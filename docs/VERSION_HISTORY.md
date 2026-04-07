@@ -86,10 +86,7 @@
 
 ---
 
-# 🚧 언릴리즈 (Unreleased - feature 브랜치)
-*현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
-
-## [feat/brand-themes] - 2026-04-07
+## [v0.5.6] - 2026-04-07
 ### Added
 - **브랜드 테마 28종 추가**: 브랜드 아이덴티티가 강한 IT 기업 14개의 공식 브랜드 컬러를 기반으로 다크/라이트 모드 각각 1종씩, 총 28개의 `.slidetheme` 파일 신규 제공.
   - **Google** (`google_dark` / `google_light`): 구글 브랜드 블루 `#4285F4` 기반
@@ -106,3 +103,11 @@
   - **Intel** (`intel_dark` / `intel_light`): Intel 브랜드 블루 `#0071C5` 기반
   - **GitLab** (`gitlab_dark` / `gitlab_light`): GitLab Tanuki 오렌지 `#FC6D26` / `#e24329` 기반
   - **Claude** (`claude_dark` / `claude_light`): Anthropic 시그니처 코퍼(Copper) `#D4784F` + 웜 다크/크림 배경
+
+---
+
+# 🚧 언릴리즈 (Unreleased - feature 브랜치)
+*현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
+
+## [Unreleased]
+*(현재 없음)*
