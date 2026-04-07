@@ -1066,7 +1066,7 @@
         .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${codeColor}; font-family: 'D2Coding', monospace; }
         .btn-copy-code { background: transparent; border: 1px solid #374151; color: #8b949e; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: sans-serif; }
         .btn-copy-code:hover, .btn-copy-code.copied { color: ${codeColor}; border-color: ${codeColor}; background: ${codeColor}1A; }
-        .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; }
+        .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; border-radius: 0 !important; }
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>
