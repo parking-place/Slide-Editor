@@ -1,4 +1,4 @@
-﻿// === SAVE DATA START ===
+// === SAVE DATA START ===
         let slidesData = [];
         // === SAVE DATA END ===
         
@@ -532,9 +532,86 @@
             } else {
                 status.innerHTML = `시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.`;
             }
+
+            // 동적 TOC 사이드바 갱신
+            updateDynamicTOC();
         };
 
+        // ===========================
+        // 동적 TOC 사이드바 구축 함수
+        // ===========================
+        let tocObserver = null; // IntersectionObserver 인스턴스 보관
+
+        function updateDynamicTOC() {
+            const nav = document.getElementById('toc-navigator');
+            if (!nav) return;
+
+            // 슬라이드가 없을 때 빈 메시지 표시
+            if (slidesData.length === 0) {
+                nav.innerHTML = `
+                    <div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>
+                    <div class="toc-sidebar-empty">
+                        <i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom: 8px; display: block;"></i>
+                        슬라이드를 추가하면<br>목차가 여기에 표시됩니다.
+                    </div>
+                `;
+                return;
+            }
+
+            // generateTocData()의 구조 데이터를 재사용하여 사이드바 DOM 생성
+            const tocLines = generateTocData(slidesData);
+            let html = `<div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>`;
+
+            tocLines.forEach(line => {
+                if (line.type === 'chapter') {
+                    html += `<div class="toc-nav-chapter" title="${escapeHtml(line.text)}">${escapeHtml(line.text)}</div>`;
+                } else if (line.type === 'middle') {
+                    // 중제목은 커버 슬라이드 div 가 있으므로 해당 id 로 스크롤
+                    const targetId = `preview-cover-${line.renderableIndex}`;
+                    html += `<div class="toc-nav-middle" title="${escapeHtml(line.text)}" onclick="document.getElementById('${targetId}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(line.text)}</div>`;
+                } else if (line.type === 'title') {
+                    const targetId = `preview-slide-${line.slideIndex}`;
+                    html += `<div class="toc-nav-title" id="toc-item-${line.slideIndex}" data-slide="${line.slideIndex}" title="${escapeHtml(line.text)}" onclick="document.getElementById('${targetId}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(line.text)}</div>`;
+                }
+            });
+
+            nav.innerHTML = html;
+
+            // 기존 옵저버 해제 후 재등록
+            if (tocObserver) tocObserver.disconnect();
+
+            const slideEls = document.querySelectorAll('.slide-preview[id^="preview-slide-"]');
+            if (slideEls.length === 0) return;
+
+            tocObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+
+                    // id="preview-slide-{index}" 에서 인덱스 추출
+                    const idParts = entry.target.id.split('-');
+                    const idx = idParts[idParts.length - 1];
+
+                    // 모든 활성 클래스 초기화
+                    document.querySelectorAll('.toc-nav-title.active').forEach(el => el.classList.remove('active'));
+
+                    // 해당 항목 하이라이트
+                    const tocItem = document.getElementById(`toc-item-${idx}`);
+                    if (tocItem) {
+                        tocItem.classList.add('active');
+                        // 사이드바 내 해당 항목으로 자동 스크롤 (보이지 않을 경우)
+                        tocItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                });
+            }, {
+                rootMargin: '-20% 0px -60% 0px', // 화면 상단 20% ~ 하단 60% 사이에 진입시 트리거
+                threshold: 0
+            });
+
+            slideEls.forEach(el => tocObserver.observe(el));
+        }
+
         // PPTX 파일 생성 다운로드
+
         window.exportToPPTX = async function() {
             if (slidesData.length === 0) {
                 showModal('다운로드할 슬라이드를 먼저 추가해주세요!');

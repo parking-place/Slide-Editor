@@ -1,4 +1,4 @@
-﻿:root {
+:root {
             --hpe-green: #00E676;
             --bg-dark: #010409;
             --slide-bg: #0D1117;
@@ -102,8 +102,9 @@
 
         /* 메인 컨테이너 */
         .main-container {
-            max-width: 1000px;
-            margin: 40px auto;
+            flex: 1;
+            min-width: 0;
+            margin: 40px 0;
             display: flex;
             flex-direction: column;
             gap: 30px;
@@ -524,3 +525,126 @@
             transform: translateY(-5px);
             filter: brightness(1.1);
         }
+
+        /* ==== 동적 TOC 네비게이터 레이아웃 ==== */
+        .layout-wrapper {
+            display: flex;
+            align-items: flex-start;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 0;
+            padding: 0 20px;
+        }
+
+        /* ==== TOC 사이드바 ==== */
+        .toc-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 90px;
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+            padding: 20px 16px;
+            border-right: 1px solid var(--border-color);
+            transition: opacity 0.3s;
+        }
+
+        /* 스크롤바 스타일 커스텀화 */
+        .toc-sidebar::-webkit-scrollbar { width: 4px; }
+        .toc-sidebar::-webkit-scrollbar-track { background: transparent; }
+        .toc-sidebar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .toc-sidebar::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+        .toc-sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toc-sidebar-empty {
+            font-size: 13px;
+            color: var(--border-color);
+            text-align: center;
+            padding: 20px 0;
+            line-height: 1.6;
+        }
+
+        /* TOC 단위 아이템 */
+        .toc-nav-chapter {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--hpe-green);
+            margin-top: 14px;
+            margin-bottom: 4px;
+            padding: 0 6px;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .toc-nav-chapter:first-child { margin-top: 0; }
+
+        .toc-nav-middle {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            padding: 3px 6px 3px 14px;
+            margin-bottom: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, padding-left 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .toc-nav-middle:hover {
+            background: rgba(0, 230, 118, 0.07);
+            color: var(--hpe-green);
+            padding-left: 18px;
+        }
+
+        .toc-nav-title {
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 4px 6px 4px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, padding-left 0.15s, border-left 0.15s;
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-left: 2px solid transparent;
+        }
+        .toc-nav-title:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            padding-left: 27px;
+        }
+        .toc-nav-title.active {
+            color: var(--hpe-green);
+            background: rgba(0, 230, 118, 0.08);
+            border-left: 2px solid var(--hpe-green);
+            font-weight: 600;
+        }
+
+        /* 라이트 모드 TOC */
+        body.light-mode .toc-sidebar {
+            border-right-color: var(--border-color);
+        }
+        body.light-mode .toc-nav-title.active {
+            background: rgba(1, 169, 130, 0.1);
+            color: #01a982;
+            border-left-color: #01a982;
+        }
+        body.light-mode .toc-nav-chapter { color: #01a982; }
+        body.light-mode .toc-nav-middle:hover { color: #01a982; background: rgba(1, 169, 130, 0.07); }
+        body.light-mode .toc-nav-title:hover { background: rgba(0,0,0,0.04); color: #111827; }
