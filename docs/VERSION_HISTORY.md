@@ -109,9 +109,14 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [chore/rebrand-to-slide-editor] - 2026-04-07
+## [Unreleased]
+*(현재 없음)*
+
+---
+
+## [v0.6.0] - 2026-04-07
 ### Changed
-- **프로젝트 리브랜딩**: 도구 이름을 `HPE VME Guide Creator` → `Slide Editor`로 변경. HPE VME 특화 도구에서 범용 슬라이드 편집 도구로 전환.
+- **프로젝트 리브랜딩 1차**: 도구 이름을 `HPE VME Guide Creator` → `Slide Editor`로 변경. HPE VME 특화 도구에서 범용 슬라이드 편집 도구로 전환.
   - `HPE_VME_Editor.html` → `SlideEditor.html` 파일명 변경
   - 브라우저 탭·헤더 로고: `HPE VME Guide Creator` → `Slide Editor`
   - `app.js` 기본 브랜딩 값 중립화: `projectName`, `guideSubtitle`, `footerCopy` 기본값을 HPE VME 전용 문구에서 범용 값(`My Guide` 등)으로 변경
@@ -121,15 +126,11 @@
   - `local_server.ps1`: 서버 배너 문구 및 기본 오픈 URL/저장 경로 반영
   - `scripts/split.ps1`: 대상 파일명 반영
   - `에디터_웹서버_실행.bat`: 콘솔 창 타이틀 `Slide Editor Server`로 변경
+- **데이터 저장 파일명 변경 (리브랜딩 2차)**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
+  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.
 
-## [bugfix/hpe-theme-display-names] - 2026-04-07
 ### Fixed
 - **HPE 기본 테마 displayName 복구**: 그래프 정리 과정의 머지 충돌로 인해 3개 HPE 기본 테마의 `displayName`이 내부 ID로 덮어씌워진 문제 수정.
   - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
   - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
   - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`
-
-## [chore/rebrand-slide-data] - 2026-04-07
-### Changed
-- **데이터 저장 파일명 변경**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
-  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.
