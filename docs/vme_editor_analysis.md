@@ -15,6 +15,7 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 - **`/` (Root)**: 메인 애플리케이션 `HPE_VME_Editor.html` 및 초기 실행 배치 스크립트(`.bat`) 위치
 - **`/src`**: 에디터 프론트엔드를 구성하는 `style.css`, `app.js` 모듈화 파일 (소스 3 모듈 분리로 HTML 코드 선 축소)
 - **`/data`**: 로컬 시스템의 데이터 영속성을 위한 JSON 저장소 (초기화 및 스냅샷 보관용)
+  - **`/data/themes`**: `.slidetheme` 형식의 커스텀 테마 파일 저장 디렉토리
 - **`/docs`**: 프로젝트 기록(버전노트, 기능분석) 마크다운 백서 
 - **`/scripts`**: 포트 스캐닝 및 HTML/JSON 렌더링 내보내기를 담당하는 로컬 Poweshell 서버 스크립트와 정규식 파이썬 패치 코드 보관
 - **`/exports`**: 사용자가 브라우저에서 '웹 가이드'를 추출할 때 떨어지는 최종 배포 HTML 산출물 저장 경로
@@ -33,31 +34,56 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 ---
 
 ## 4. 데이터 구조 (State Management)
-앱의 핵심 데이터는 전역 변수 `slidesData` 배열로 관리됩니다.
-```javascript
-let slidesData = [
-  {
-    chapter: "1. 대제목",
-    middleTitle: "1.1 중제목 (선택)",
-    title: "1.1.1 소제목",
-    text: "본문 내용 (마크다운 지원)",
-    image: "data:image/png;base64,...", // Base64 인코딩 이미지
-    imageCaption: "이미지 설명 캡션"
+앱의 핵심 데이터는 전역 변수 `slidesData`, `projectSettings`, `activeTheme`으로 관리됩니다.
+
+**`vme_data.json` 저장 구조** (`feat/custom-theme-builder` 이후)
+```json
+{
+  "settings": {
+    "activeTheme": "hpe_default",
+    "branding": {
+      "projectName":   "HPE Virtual Machine Essentials (VME)",
+      "guideSubtitle": "설치 및 구성 가이드",
+      "footerCopy":    "HPE VME Guide"
+    }
   },
-  // ...
-];
+  "slides": [
+    {
+      "chapter": "1. 대제목",
+      "middleTitle": "1.1 중제목 (선택)",
+      "title": "1.1.1 소제목",
+      "text": "본문 내용 (마크다운 지원)",
+      "image": "data:image/png;base64,...",
+      "imageCaption": "이미지 설명 캡션"
+    }
+  ]
+}
 ```
-그 외 UI의 상태(열려있는 에디터 위치)를 추적하기 위해 `activeEditorIndex` (추가 중인 폼 위치), `editingSlideIndex` (수정 중인 폼 위치) 변수를 사용합니다.
+> **구버전 호환**: 파일이 배열(`[]`) 형태인 경우 `parseLoadedData()`가 자동으로 감지하여 슬라이드만 교체하고 `settings`는 기본값을 유지합니다.
+
+**`.slidetheme` 파일 구조**
+```json
+{
+  "name": "hpe_default",
+  "colors": { "accent": "#00E676", "bgDark": "#010409", ... },
+  "pptx":   { "masterBg": "0D1117", "accentColor": "00E676", ... },
+  "webGuide": { "headerBg": "#01a982", "accentColor": "#01a982", ... },
+  "fonts":  { "uiFamily": "Pretendard", "pptxBody": "Malgun Gothic", ... }
+}
+```
+
+그 외 UI 상태 추적용으로 `activeEditorIndex`(추가 중인 폼 위치), `editingSlideIndex`(수정 중인 폼 위치) 변수를 사용합니다.
 
 ---
 
 ## 5. 핵심 모듈 및 기능 (Functions)
 
 ### 5.1 데이터 로드 및 저장 (Data & File I/O)
-- `loadInitialData()`: 에디터 로드 시 같은 경로에 있는 `vme_data.json`을 자동으로 가져옵니다.
-- `migrateData(slides)`: 구버전 데이터(과거 `bashCode` 필드 사용)를 불러왔을 때 포맷 붕괴가 생기지 않도록, `bashCode`의 내용을 마크다운의 `code` 블록 형태(````bash ... ````)로 변환해 `text`에 병합하는 호환성 관리 함수입니다.
-- `exportData()`: 현재 작성된 데이터를 `vme_data_YYMMDDhhmmss.json` 포맷으로 다운로드합니다.
-- `importData(event)`: 사용자가 로컬 기기에서 JSON 파일을 선택해 불러옵니다.
+- `loadInitialData()`: 에디터 로드 시 `vme_data.json`을 자동으로 가져온 뒤 `parseLoadedData()`로 파싱, 이후 저장된 테마(`projectSettings.activeTheme`)를 자동 로드합니다.
+- `parseLoadedData(data)`: 구버전(배열)/신버전(래퍼 객체) 데이터를 자동 판별하여 `slidesData`와 `projectSettings`를 갱신하는 호환 파서입니다.
+- `migrateData(slides)`: 구버전 `bashCode` 필드를 마크다운 코드 블록으로 변환하는 역방향 호환 함수.
+- `exportData()` / `downloadData()`: 현재 `{ settings, slides }` 래퍼 객체를 JSON 파일로 서버 저장 또는 브라우저 다운로드합니다.
+- `importData(event)`:  불러온 JSON이 구버전 배열이면 슬라이드만 교체, 신버전 래퍼 구조면 settings·theme까지 함께 복원합니다.
 
 ### 5.2 화면 렌더링 및 UI 처리 (UI Rendering)
 - `renderPreview()`: 데이터를 기반으로 화면 전체를 새로 그리는 메인 렌더링 엔진입니다. React의 렌더링 방식처럼 데이터가 바뀔 때 마다 `preview-area` 내부의 HTML을 싹 지우고 다시 생성합니다.
@@ -97,10 +123,22 @@ let slidesData = [
 - `openImageModal()`: 이미지가 포함된 슬라이드 클릭 시 확대하여 보여주는 라이트박스 로직.
 - `escapeHtml(str)`: 폼 입력 시 XSS 및 렌더링 깨짐을 대비한 이스케이프 함수.
 
+### 5.7 테마 엔진 (Theme Engine)
+— `feat/custom-theme-builder` 브랜치에서 추가된 신규 모듈
+- **`applyThemeToEditor(theme)`**: `document.documentElement.style.setProperty()`로 CSS 변수(`--hpe-green`, `--bg-dark` 등)를 실시간 교체. `activeTheme`과 `projectSettings.activeTheme`을 동시 갱신.
+- **`loadThemeByName(name)`**: `/api/themes/{name}.slidetheme` API 호출 → 성공 시 `applyThemeToEditor()`, 실패 시 `getDefaultThemeObject()`로 폴백.
+- **`renderThemeModal()`**: 테마 목록 비동기 렌더링 + 7개의 색상 행(`color-row` 컴포넌트, 픽커↔HEX 양방향 동기화) + 브랜딩 필드 채우기.
+- **`buildThemeFromModal()`**: 모달 UI 입력값으로부터 완전한 테마 오브젝트(colors, pptx, webGuide, fonts)를 빌드.
+- **`syncBrandingUI()` / `collectBrandingFromUI()`**: 모달의 브랜딩 필드와 `projectSettings.branding` 간 양방향 동기화.
+- **`exportTheme()` / `importTheme(event)`**: `.slidetheme` 파일 브라우저 다운로드 및 파일 불러오기.
+- **`saveThemeToServer(theme)`**: `/api/themes/{name}.slidetheme` POST로 서버 저장.
+
 ---
 
 ## 6. 향후 수정 시 고려사항 (Considerations)
 1. **렌더링 방식 한계**: 현재 바닐라 JS의 `innerHTML` 조작으로 통째로 리렌더링(`renderPreview()`) 하는 방식이라 데이터가 매우 큰 경우 스크롤 위치 유지나 포커스 아웃 현상을 조심해야 합니다.
 2. **에러 핸들링**: PPTX 내보내기 시 텍스트가 매우 길어 높이를 초과할 경우 슬라이드 밖으로 벗어나는 한계가 있을 수 있습니다(현재 라인 수 곱하기로 대략적인 높이 산정 `estimatedHeight`).
-3. **스타일 격리**: `exportToHTML` 문자열 안의 css와 본문 에디터 상단의 css가 나뉘어져 있으므로, 테마 변경 시 양쪽 모두 수정이 필요합니다.
+3. **스타일 격리**: `exportToHTML` 문자열 안의 CSS는 `activeTheme.webGuide`를 통해 동적으로 주입되므로, 에디터 CSS와 내보내기 CSS를 함께 수정해야 합니다.
 4. **TOC Observer 재등록 비용**: `renderPreview()` 호출마다 `IntersectionObserver`를 `disconnect` 후 재등록하기 때문에, 슬라이드 수가 매우 많은 경우 (수십 장 이상) Observer 성능 영향을 확인해야 합니다. 필요시 Debounce 도입 검토.
+5. **`vme_data.json` 구조 변경 주의**: `feat/custom-theme-builder` 이후 저장 포맷이 배열에서 `{ settings, slides }` 래퍼 객체로 바뀌었습니다. 불러오기는 하위 호환되지만, 새로 저장한 파일은 구버전 에디터에서 열 수 없습니다.
+6. **테마 서버 의존성**: 테마 기능은 `/api/themes` 엔드포인트(local_server.ps1)에 의존합니다. 서버 없이 동작 시 `getDefaultThemeObject()` 폴백으로 기본 테마가 적용됩니다.

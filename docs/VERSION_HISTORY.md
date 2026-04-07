@@ -56,5 +56,18 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-*(현재 없음)*
+## [feat/custom-theme-builder] - 2026-04-07
+### Added
+- **커스텀 테마 빌더**: 색상 팔레트(에디터/PPTX/웹가이드)와 폰트를 독립된 `.slidetheme` 파일로 정의하고 불러올 수 있는 테마 관리 시스템 구현.
+- **`.slidetheme` 파일 포맷**: `colors`, `pptx`, `webGuide`, `fonts` 4개 섹션으로 구성된 JSON 기반 테마 파일 규격 정의.
+- **기본 테마 3종 제공**: `hpe_default` (다크 그린), `hpe_light` (라이트), `hpe_blue` (다크 블루) `.slidetheme` 파일 생성 (`data/themes/`).
+- **테마 관리 모달 UI**: 상단 헤더의 `🎨 테마 관리` 버튼으로 열리는 2열 모달 (좌: 목록, 우: 편집기). 색상 픽커(`input[type=color]`) + HEX 텍스트 입력 양방향 실시간 동기화.
+- **테마 서버 API 3종**: `local_server.ps1`에 `/api/themes` GET(목록), `/api/themes/{name}` GET(파일), POST(저장) 엔드포인트 추가.
+- **테마 내보내기/불러오기**: `.slidetheme` 파일 브라우저 다운로드 및 파일 선택 불러오기 지원.
 
+### Changed
+- **`vme_data.json` 구조 변경**: 슬라이드 배열(`[]`)에서 `{ settings, slides }` 래퍼 객체로 확장. `settings.activeTheme`(선택된 테마명)과 `settings.branding`(프로젝트명·부제·footer) 영역 추가.
+- **구버전 데이터 자동 호환**: `parseLoadedData()` 함수 도입. 구버전 배열 형식 → 슬라이드만 교체(기존 settings 유지), 신버전 래퍼 구조 → 완전 복원(Deep merge).
+- **`generateHTMLContent()` 파라미터화**: 웹 가이드 출력물의 헤더 배경, 강조색, footer 문구, 제목/부제를 `activeTheme.webGuide`와 `projectSettings.branding`으로 동적 주입.
+- **`exportToPPTX()` 파라미터화**: 슬라이드 마스터 배경, 강조색, 폰트, footer 문구, 표지 텍스트를 `activeTheme.pptx`와 `projectSettings.branding`으로 동적 주입.
+- **브랜딩 정보 데이터 분리**: 프로젝트명·부제·footer 문구는 `.slidetheme` 파일이 아닌 `vme_data.json`(settings.branding)에 저장하여 프로젝트별 독립 관리.
