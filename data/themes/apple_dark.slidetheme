@@ -1,0 +1,36 @@
+{
+  "name": "apple_dark",
+  "displayName": "Apple Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#0A84FF",
+    "codeColor": "#30D158",
+    "bgDark": "#000000",
+    "slideBg": "#1c1c1e",
+    "boxBg": "#2c2c2e",
+    "border": "#3a3a3c",
+    "textMain": "#FFFFFF",
+    "textDim": "#98989d"
+  },
+  "pptx": {
+    "masterBg": "1c1c1e",
+    "coverBg": "000000",
+    "middleCoverBg": "2c2c2e",
+    "accentColor": "0A84FF",
+    "codeColor": "30D158",
+    "textColor": "FFFFFF",
+    "dimColor": "98989d"
+  },
+  "webGuide": {
+    "headerBg": "#0A84FF",
+    "accentColor": "#0A84FF",
+    "darkAccent": "#409cff"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

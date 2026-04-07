@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "hpe_default",
   "displayName": "hpe_default",
   "version": "1.0",
@@ -18,7 +18,7 @@
     "coverBg": "010409",
     "middleCoverBg": "111827",
     "accentColor": "00E676",
-    "codeColor": "00E676",
+    "codeColor": "01a982",
     "textColor": "FFFFFF",
     "dimColor": "8B949E"
   },

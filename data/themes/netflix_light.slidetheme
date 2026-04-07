@@ -1,0 +1,36 @@
+{
+  "name": "netflix_light",
+  "displayName": "Netflix Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#B81D24",
+    "codeColor": "#B81D24",
+    "bgDark": "#f5f5f5",
+    "slideBg": "#ffffff",
+    "boxBg": "#fafafa",
+    "border": "#e5e5e5",
+    "textMain": "#141414",
+    "textDim": "#757575"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "f5f5f5",
+    "middleCoverBg": "B81D24",
+    "accentColor": "B81D24",
+    "codeColor": "B81D24",
+    "textColor": "141414",
+    "dimColor": "757575"
+  },
+  "webGuide": {
+    "headerBg": "#B81D24",
+    "accentColor": "#B81D24",
+    "darkAccent": "#960000"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

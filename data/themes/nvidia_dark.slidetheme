@@ -1,0 +1,36 @@
+{
+  "name": "nvidia_dark",
+  "displayName": "NVIDIA Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#76B900",
+    "codeColor": "#76B900",
+    "bgDark": "#050505",
+    "slideBg": "#0f0f0f",
+    "boxBg": "#1a1a1a",
+    "border": "#2a2a2a",
+    "textMain": "#FFFFFF",
+    "textDim": "#a0a0a0"
+  },
+  "pptx": {
+    "masterBg": "0f0f0f",
+    "coverBg": "050505",
+    "middleCoverBg": "1a1a1a",
+    "accentColor": "76B900",
+    "codeColor": "76B900",
+    "textColor": "FFFFFF",
+    "dimColor": "a0a0a0"
+  },
+  "webGuide": {
+    "headerBg": "#76B900",
+    "accentColor": "#76B900",
+    "darkAccent": "#92d400"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "nvidia_light",
+  "displayName": "NVIDIA Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#5a8f00",
+    "codeColor": "#5a8f00",
+    "bgDark": "#e8f2d5",
+    "slideBg": "#ffffff",
+    "boxBg": "#f2f9e5",
+    "border": "#cce68f",
+    "textMain": "#1a1a1a",
+    "textDim": "#5a5a5a"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "e8f2d5",
+    "middleCoverBg": "5a8f00",
+    "accentColor": "5a8f00",
+    "codeColor": "5a8f00",
+    "textColor": "1a1a1a",
+    "dimColor": "5a5a5a"
+  },
+  "webGuide": {
+    "headerBg": "#5a8f00",
+    "accentColor": "#5a8f00",
+    "darkAccent": "#447000"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

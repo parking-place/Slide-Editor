@@ -1,0 +1,36 @@
+{
+  "name": "meta_dark",
+  "displayName": "Meta Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#1877F2",
+    "codeColor": "#42b72a",
+    "bgDark": "#0a0d16",
+    "slideBg": "#18191a",
+    "boxBg": "#242526",
+    "border": "#3a3b3c",
+    "textMain": "#e4e6eb",
+    "textDim": "#b0b3b8"
+  },
+  "pptx": {
+    "masterBg": "18191a",
+    "coverBg": "0a0d16",
+    "middleCoverBg": "242526",
+    "accentColor": "1877F2",
+    "codeColor": "42b72a",
+    "textColor": "e4e6eb",
+    "dimColor": "b0b3b8"
+  },
+  "webGuide": {
+    "headerBg": "#1877F2",
+    "accentColor": "#1877F2",
+    "darkAccent": "#4299f7"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

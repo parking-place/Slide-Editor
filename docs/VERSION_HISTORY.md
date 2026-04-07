@@ -89,5 +89,16 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [bugfix/navigator-theme-colors] - 2026-04-07
-*(현재 없음)*
+## [feat/brand-themes] - 2026-04-07
+### Added
+- **브랜드 테마 20종 추가**: 브랜드 아이덴티티가 강한 IT 기업 10개의 공식 브랜드 컬러를 기반으로 다크/라이트 모드 각각 1종씩, 총 20개의 `.slidetheme` 파일 신규 제공.
+  - **Google** (`google_dark` / `google_light`): 구글 브랜드 블루 `#4285F4` 기반
+  - **Microsoft** (`microsoft_dark` / `microsoft_light`): MS 브랜드 블루 `#00A4EF` / `#0078D4` 기반
+  - **Apple** (`apple_dark` / `apple_light`): Apple 시스템 블루 `#0A84FF` / `#007AFF`, 순수 블랙 배경
+  - **AWS** (`aws_dark` / `aws_light`): AWS Squid Ink 다크 배경 + 오렌지 `#FF9900` 강조색
+  - **GitHub** (`github_dark` / `github_light`): GitHub 공식 다크/라이트 팔레트 (`#58a6ff` / `#0969da`)
+  - **Netflix** (`netflix_dark` / `netflix_light`): Netflix 시그니처 레드 `#E50914` + 순수 블랙 배경
+  - **Spotify** (`spotify_dark` / `spotify_light`): Spotify 그린 `#1DB954` + 딥 블랙 배경
+  - **IBM** (`ibm_dark` / `ibm_light`): IBM Carbon Design System 공식 팔레트 (`#0f62fe` / `#0043ce`)
+  - **NVIDIA** (`nvidia_dark` / `nvidia_light`): NVIDIA 시그니처 그린 `#76B900` + 딥 블랙 배경
+  - **Meta** (`meta_dark` / `meta_light`): Meta/Facebook 브랜드 블루 `#1877F2` 기반

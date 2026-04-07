@@ -1,0 +1,36 @@
+{
+  "name": "apple_light",
+  "displayName": "Apple Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#007AFF",
+    "codeColor": "#34C759",
+    "bgDark": "#f2f2f7",
+    "slideBg": "#ffffff",
+    "boxBg": "#f2f2f7",
+    "border": "#d1d1d6",
+    "textMain": "#000000",
+    "textDim": "#6e6e73"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "f2f2f7",
+    "middleCoverBg": "007AFF",
+    "accentColor": "007AFF",
+    "codeColor": "34C759",
+    "textColor": "000000",
+    "dimColor": "6e6e73"
+  },
+  "webGuide": {
+    "headerBg": "#007AFF",
+    "accentColor": "#007AFF",
+    "darkAccent": "#0071e3"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "ibm_dark",
+  "displayName": "IBM Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#0f62fe",
+    "codeColor": "#42be65",
+    "bgDark": "#0a0a0a",
+    "slideBg": "#161616",
+    "boxBg": "#262626",
+    "border": "#393939",
+    "textMain": "#f4f4f4",
+    "textDim": "#a8a8a8"
+  },
+  "pptx": {
+    "masterBg": "161616",
+    "coverBg": "0a0a0a",
+    "middleCoverBg": "262626",
+    "accentColor": "0f62fe",
+    "codeColor": "42be65",
+    "textColor": "f4f4f4",
+    "dimColor": "a8a8a8"
+  },
+  "webGuide": {
+    "headerBg": "#0f62fe",
+    "accentColor": "#0f62fe",
+    "darkAccent": "#4589ff"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "github_light",
+  "displayName": "GitHub Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#0969da",
+    "codeColor": "#1a7f37",
+    "bgDark": "#eaeef2",
+    "slideBg": "#ffffff",
+    "boxBg": "#f6f8fa",
+    "border": "#d0d7de",
+    "textMain": "#1f2328",
+    "textDim": "#57606a"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "eaeef2",
+    "middleCoverBg": "0969da",
+    "accentColor": "0969da",
+    "codeColor": "1a7f37",
+    "textColor": "1f2328",
+    "dimColor": "57606a"
+  },
+  "webGuide": {
+    "headerBg": "#0969da",
+    "accentColor": "#0969da",
+    "darkAccent": "#0550ae"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}
