@@ -636,6 +636,10 @@
                     slide.text = text;
                     delete slide.bashCode;
                 }
+                
+                if (slide.textRatio === undefined) {
+                    slide.textRatio = 50;
+                }
                 return slide;
             });
         }
@@ -794,17 +798,19 @@
             const text = document.getElementById('input-text').value.trim();
             const imageInput = document.getElementById('input-image');
             const imageCaption = document.getElementById('input-image-caption').value.trim();
+            const textRatioInput = document.getElementById('input-text-ratio');
+            const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
 
             if (imageInput.files && imageInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: e.target.result });
+                    slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: e.target.result, textRatio });
                     activeEditorIndex = null;
                     window.renderPreview();
                 };
                 reader.readAsDataURL(imageInput.files[0]);
             } else {
-                slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: null });
+                slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: null, textRatio });
                 activeEditorIndex = null;
                 window.renderPreview();
             }
@@ -832,12 +838,14 @@
             const imageInput = document.getElementById('edit-image');
             const imageCaption = document.getElementById('edit-image-caption').value.trim();
             const deleteImageChecked = document.getElementById('edit-delete-image')?.checked;
+            const textRatioInput = document.getElementById('edit-text-ratio');
+            const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
 
             if (imageInput.files && imageInput.files[0]) {
                 // 새 이미지 업로드 시
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: e.target.result };
+                    slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: e.target.result, textRatio };
                     editingSlideIndex = null;
                     window.renderPreview();
                 };
@@ -845,7 +853,7 @@
             } else {
                 // 이미지 업로드 안 한 경우 (기존 이미지 유지 혹은 삭제)
                 const existingImage = deleteImageChecked ? null : slidesData[index].image;
-                slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: existingImage };
+                slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: existingImage, textRatio };
                 editingSlideIndex = null;
                 window.renderPreview();
             }
@@ -961,9 +969,18 @@
                         <textarea id="input-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)\n## 소제목\n* 설명\n\n\`\`\`bash\n코드 블록 작성 시 여기에 코드를 넣으세요.\n\`\`\`"></textarea>
                         <div class="file-upload-wrapper" style="flex-wrap: wrap;">
                             <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;">
+                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="document.getElementById('input-layout-ratio-container').style.display='flex'">
                             <span style="font-size: 12px; color: #484f58; flex: 1;">(선택) 스크린샷 이미지 업로드</span>
                             <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                        </div>
+                        <div class="file-upload-wrapper" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
+                                <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                                <span id="input-ratio-text">50% : 50%</span>
+                                <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                            </div>
+                            <input type="range" id="input-text-ratio" min="20" max="80" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('input-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                            <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
                         </div>
                         <button type="button" class="btn-add" onclick="window.insertNewSlide(${i})">
                             <i class="fa-solid fa-plus"></i> 슬라이드 생성
@@ -1029,11 +1046,20 @@
                             <textarea id="edit-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)">${escapeHtml(slide.text)}</textarea>
                             <div class="file-upload-wrapper" style="flex-wrap: wrap;">
                                 <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;">
+                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="if(this.files.length) document.getElementById('edit-layout-ratio-container').style.display='flex'">
                                 <span style="font-size: 12px; color: #484f58; flex: 1;">
                                     ${slide.image ? '(선택) 새 이미지 업로드 시 기존 이미지 교체' : '(선택) 스크린샷 이미지 업로드'}
                                 </span>
                                 <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                            </div>
+                            <div class="file-upload-wrapper" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
+                                    <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                                    <span id="edit-ratio-text">${slide.textRatio || 50}% : ${100 - (slide.textRatio || 50)}%</span>
+                                    <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                                </div>
+                                <input type="range" id="edit-text-ratio" min="20" max="80" value="${slide.textRatio || 50}" style="width: 100%; cursor: pointer;" oninput="document.getElementById('edit-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                                <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
                             </div>
                             ${existingImageDeleteCheck}
                             <button type="button" class="btn-add" onclick="window.saveEditSlide(${i})">
@@ -1053,10 +1079,14 @@
                         // Markdown 파싱
                         const parsedMarkdownText = marked.parse(slide.text || '');
 
+                        let currentRatio = slide.textRatio || 50;
+                        let txtFlex = (hasImage && hasText) ? currentRatio : 100;
+                        let imgFlex = (hasImage && hasText) ? (100 - currentRatio) : 100;
+
                         let textContentHtml = '';
                         if (hasText) {
                             textContentHtml = `
-                                <div class="box">
+                                <div class="box" style="flex: ${txtFlex};">
                                     <div class="markdown-body">${parsedMarkdownText}</div>
                                 </div>
                             `;
@@ -1068,7 +1098,7 @@
                         let imageHtml = '';
                         if (hasImage) {
                             let captionHtml = slide.imageCaption ? `<div style="font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                            imageHtml = `<div class="box image-box" style="flex-direction: column;"><img src="${slide.image}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${slide.image}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                         }
 
                         const middleTitleHtml = slide.middleTitle 
@@ -1243,8 +1273,21 @@
                     }
                 } else {
                     // 기존 레이아웃 (텍스트 + 이미지, 또는 텍스트 단독)
-                    let textWidth = hasImage ? 4.1 : 8.8;
-                    let boxWidth = hasImage ? 4.3 : 9.0;
+                    let currentRatio = data.textRatio || 50;
+                    let textWidth = 8.8; 
+                    let boxWidth = 9.0;
+                    let imgWidth = 0;
+                    let imgX = 5.2;
+
+                    if (hasImage && hasText) {
+                        boxWidth = 8.6 * (currentRatio / 100);
+                        textWidth = boxWidth - 0.2;
+                        imgWidth = 8.6 * ((100 - currentRatio) / 100);
+                        imgX = 0.5 + boxWidth + 0.4;
+                    } else if (hasImage) {
+                        textWidth = 4.1;
+                        boxWidth = 4.3;
+                    }
 
                     slide.addShape(pptx.ShapeType.rect, {
                         x: 0.5, y: 1.5, w: boxWidth, h: 3.3, fill: { color: '161B22' }, line: { color: '30363D', width: 1 }
@@ -1288,16 +1331,18 @@
                     });
 
                     if (hasImage) {
+                        let finalImgWidth = (hasImage && hasText) ? imgWidth : 4.3;
+                        let finalImgX = (hasImage && hasText) ? imgX : 5.2;
                         let imgH = data.imageCaption ? 3.0 : 3.3; // 캡션이 있으면 이미지 높이를 조금 줄임
                         slide.addImage({
                             data: data.image,
-                            x: 5.2, y: 1.5, w: 4.3, h: imgH, 
-                            sizing: { type: 'contain', w: 4.3, h: imgH }
+                            x: finalImgX, y: 1.5, w: finalImgWidth, h: imgH, 
+                            sizing: { type: 'contain', w: finalImgWidth, h: imgH }
                         });
                         
                         if (data.imageCaption) {
                             slide.addText(data.imageCaption, {
-                                x: 5.2, y: 1.5 + imgH, w: 4.3, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
+                                x: finalImgX, y: 1.5 + imgH, w: finalImgWidth, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
                             });
                         }
                     }
@@ -1490,10 +1535,14 @@
                 const hasText = slide.text && slide.text.trim() !== '';
                 const hasImage = !!slide.image;
 
+                let currentRatio = slide.textRatio || 50;
+                let txtFlex = (hasImage && hasText) ? currentRatio : 100;
+                let imgFlex = (hasImage && hasText) ? (100 - currentRatio) : 100;
+
                 let textContentHtml = '';
                 if (hasText) {
                     textContentHtml = `
-                        <div class="text-content">
+                        <div class="text-content" style="flex: ${txtFlex};">
                             <div class="markdown-body">${parsedMarkdownText}</div>
                         </div>
                     `;
@@ -1502,7 +1551,7 @@
                 let imgContentHtml = '';
                 if (hasImage) {
                     let captionHtml = slide.imageCaption ? `<div style="font-size: 13px; color: #6b7280; text-align: center; margin-top: 8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                    imgContentHtml = `<div class="img-content" style="flex-direction: column; align-items: center;"><img src="${slide.image}" alt="Slide ${index + 1} Image" onclick="openModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                    imgContentHtml = `<div class="img-content" style="flex: ${imgFlex}; flex-direction: column; align-items: center;"><img src="${slide.image}" alt="Slide ${index + 1} Image" onclick="openModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                 }
 
                 const middleTitleHtml = slide.middleTitle 
