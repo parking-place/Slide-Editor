@@ -385,8 +385,8 @@
         }
         .markdown-body li { margin-bottom: 0.3em; white-space: pre-wrap; word-break: break-word; }
         .markdown-body code {
-            background: rgba(0, 230, 118, 0.1);
-            color: var(--hpe-green);
+            background: var(--code-bg);
+            color: var(--code-color);
             padding: 2px 5px;
             border-radius: 4px;
             font-family: 'D2Coding', monospace;

@@ -127,7 +127,7 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 — `feat/custom-theme-builder` 브랜치에서 추가된 신규 모듈
 - **`applyThemeToEditor(theme)`**: `document.documentElement.style.setProperty()`로 CSS 변수(`--hpe-green`, `--bg-dark` 등)를 실시간 교체. `activeTheme`과 `projectSettings.activeTheme`을 동시 갱신.
 - **`loadThemeByName(name)`**: `/api/themes/{name}.slidetheme` API 호출 → 성공 시 `applyThemeToEditor()`, 실패 시 `getDefaultThemeObject()`로 폴백.
-- **`renderThemeModal()`**: 테마 목록 비동기 렌더링 + 7개의 색상 행(`color-row` 컴포넌트, 픽커↔HEX 양방향 동기화). 브랜딩 필드는 별도 모달로 분리됨.
+- **`renderThemeModal()`**: 테마 목록 비동기 렌더링 + 8개의 색상 행(codeColor 추가, `color-row` 컴포넌트, 픽커↔HEX 양방향 동기화). 브랜딩 필드는 별도 모달로 분리됨.
 - **`buildThemeFromModal()`**: 모달 UI 입력값으로부터 완전한 테마 오브젝트(colors, pptx, webGuide, fonts)를 빌드.
 - **`syncBrandingUI()` / `collectBrandingFromUI()`**: 브랜딩 모달의 필드와 `projectSettings.branding` 간 양방향 동기화.
 - **`exportTheme()` / `importTheme(event)`**: `.slidetheme` 파일 브라우저 다운로드 및 파일 불러오기.

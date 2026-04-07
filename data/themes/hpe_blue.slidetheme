@@ -4,6 +4,7 @@
   "version": "1.0",
   "colors": {
     "accent":   "#1a73e8",
+    "codeColor": "#8ab4f8",
     "bgDark":   "#050d1a",
     "slideBg":  "#0a1628",
     "boxBg":    "#0f1f3d",
@@ -23,7 +24,8 @@
   "webGuide": {
     "headerBg":    "#1a73e8",
     "accentColor": "#1a73e8",
-    "darkAccent":  "#8ab4f8"
+    "darkAccent":  "#8ab4f8",
+    "codeColor":   "#8ab4f8"
   },
   "fonts": {
     "uiFamily":   "Pretendard",
