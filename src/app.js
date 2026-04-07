@@ -558,21 +558,32 @@
                 return;
             }
 
-            // generateTocData()의 구조 데이터를 재사용하여 사이드바 DOM 생성
-            const tocLines = generateTocData(slidesData);
+            // generateTocData() 대신 slidesData를 직접 순회
+            // → 같은 소제목이 여러 슬라이드에 있어도 인덱스 기준으로 전부 표시
             let html = `<div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>`;
+            let prevCh = null;
+            let prevMid = null;
 
-            tocLines.forEach(line => {
-                if (line.type === 'chapter') {
-                    html += `<div class="toc-nav-chapter" title="${escapeHtml(line.text)}">${escapeHtml(line.text)}</div>`;
-                } else if (line.type === 'middle') {
-                    // 중제목은 커버 슬라이드 div 가 있으므로 해당 id 로 스크롤
-                    const targetId = `preview-cover-${line.renderableIndex}`;
-                    html += `<div class="toc-nav-middle" title="${escapeHtml(line.text)}" onclick="document.getElementById('${targetId}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(line.text)}</div>`;
-                } else if (line.type === 'title') {
-                    const targetId = `preview-slide-${line.slideIndex}`;
-                    html += `<div class="toc-nav-title" id="toc-item-${line.slideIndex}" data-slide="${line.slideIndex}" title="${escapeHtml(line.text)}" onclick="document.getElementById('${targetId}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(line.text)}</div>`;
+            slidesData.forEach((s, i) => {
+                const ch  = s.chapter     || '대제목 미지정';
+                const mid = s.middleTitle || '';
+                const tit = s.title       || '소제목 없음';
+
+                // 대제목이 바뀔 때만 헤더 노출
+                if (ch !== prevCh) {
+                    html += `<div class="toc-nav-chapter" title="${escapeHtml(ch)}">${escapeHtml(ch)}</div>`;
+                    prevCh = ch;
+                    prevMid = null; // 대제목 변경 시 중제목 초기화
                 }
+
+                // 중제목이 바뀔 때만 헤더 노출 (클릭하면 해당 중제목의 첫 슬라이드로 이동)
+                if (mid && mid !== prevMid) {
+                    html += `<div class="toc-nav-middle" title="${escapeHtml(mid)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(mid)}</div>`;
+                    prevMid = mid;
+                }
+
+                // 소제목은 중복 여부와 무관하게 모든 슬라이드 항목을 각 인덱스로 표시
+                html += `<div class="toc-nav-title" id="toc-item-${i}" data-slide="${i}" title="${escapeHtml(tit)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(tit)}</div>`;
             });
 
             nav.innerHTML = html;
@@ -598,17 +609,17 @@
                     const tocItem = document.getElementById(`toc-item-${idx}`);
                     if (tocItem) {
                         tocItem.classList.add('active');
-                        // 사이드바 내 해당 항목으로 자동 스크롤 (보이지 않을 경우)
                         tocItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                     }
                 });
             }, {
-                rootMargin: '-20% 0px -60% 0px', // 화면 상단 20% ~ 하단 60% 사이에 진입시 트리거
+                rootMargin: '-20% 0px -60% 0px',
                 threshold: 0
             });
 
             slideEls.forEach(el => tocObserver.observe(el));
         }
+
 
         // PPTX 파일 생성 다운로드
 
