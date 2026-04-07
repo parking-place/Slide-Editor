@@ -109,8 +109,9 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased]
-*(현재 없음)*
+## [Unreleased] (fix/toc-hover-theme)
+### Fixed
+- **웹 가이드 네비게이터 호버 색상 동적 테마 연동**: 하드코딩되었던 `guide-toc-item`과 `toc-link`의 hover 배경색/글자색을 테마 지정 색상의 투명도 옵션(`${accentColor}0D`, `${darkAccent}0D`)으로 동적 적용되도록 수정.
 
 ---
 

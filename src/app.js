@@ -1010,7 +1010,7 @@
         .markdown-body blockquote { border-left: 4px solid #d1d5db; margin: 0 0 1em 0; padding-left: 15px; color: #6b7280; font-style: italic; }
         
         .toc-link { text-decoration: none; display: block; transition: 0.2s; border-radius: 6px; }
-        .toc-link:hover { background-color: #f9fafb; padding-left: 5px; }
+        .toc-link:hover { background-color: ${accentColor}0D; padding-left: 5px; }
 
         /* Dark Mode Variables for Web Guide */
         body.dark-mode { background: #010409; color: #ffffff; }
@@ -1021,7 +1021,7 @@
         body.dark-mode .middle-title { color: #8b949e; }
         body.dark-mode .markdown-body pre { background: #010409; color: #00e676; border-color: #30363d; }
         body.dark-mode .toc-link div { color: #c9d1d9 !important; border-bottom-color: #30363d !important; }
-        body.dark-mode .toc-link:hover { background-color: rgba(255, 255, 255, 0.05); }
+        body.dark-mode .toc-link:hover { background-color: ${darkAccent}0D; }
 
         /* Image Modal Styles */
         .img-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
@@ -1047,7 +1047,7 @@
         .guide-toc-middle { font-size: 12px; font-weight: 600; color: #4b5563; padding: 3px 4px 3px 14px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; }
         .guide-toc-middle:hover { color: ${accentColor}; background: ${accentColor}1A; }
         .guide-toc-item { font-size: 11.5px; color: #6b7280; padding: 3px 4px 3px 26px; border-radius: 4px; border-left: 2px solid transparent; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; margin-bottom: 1px; }
-        .guide-toc-item:hover { color: #374151; background: rgba(0,0,0,0.03); }
+        .guide-toc-item:hover { color: ${accentColor}; background: ${accentColor}0D; }
         .guide-toc-item.active { color: ${accentColor}; border-left-color: ${accentColor}; font-weight: 600; background: ${accentColor}1A; }
         .container { flex: 1; min-width: 0; max-width: none; margin: 0; }
         /* Dark mode TOC */
@@ -1057,7 +1057,7 @@
         body.dark-mode .guide-toc-middle { color: #8b949e; }
         body.dark-mode .guide-toc-middle:hover { color: ${darkAccent}; background: ${darkAccent}14; }
         body.dark-mode .guide-toc-item { color: #8b949e; }
-        body.dark-mode .guide-toc-item:hover { background: rgba(255,255,255,0.04); color: #c9d1d9; }
+        body.dark-mode .guide-toc-item:hover { background: ${darkAccent}0D; color: ${darkAccent}; }
         body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: ${darkAccent}14; }
 
         /* Code Block Wrapper & Copy Button */
