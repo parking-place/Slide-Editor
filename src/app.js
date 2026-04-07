@@ -6,6 +6,54 @@
         let activeEditorIndex = null;
         let editingSlideIndex = null;
 
+        // ===========================
+        // highlight.js + marked.js 연동 렌더러 설정
+        // ===========================
+        (function setupMarkedRenderer() {
+            const renderer = new marked.Renderer();
+            renderer.code = function({ text, lang }) {
+                const validLang = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+                const highlighted = hljs.highlight(text, { language: validLang }).value;
+                return `<div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span class="code-lang-label">${validLang}</span>
+                        <button class="btn-copy-code" onclick="window.copyCode(this)" title="코드 복사">
+                            <i class="fa-regular fa-copy"></i> 복사
+                        </button>
+                    </div>
+                    <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
+                </div>`;
+            };
+            marked.use({ renderer });
+        })();
+
+        // 코드 블록 원클릭 복사 함수
+        window.copyCode = function(btn) {
+            const code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // clipboard API 미지원 시 fallback
+                const ta = document.createElement('textarea');
+                ta.value = code;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        };
+
         // 구버전(bashCode 필드 포함) 데이터를 새 마크다운 구조로 마이그레이션하는 함수 (안정성 강화)
         function migrateData(slides) {
             return slides.map(slide => {
@@ -855,7 +903,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HPE VME Installation Guide</title>
-    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css](https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css)">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"><\/script>
     
     <style>
         body { margin: 0; padding: 0; background: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; }
@@ -913,6 +963,15 @@
         .btn-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #01a982; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 9999; }
         .btn-top.show { opacity: 1; visibility: visible; }
         .btn-top:hover { transform: translateY(-5px); background: #008767; }
+
+        /* Code Block Wrapper & Copy Button */
+        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid #01a982; }
+        .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 14px; border-bottom: 1px solid #374151; }
+        .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #01a982; font-family: 'D2Coding', monospace; }
+        .btn-copy-code { background: transparent; border: 1px solid #374151; color: #8b949e; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: sans-serif; }
+        .btn-copy-code:hover, .btn-copy-code.copied { color: #01a982; border-color: #01a982; background: rgba(1,169,130,0.1); }
+        .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; }
+        .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -1064,6 +1123,21 @@
     <div class="footer">
         &copy; ${new Date().getFullYear()} HPE VME Guide Generated
     </div>
+    <script>
+        // 복사 버튼 핸들러
+        function copyCode(btn) {
+            var code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(function() {
+                btn.innerHTML = '✓ 복사됨!';
+                btn.classList.add('copied');
+                setTimeout(function() { btn.innerHTML = '복사'; btn.classList.remove('copied'); }, 2000);
+            });
+        }
+        // 맨 위로 버튼
+        window.addEventListener('scroll', function() {
+            document.getElementById('btn-top') && (document.getElementById('btn-top').classList.toggle('show', window.scrollY > 300));
+        });
+    <\/script>
 </body>
 </html>`;
 

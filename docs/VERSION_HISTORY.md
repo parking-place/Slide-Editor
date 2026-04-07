@@ -45,3 +45,11 @@
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
 *(현재 없음)*
+
+## [Unreleased] (feat/syntax-highlight)
+### Added
+- **코드 블록 구문 강조 (Syntax Highlighting)**: `highlight.js 11.10.0` + `atom-one-dark` 테마를 도입하여 `bash`, `powershell`, `sql`, `python` 등 언어별 문법 색상 강조 적용.
+- **원클릭 복사 버튼**: 코드 블록 상단에 언어 레이블과 함께 '복사' 버튼 배치. 클릭 시 "복사됨!" 2초 피드백 후 원복. `navigator.clipboard` API + `execCommand` fallback 지원.
+- **코드 블록 래퍼 UI**: 언어명·복사 버튼을 포함한 헤더 바와 코드 영역으로 구성된 `.code-block-wrapper` 컴포넌트 적용. 다크/라이트 모드 모두 대응.
+- **HTML 내보내기 동기화**: 내보낸 웹 가이드(HTML) 파일에도 동일한 hljs CDN, 코드 블록 UI, 복사 버튼 기능이 포함되도록 `generateHTMLContent()` 함수 업데이트.
+

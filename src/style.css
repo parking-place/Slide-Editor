@@ -356,7 +356,7 @@
         .markdown-body pre code {
             background: transparent !important;
             padding: 0 !important;
-            color: var(--hpe-green) !important;
+            /* color 제거 → highlight.js 문법별 색상 적용 */
             font-family: 'D2Coding', monospace !important;
             font-size: 13px !important;
         }
@@ -367,6 +367,83 @@
             padding-left: 15px;
             color: var(--text-dim);
             font-style: italic;
+        }
+
+        /* ==== 코드 블록 래퍼 (highlight.js + 복사 버튼) ==== */
+        .code-block-wrapper {
+            position: relative;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--hpe-green);
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 5px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        body.light-mode .code-block-header {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .code-lang-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--hpe-green);
+            font-family: 'D2Coding', monospace;
+        }
+
+        .btn-copy-code {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-dim);
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            font-family: 'Pretendard', sans-serif;
+        }
+        .btn-copy-code:hover {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--hpe-green);
+            border-color: var(--hpe-green);
+        }
+        .btn-copy-code.copied {
+            color: var(--hpe-green);
+            border-color: var(--hpe-green);
+            background: rgba(0, 230, 118, 0.15);
+        }
+
+        /* highlight.js 배경을 에디터 다크 테마에 맞게 오버라이드 */
+        .code-block-wrapper pre {
+            margin: 0 !important;
+            padding: 14px 16px !important;
+            background: var(--bg-dark) !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow-x: auto;
+        }
+        body.light-mode .code-block-wrapper pre {
+            background: #1e1e1e !important;
+        }
+        .code-block-wrapper pre code.hljs {
+            padding: 0 !important;
+            background: transparent !important;
+            font-family: 'D2Coding', monospace !important;
+            font-size: 13px !important;
+            line-height: 1.6;
         }
 
         /* TOC Styles for Preview */
