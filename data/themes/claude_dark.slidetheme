@@ -1,0 +1,36 @@
+{
+  "name": "claude_dark",
+  "displayName": "Claude Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#D4784F",
+    "codeColor": "#e8a882",
+    "bgDark": "#0d0b08",
+    "slideBg": "#1a1612",
+    "boxBg": "#261f18",
+    "border": "#3d3026",
+    "textMain": "#f0ebe3",
+    "textDim": "#a89880"
+  },
+  "pptx": {
+    "masterBg": "1a1612",
+    "coverBg": "0d0b08",
+    "middleCoverBg": "261f18",
+    "accentColor": "D4784F",
+    "codeColor": "e8a882",
+    "textColor": "f0ebe3",
+    "dimColor": "a89880"
+  },
+  "webGuide": {
+    "headerBg": "#D4784F",
+    "accentColor": "#D4784F",
+    "darkAccent": "#e3956e"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

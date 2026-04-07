@@ -1,0 +1,36 @@
+{
+  "name": "amd_dark",
+  "displayName": "AMD Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#ED1C24",
+    "codeColor": "#ED1C24",
+    "bgDark": "#080000",
+    "slideBg": "#130000",
+    "boxBg": "#1f0505",
+    "border": "#3d0a0a",
+    "textMain": "#FFFFFF",
+    "textDim": "#c0a0a0"
+  },
+  "pptx": {
+    "masterBg": "130000",
+    "coverBg": "080000",
+    "middleCoverBg": "1f0505",
+    "accentColor": "ED1C24",
+    "codeColor": "ED1C24",
+    "textColor": "FFFFFF",
+    "dimColor": "c0a0a0"
+  },
+  "webGuide": {
+    "headerBg": "#ED1C24",
+    "accentColor": "#ED1C24",
+    "darkAccent": "#ff3d45"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

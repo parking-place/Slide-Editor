@@ -91,7 +91,7 @@
 
 ## [feat/brand-themes] - 2026-04-07
 ### Added
-- **브랜드 테마 20종 추가**: 브랜드 아이덴티티가 강한 IT 기업 10개의 공식 브랜드 컬러를 기반으로 다크/라이트 모드 각각 1종씩, 총 20개의 `.slidetheme` 파일 신규 제공.
+- **브랜드 테마 28종 추가**: 브랜드 아이덴티티가 강한 IT 기업 14개의 공식 브랜드 컬러를 기반으로 다크/라이트 모드 각각 1종씩, 총 28개의 `.slidetheme` 파일 신규 제공.
   - **Google** (`google_dark` / `google_light`): 구글 브랜드 블루 `#4285F4` 기반
   - **Microsoft** (`microsoft_dark` / `microsoft_light`): MS 브랜드 블루 `#00A4EF` / `#0078D4` 기반
   - **Apple** (`apple_dark` / `apple_light`): Apple 시스템 블루 `#0A84FF` / `#007AFF`, 순수 블랙 배경
@@ -102,3 +102,7 @@
   - **IBM** (`ibm_dark` / `ibm_light`): IBM Carbon Design System 공식 팔레트 (`#0f62fe` / `#0043ce`)
   - **NVIDIA** (`nvidia_dark` / `nvidia_light`): NVIDIA 시그니처 그린 `#76B900` + 딥 블랙 배경
   - **Meta** (`meta_dark` / `meta_light`): Meta/Facebook 브랜드 블루 `#1877F2` 기반
+  - **AMD** (`amd_dark` / `amd_light`): AMD 시그니처 레드 `#ED1C24` 기반
+  - **Intel** (`intel_dark` / `intel_light`): Intel 브랜드 블루 `#0071C5` 기반
+  - **GitLab** (`gitlab_dark` / `gitlab_light`): GitLab Tanuki 오렌지 `#FC6D26` / `#e24329` 기반
+  - **Claude** (`claude_dark` / `claude_light`): Anthropic 시그니처 코퍼(Copper) `#D4784F` + 웜 다크/크림 배경

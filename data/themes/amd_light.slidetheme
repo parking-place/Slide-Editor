@@ -1,0 +1,36 @@
+{
+  "name": "amd_light",
+  "displayName": "AMD Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#c41018",
+    "codeColor": "#c41018",
+    "bgDark": "#fce8e9",
+    "slideBg": "#ffffff",
+    "boxBg": "#fff5f5",
+    "border": "#f5c6c8",
+    "textMain": "#1a0000",
+    "textDim": "#6b3a3a"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "fce8e9",
+    "middleCoverBg": "c41018",
+    "accentColor": "c41018",
+    "codeColor": "c41018",
+    "textColor": "1a0000",
+    "dimColor": "6b3a3a"
+  },
+  "webGuide": {
+    "headerBg": "#c41018",
+    "accentColor": "#c41018",
+    "darkAccent": "#a00d14"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

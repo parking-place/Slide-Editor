@@ -1,0 +1,36 @@
+{
+  "name": "claude_light",
+  "displayName": "Claude Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#b85c30",
+    "codeColor": "#b85c30",
+    "bgDark": "#f5ede4",
+    "slideBg": "#fffbf7",
+    "boxBg": "#fdf5ec",
+    "border": "#e8d0bc",
+    "textMain": "#1a1008",
+    "textDim": "#7a5a40"
+  },
+  "pptx": {
+    "masterBg": "fffbf7",
+    "coverBg": "f5ede4",
+    "middleCoverBg": "b85c30",
+    "accentColor": "b85c30",
+    "codeColor": "b85c30",
+    "textColor": "1a1008",
+    "dimColor": "7a5a40"
+  },
+  "webGuide": {
+    "headerBg": "#b85c30",
+    "accentColor": "#b85c30",
+    "darkAccent": "#964a26"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}
