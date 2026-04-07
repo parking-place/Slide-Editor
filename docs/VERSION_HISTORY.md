@@ -28,7 +28,15 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased] (chore/restructure)
+# 구조 개편 - 2026-04-07
 ### Changed
 - **프로젝트 디렉토리 구조 리팩토링**: 확장성과 유지 관리를 위해 `data`, `docs`, `scripts`, `exports` 폴더를 신설하고 모든 리소스 목적별 분리 조치.
 - **경로 무결성 패치**: 구조화로 인해 깨지는 API fetch, 서버 스크립트 실행 참조 경로(`local_server.ps1`, `patch.py`, `에디터_웹서버_실행.bat` 등)를 올바르게 동기화.
+- CSS와 JS를 `src/style.css`, `src/app.js`로 모듈화하여 `HPE_VME_Editor.html` 코드를  단순화.
+
+## [Unreleased] (feat/dynamic-toc)
+### Added
+- **동적 목차(TOC) 사이드바 네비게이터**: 에디터 좌측에 `Navigator` 사이드바가 고정 노출되도록 레이아웃 도입. 바을 클릭하면 해당 슬라이드로 부드럽게 자동 스크롤(`scrollIntoView`) 되도록 연동.
+- **IntersectionObserver 연동**: 사용자가 본문을 스크롤할 때 현재 화면에 보이는 슬라이드에 맞는 TOC 항목이 자동으로 하이라이트(`.active`).
+- **2단 배치 레이아웃**: 기존 1하단(`max-width: 1000px`) 구성에서 `layout-wrapper`(최대 널비 1400px 활용) 기준 2단 분할 구조로 확장.
+- **다크모드/라이트모드 대응**: TOC 사이드바도 테마 전환에 완전히 반응도록 색상 대응 설계.
