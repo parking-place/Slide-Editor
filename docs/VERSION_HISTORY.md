@@ -71,3 +71,5 @@
 - **`generateHTMLContent()` 파라미터화**: 웹 가이드 출력물의 헤더 배경, 강조색, footer 문구, 제목/부제를 `activeTheme.webGuide`와 `projectSettings.branding`으로 동적 주입.
 - **`exportToPPTX()` 파라미터화**: 슬라이드 마스터 배경, 강조색, 폰트, footer 문구, 표지 텍스트를 `activeTheme.pptx`와 `projectSettings.branding`으로 동적 주입.
 - **브랜딩 정보 데이터 분리**: 프로젝트명·부제·footer 문구는 `.slidetheme` 파일이 아닌 `vme_data.json`(settings.branding)에 저장하여 프로젝트별 독립 관리.
+- **헤더 버튼 UI 소형화**: 소형 버튼 시스템(`.btn-hdr`) 도입. 패딩 축소(5px 11px), 높이 30px, 12px 폰트. 색상 variant(`--amber`, `--indigo`, `--purple`, `--blue`, `--green`) 클래스 체계화. 구분선(`.hdr-divider`) 추가.
+- **브랜딩 모달 분리**: 테마 모달에서 브랜딩 섹션 완전 제거, 독립된 `브랜딩` 버튼 및 전용 모달 UI로 분리. 프로젝트명·부제·Footer 세 필드와 적용 대상 힌트 제공.
