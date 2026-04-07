@@ -558,32 +558,42 @@
                 return;
             }
 
-            // generateTocData() 대신 slidesData를 직접 순회
-            // → 같은 소제목이 여러 슬라이드에 있어도 인덱스 기준으로 전부 표시
             let html = `<div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>`;
-            let prevCh = null;
+            let prevCh  = null;
             let prevMid = null;
+            const titleKeyToTocId = {}; // 복합키(챕터+중제목+소제목) → 첫 toc-item id
+            const slideToTocId    = {}; // 슬라이드 인덱스 → toc-item id (중복 포함)
 
             slidesData.forEach((s, i) => {
                 const ch  = s.chapter     || '대제목 미지정';
                 const mid = s.middleTitle || '';
                 const tit = s.title       || '소제목 없음';
 
-                // 대제목이 바뀔 때만 헤더 노출
+                // 대제목: 변경 시에만 헤더 노출, 중제목 추적 초기화
                 if (ch !== prevCh) {
                     html += `<div class="toc-nav-chapter" title="${escapeHtml(ch)}">${escapeHtml(ch)}</div>`;
-                    prevCh = ch;
-                    prevMid = null; // 대제목 변경 시 중제목 초기화
+                    prevCh  = ch;
+                    prevMid = null;
                 }
 
-                // 중제목이 바뀔 때만 헤더 노출 (클릭하면 해당 중제목의 첫 슬라이드로 이동)
+                // 중제목: 변경 시에만 헤더 노출
                 if (mid && mid !== prevMid) {
                     html += `<div class="toc-nav-middle" title="${escapeHtml(mid)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(mid)}</div>`;
                     prevMid = mid;
                 }
 
-                // 소제목은 중복 여부와 무관하게 모든 슬라이드 항목을 각 인덱스로 표시
-                html += `<div class="toc-nav-title" id="toc-item-${i}" data-slide="${i}" title="${escapeHtml(tit)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(tit)}</div>`;
+                // 소제목: 같은 챕터+중제목+소제목 조합이면 하나로 합침
+                const key = `${ch}||${mid}||${tit}`;
+                if (titleKeyToTocId[key] !== undefined) {
+                    // 중복: 새 항목을 그리지 않고, 이 슬라이드를 첫 번째 항목 id에 연결
+                    slideToTocId[i] = titleKeyToTocId[key];
+                } else {
+                    // 최초 등장: 항목 렌더링 및 맵 등록
+                    const tocId = `toc-item-${i}`;
+                    titleKeyToTocId[key] = tocId;
+                    slideToTocId[i]      = tocId;
+                    html += `<div class="toc-nav-title" id="${tocId}" data-slide="${i}" title="${escapeHtml(tit)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(tit)}</div>`;
+                }
             });
 
             nav.innerHTML = html;
@@ -598,19 +608,17 @@
                 entries.forEach(entry => {
                     if (!entry.isIntersecting) return;
 
-                    // id="preview-slide-{index}" 에서 인덱스 추출
                     const idParts = entry.target.id.split('-');
-                    const idx = idParts[idParts.length - 1];
+                    const idx     = parseInt(idParts[idParts.length - 1], 10);
 
                     // 모든 활성 클래스 초기화
                     document.querySelectorAll('.toc-nav-title.active').forEach(el => el.classList.remove('active'));
 
-                    // 해당 항목 하이라이트
-                    const tocItem = document.getElementById(`toc-item-${idx}`);
-                    if (tocItem) {
-                        tocItem.classList.add('active');
-                        tocItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                    }
+                    // 중복 슬라이드도 첫 번째 항목 id로 하이라이트
+                    // (사이드바 자동 스크롤 없음 — 사용자 지정 위치 유지)
+                    const tocId  = slideToTocId[idx];
+                    const tocItem = tocId ? document.getElementById(tocId) : null;
+                    if (tocItem) tocItem.classList.add('active');
                 });
             }, {
                 rootMargin: '-20% 0px -60% 0px',
