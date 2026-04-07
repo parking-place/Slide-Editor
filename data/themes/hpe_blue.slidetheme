@@ -2,6 +2,7 @@
   "name": "hpe_blue",
   "displayName": "HPE Blue (Dark)",
   "version": "1.0",
+  "isLightMode": false,
   "colors": {
     "accent":   "#1a73e8",
     "codeColor": "#8ab4f8",

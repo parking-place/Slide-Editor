@@ -1501,6 +1501,7 @@
                 name: 'hpe_default',
                 displayName: 'HPE Default (Dark)',
                 version: '1.0',
+                isLightMode: false,
                 colors: {
                     accent:   '#00E676',
                     codeColor:'#00E676',
@@ -1548,6 +1549,7 @@
             root.setProperty('--border-color',   theme.colors.border);
             root.setProperty('--text-main',      theme.colors.textMain);
             root.setProperty('--text-dim',       theme.colors.textDim);
+            document.body.classList.toggle('light-mode', !!theme.isLightMode);
             activeTheme = theme;
             projectSettings.activeTheme = theme.name;
         }
@@ -1695,9 +1697,11 @@
                 }).join('');
             }
 
-            // 테마 이름
+            // 테마 이름 및 라이트모드
             const nameEl = document.getElementById('theme-name-input');
             if (nameEl) nameEl.value = t.name || '';
+            const lmEl = document.getElementById('theme-light-mode-input');
+            if (lmEl) lmEl.checked = !!t.isLightMode;
 
             // 브랜딩 UI
             syncBrandingUI();
@@ -1731,6 +1735,10 @@
                     }
                 }
             });
+            const lmEl = document.getElementById('theme-light-mode-input');
+            if (lmEl) {
+                document.body.classList.toggle('light-mode', lmEl.checked);
+            }
         };
 
         // 모달에서 현재 색상 수집 → 테마 오브젝트 빌드
@@ -1748,25 +1756,29 @@
             const t = activeTheme || getDefaultThemeObject();
             const nameEl = document.getElementById('theme-name-input');
             const name = (nameEl ? nameEl.value.trim() : '') || t.name;
+            const lmEl = document.getElementById('theme-light-mode-input');
+            const isLM = lmEl ? lmEl.checked : false;
 
             return {
                 name,
                 displayName: name,
                 version: '1.0',
+                isLightMode: isLM,
                 colors,
                 pptx: {
                     masterBg:      strip(colors.slideBg),
                     coverBg:       strip(colors.bgDark),
-                    middleCoverBg: '111827',
+                    middleCoverBg: strip(colors.boxBg),
                     accentColor:   strip(colors.accent),
-                    codeColor:     strip(colors.accent),
+                    codeColor:     strip(colors.codeColor || colors.accent),
                     textColor:     strip(colors.textMain),
                     dimColor:      strip(colors.textDim)
                 },
                 webGuide: {
                     headerBg:    colors.accent,
                     accentColor: colors.accent,
-                    darkAccent:  colors.accent
+                    darkAccent:  colors.codeColor || colors.accent,
+                    codeColor:   colors.codeColor || colors.accent
                 },
                 fonts: t.fonts || getDefaultThemeObject().fonts
             };

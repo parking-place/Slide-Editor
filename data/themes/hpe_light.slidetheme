@@ -2,6 +2,7 @@
   "name": "hpe_light",
   "displayName": "HPE Light",
   "version": "1.0",
+  "isLightMode": true,
   "colors": {
     "accent":   "#01a982",
     "codeColor": "#01a982",

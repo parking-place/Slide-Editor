@@ -49,10 +49,6 @@
     <nav class="header-nav">
         <div class="logo">HPE VME <span>Guide Creator</span></div>
         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <!-- 라이트/다크 -->
-            <button type="button" class="btn-hdr" title="라이트/다크 전환" onclick="document.body.classList.toggle('light-mode')">
-                <i class="fa-solid fa-circle-half-stroke"></i>
-            </button>
             <!-- 테마 관리 -->
             <button type="button" class="btn-hdr btn-hdr--amber" title="테마 관리" onclick="window.openThemeModal()">
                 <i class="fa-solid fa-palette"></i> 테마
@@ -137,6 +133,10 @@
                     <div class="theme-editor-section">
                         <label class="theme-section-label">테마 이름</label>
                         <input type="text" id="theme-name-input" class="theme-text-input" placeholder="예: my_company_theme">
+                    </div>
+                    <div class="theme-editor-section" style="display:flex; align-items:center; gap:10px; margin-top: -10px;">
+                        <input type="checkbox" id="theme-light-mode-input" style="width:16px; height:16px; cursor:pointer;" onchange="window.applyColorPreview()">
+                        <label for="theme-light-mode-input" style="font-size:14px; color:var(--text-main); cursor:pointer; user-select:none;">라이트 모드 사용 (Light Mode)</label>
                     </div>
                     <div class="theme-editor-section">
                         <label class="theme-section-label">색상 설정</label>
