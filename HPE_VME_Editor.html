@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -70,14 +70,21 @@
         </div>
     </nav>
 
-    <div class="main-container">
-        
-        <div class="status-bar" id="status-text">시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.</div>
-        
-        <!-- 프리뷰 렌더링 영역 -->
-        <div id="preview-area" style="display: flex; flex-direction: column; gap: 30px;">
-        </div>
+    <div class="layout-wrapper">
+        <!-- 동적 목차 사이드바 -->
+        <aside class="toc-sidebar" id="toc-navigator">
+            <!-- 자바스크립트로 목차가 렌더링 됩니다 -->
+        </aside>
 
+        <div class="main-container">
+            
+            <div class="status-bar" id="status-text">시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.</div>
+            
+            <!-- 프리뷰 렌더링 영역 -->
+            <div id="preview-area" style="display: flex; flex-direction: column; gap: 30px;">
+            </div>
+
+        </div>
     </div>
 
     <script src="src/app.js"></script>

@@ -1,4 +1,4 @@
-﻿// === SAVE DATA START ===
+// === SAVE DATA START ===
         let slidesData = [];
         // === SAVE DATA END ===
         
@@ -532,9 +532,105 @@
             } else {
                 status.innerHTML = `시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.`;
             }
+
+            // 동적 TOC 사이드바 갱신
+            updateDynamicTOC();
         };
 
+        // ===========================
+        // 동적 TOC 사이드바 구축 함수
+        // ===========================
+        let tocObserver = null; // IntersectionObserver 인스턴스 보관
+
+        function updateDynamicTOC() {
+            const nav = document.getElementById('toc-navigator');
+            if (!nav) return;
+
+            // 슬라이드가 없을 때 빈 메시지 표시
+            if (slidesData.length === 0) {
+                nav.innerHTML = `
+                    <div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>
+                    <div class="toc-sidebar-empty">
+                        <i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom: 8px; display: block;"></i>
+                        슬라이드를 추가하면<br>목차가 여기에 표시됩니다.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>`;
+            let prevCh  = null;
+            let prevMid = null;
+            const titleKeyToTocId = {}; // 복합키(챕터+중제목+소제목) → 첫 toc-item id
+            const slideToTocId    = {}; // 슬라이드 인덱스 → toc-item id (중복 포함)
+
+            slidesData.forEach((s, i) => {
+                const ch  = s.chapter     || '대제목 미지정';
+                const mid = s.middleTitle || '';
+                const tit = s.title       || '소제목 없음';
+
+                // 대제목: 변경 시에만 헤더 노출, 중제목 추적 초기화
+                if (ch !== prevCh) {
+                    html += `<div class="toc-nav-chapter" title="${escapeHtml(ch)}">${escapeHtml(ch)}</div>`;
+                    prevCh  = ch;
+                    prevMid = null;
+                }
+
+                // 중제목: 변경 시에만 헤더 노출
+                if (mid && mid !== prevMid) {
+                    html += `<div class="toc-nav-middle" title="${escapeHtml(mid)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(mid)}</div>`;
+                    prevMid = mid;
+                }
+
+                // 소제목: 같은 챕터+중제목+소제목 조합이면 하나로 합침
+                const key = `${ch}||${mid}||${tit}`;
+                if (titleKeyToTocId[key] !== undefined) {
+                    // 중복: 새 항목을 그리지 않고, 이 슬라이드를 첫 번째 항목 id에 연결
+                    slideToTocId[i] = titleKeyToTocId[key];
+                } else {
+                    // 최초 등장: 항목 렌더링 및 맵 등록
+                    const tocId = `toc-item-${i}`;
+                    titleKeyToTocId[key] = tocId;
+                    slideToTocId[i]      = tocId;
+                    html += `<div class="toc-nav-title" id="${tocId}" data-slide="${i}" title="${escapeHtml(tit)}" onclick="document.getElementById('preview-slide-${i}')?.scrollIntoView({behavior:'smooth', block:'start'})">${escapeHtml(tit)}</div>`;
+                }
+            });
+
+            nav.innerHTML = html;
+
+            // 기존 옵저버 해제 후 재등록
+            if (tocObserver) tocObserver.disconnect();
+
+            const slideEls = document.querySelectorAll('.slide-preview[id^="preview-slide-"]');
+            if (slideEls.length === 0) return;
+
+            tocObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+
+                    const idParts = entry.target.id.split('-');
+                    const idx     = parseInt(idParts[idParts.length - 1], 10);
+
+                    // 모든 활성 클래스 초기화
+                    document.querySelectorAll('.toc-nav-title.active').forEach(el => el.classList.remove('active'));
+
+                    // 중복 슬라이드도 첫 번째 항목 id로 하이라이트
+                    // (사이드바 자동 스크롤 없음 — 사용자 지정 위치 유지)
+                    const tocId  = slideToTocId[idx];
+                    const tocItem = tocId ? document.getElementById(tocId) : null;
+                    if (tocItem) tocItem.classList.add('active');
+                });
+            }, {
+                rootMargin: '-20% 0px -60% 0px',
+                threshold: 0
+            });
+
+            slideEls.forEach(el => tocObserver.observe(el));
+        }
+
+
         // PPTX 파일 생성 다운로드
+
         window.exportToPPTX = async function() {
             if (slidesData.length === 0) {
                 showModal('다운로드할 슬라이드를 먼저 추가해주세요!');
