@@ -1,34 +1,36 @@
 {
   "name": "hpe_default",
-  "displayName": "HPE Default (Dark)",
+  "displayName": "hpe_default",
   "version": "1.0",
+  "isLightMode": false,
   "colors": {
-    "accent":   "#00E676",
-    "bgDark":   "#010409",
-    "slideBg":  "#0D1117",
-    "boxBg":    "#161B22",
-    "border":   "#30363D",
+    "accent": "#00E676",
+    "codeColor": "#01a982",
+    "bgDark": "#010409",
+    "slideBg": "#0D1117",
+    "boxBg": "#161B22",
+    "border": "#30363D",
     "textMain": "#FFFFFF",
-    "textDim":  "#8B949E"
+    "textDim": "#8B949E"
   },
   "pptx": {
-    "masterBg":      "0D1117",
-    "coverBg":       "010409",
+    "masterBg": "0D1117",
+    "coverBg": "010409",
     "middleCoverBg": "111827",
-    "accentColor":   "00E676",
-    "codeColor":     "00E676",
-    "textColor":     "C9D1D9",
-    "dimColor":      "8B949E"
+    "accentColor": "00E676",
+    "codeColor": "00E676",
+    "textColor": "FFFFFF",
+    "dimColor": "8B949E"
   },
   "webGuide": {
-    "headerBg":    "#01a982",
-    "accentColor": "#01a982",
-    "darkAccent":  "#00e676"
+    "headerBg": "#00E676",
+    "accentColor": "#00E676",
+    "darkAccent": "#00E676"
   },
   "fonts": {
-    "uiFamily":   "Pretendard",
+    "uiFamily": "Pretendard",
     "codeFamily": "D2Coding",
-    "pptxBody":   "Malgun Gothic",
-    "pptxTitle":  "Arial"
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
   }
 }

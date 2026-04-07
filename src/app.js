@@ -947,11 +947,12 @@
         // HTML 웹 가이드 문자열 템플릿 생성 헬퍼
         function generateHTMLContent() {
             // 테마 및 브랜딩 변수 추출 (없으면 기본값)
-            const th = (activeTheme && activeTheme.webGuide) ? activeTheme.webGuide : { headerBg: '#01a982', accentColor: '#01a982', darkAccent: '#00e676' };
+            const th = (activeTheme && activeTheme.webGuide) ? activeTheme.webGuide : { headerBg: '#01a982', accentColor: '#01a982', darkAccent: '#00e676', codeColor: '#00e676' };
             const br = projectSettings.branding;
             const headerBg    = th.headerBg    || '#01a982';
             const accentColor = th.accentColor || '#01a982';
             const darkAccent  = th.darkAccent  || '#00e676';
+            const codeColor   = th.codeColor   || darkAccent;
             const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
             const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
             const footerCopy    = br.footerCopy    || 'HPE VME Guide';
@@ -1060,11 +1061,11 @@
         body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: rgba(0,230,118,0.08); }
 
         /* Code Block Wrapper & Copy Button */
-        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid ${accentColor}; }
+        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid ${codeColor}; }
         .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 14px; border-bottom: 1px solid #374151; }
-        .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${accentColor}; font-family: 'D2Coding', monospace; }
+        .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${codeColor}; font-family: 'D2Coding', monospace; }
         .btn-copy-code { background: transparent; border: 1px solid #374151; color: #8b949e; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: sans-serif; }
-        .btn-copy-code:hover, .btn-copy-code.copied { color: ${accentColor}; border-color: ${accentColor}; background: rgba(1,169,130,0.1); }
+        .btn-copy-code:hover, .btn-copy-code.copied { color: ${codeColor}; border-color: ${codeColor}; background: ${codeColor}1A; }
         .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; }
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
@@ -1500,8 +1501,10 @@
                 name: 'hpe_default',
                 displayName: 'HPE Default (Dark)',
                 version: '1.0',
+                isLightMode: false,
                 colors: {
                     accent:   '#00E676',
+                    codeColor:'#00E676',
                     bgDark:   '#010409',
                     slideBg:  '#0D1117',
                     boxBg:    '#161B22',
@@ -1521,7 +1524,8 @@
                 webGuide: {
                     headerBg:    '#01a982',
                     accentColor: '#01a982',
-                    darkAccent:  '#00e676'
+                    darkAccent:  '#00e676',
+                    codeColor:   '#00e676'
                 },
                 fonts: {
                     uiFamily:   'Pretendard',
@@ -1537,12 +1541,15 @@
             if (!theme || !theme.colors) return;
             const root = document.documentElement.style;
             root.setProperty('--hpe-green',     theme.colors.accent);
+            root.setProperty('--code-color',    theme.colors.codeColor || theme.colors.accent);
+            root.setProperty('--code-bg',       (theme.colors.codeColor || theme.colors.accent) + '1A');
             root.setProperty('--bg-dark',        theme.colors.bgDark);
             root.setProperty('--slide-bg',       theme.colors.slideBg);
             root.setProperty('--box-bg',         theme.colors.boxBg);
             root.setProperty('--border-color',   theme.colors.border);
             root.setProperty('--text-main',      theme.colors.textMain);
             root.setProperty('--text-dim',       theme.colors.textDim);
+            document.body.classList.toggle('light-mode', !!theme.isLightMode);
             activeTheme = theme;
             projectSettings.activeTheme = theme.name;
         }
@@ -1667,6 +1674,7 @@
             // 색상 편집기 채우기
             const colorFields = [
                 { key: 'accent',   label: '강조색 (Accent)' },
+                { key: 'codeColor',label: '코드 텍스트색 (Code Color)' },
                 { key: 'bgDark',   label: '에디터 배경 (bgDark)' },
                 { key: 'slideBg',  label: '슬라이드 배경 (slideBg)' },
                 { key: 'boxBg',    label: '박스 배경 (boxBg)' },
@@ -1689,9 +1697,11 @@
                 }).join('');
             }
 
-            // 테마 이름
+            // 테마 이름 및 라이트모드
             const nameEl = document.getElementById('theme-name-input');
             if (nameEl) nameEl.value = t.name || '';
+            const lmEl = document.getElementById('theme-light-mode-input');
+            if (lmEl) lmEl.checked = !!t.isLightMode;
 
             // 브랜딩 UI
             syncBrandingUI();
@@ -1711,22 +1721,29 @@
 
         // 색상 변경 → 에디터 실시간 미리보기
         window.applyColorPreview = function() {
-            const keys = ['accent','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            const keys = ['accent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
             keys.forEach(key => {
                 const hexEl = document.getElementById('hex-' + key);
                 if (hexEl && /^#[0-9a-fA-F]{6}$/.test(hexEl.value)) {
                     const map = {
-                        accent: '--hpe-green', bgDark: '--bg-dark', slideBg: '--slide-bg',
+                        accent: '--hpe-green', codeColor: '--code-color', bgDark: '--bg-dark', slideBg: '--slide-bg',
                         boxBg: '--box-bg', border: '--border-color', textMain: '--text-main', textDim: '--text-dim'
                     };
                     document.documentElement.style.setProperty(map[key], hexEl.value);
+                    if (key === 'codeColor' || (key === 'accent' && !document.getElementById('hex-codeColor'))) {
+                        document.documentElement.style.setProperty('--code-bg', hexEl.value + '1A');
+                    }
                 }
             });
+            const lmEl = document.getElementById('theme-light-mode-input');
+            if (lmEl) {
+                document.body.classList.toggle('light-mode', lmEl.checked);
+            }
         };
 
         // 모달에서 현재 색상 수집 → 테마 오브젝트 빌드
         function buildThemeFromModal() {
-            const keys = ['accent','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            const keys = ['accent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
             const colors = {};
             keys.forEach(k => {
                 const hexEl = document.getElementById('hex-' + k);
@@ -1739,25 +1756,29 @@
             const t = activeTheme || getDefaultThemeObject();
             const nameEl = document.getElementById('theme-name-input');
             const name = (nameEl ? nameEl.value.trim() : '') || t.name;
+            const lmEl = document.getElementById('theme-light-mode-input');
+            const isLM = lmEl ? lmEl.checked : false;
 
             return {
                 name,
                 displayName: name,
                 version: '1.0',
+                isLightMode: isLM,
                 colors,
                 pptx: {
                     masterBg:      strip(colors.slideBg),
                     coverBg:       strip(colors.bgDark),
-                    middleCoverBg: '111827',
+                    middleCoverBg: strip(colors.boxBg),
                     accentColor:   strip(colors.accent),
-                    codeColor:     strip(colors.accent),
+                    codeColor:     strip(colors.codeColor || colors.accent),
                     textColor:     strip(colors.textMain),
                     dimColor:      strip(colors.textDim)
                 },
                 webGuide: {
                     headerBg:    colors.accent,
                     accentColor: colors.accent,
-                    darkAccent:  colors.accent
+                    darkAccent:  colors.codeColor || colors.accent,
+                    codeColor:   colors.codeColor || colors.accent
                 },
                 fonts: t.fonts || getDefaultThemeObject().fonts
             };
