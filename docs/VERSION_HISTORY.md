@@ -27,3 +27,8 @@
 
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
+
+## [Unreleased] (chore/restructure)
+### Changed
+- **프로젝트 디렉토리 구조 리팩토링**: 확장성과 유지 관리를 위해 `data`, `docs`, `scripts`, `exports` 폴더를 신설하고 모든 리소스 목적별 분리 조치.
+- **경로 무결성 패치**: 구조화로 인해 깨지는 API fetch, 서버 스크립트 실행 참조 경로(`local_server.ps1`, `patch.py`, `에디터_웹서버_실행.bat` 등)를 올바르게 동기화.
