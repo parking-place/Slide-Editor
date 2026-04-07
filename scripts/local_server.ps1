@@ -65,6 +65,79 @@ try {
         }
         # === POST /api/saveHtml 요청 처리 끝 ===
 
+        # === GET /api/themes 목록 요청 처리 시작 ===
+        if ($request.HttpMethod -eq "GET" -and $url -eq "/api/themes") {
+            try {
+                $themesDir = [System.IO.Path]::Combine($root, "data", "themes")
+                if (-not (Test-Path $themesDir)) { New-Item -ItemType Directory -Force -Path $themesDir | Out-Null }
+                $files = Get-ChildItem -Path $themesDir -Filter "*.slidetheme" | Select-Object -ExpandProperty Name
+                $json = '[' + (($files | ForEach-Object { "`"$_`"" }) -join ',') + ']'
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.AddHeader("Access-Control-Allow-Origin", "*")
+                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+            } catch {
+                $response.StatusCode = 500
+                Write-Host "테마 목록 조회 실패: $_" -ForegroundColor Red
+            } finally {
+                $response.Close()
+            }
+            continue
+        }
+        # === GET /api/themes 목록 요청 처리 끝 ===
+
+        # === GET /api/themes/{name} 파일 반환 처리 시작 ===
+        if ($request.HttpMethod -eq "GET" -and $url -match "^/api/themes/(.+\.slidetheme)$") {
+            try {
+                $themeName = $Matches[1] -replace '\.\.', ''
+                $themePath = [System.IO.Path]::Combine($root, "data", "themes", $themeName)
+                if (Test-Path $themePath -PathType Leaf) {
+                    $content = [System.IO.File]::ReadAllText($themePath, [System.Text.Encoding]::UTF8)
+                    $response.StatusCode = 200
+                    $response.ContentType = "application/json; charset=utf-8"
+                    $response.AddHeader("Access-Control-Allow-Origin", "*")
+                    $responseBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
+                    $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+                } else {
+                    $response.StatusCode = 404
+                }
+            } catch {
+                $response.StatusCode = 500
+                Write-Host "테마 파일 읽기 실패: $_" -ForegroundColor Red
+            } finally {
+                $response.Close()
+            }
+            continue
+        }
+        # === GET /api/themes/{name} 파일 반환 처리 끝 ===
+
+        # === POST /api/themes/{name} 파일 저장 처리 시작 ===
+        if ($request.HttpMethod -eq "POST" -and $url -match "^/api/themes/(.+\.slidetheme)$") {
+            try {
+                $themeName = $Matches[1] -replace '\.\.', ''
+                $reader = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+                $body = $reader.ReadToEnd()
+                $reader.Close()
+                $themesDir = [System.IO.Path]::Combine($root, "data", "themes")
+                if (-not (Test-Path $themesDir)) { New-Item -ItemType Directory -Force -Path $themesDir | Out-Null }
+                $savePath = [System.IO.Path]::Combine($themesDir, $themeName)
+                [System.IO.File]::WriteAllText($savePath, $body, [System.Text.Encoding]::UTF8)
+                $response.StatusCode = 200
+                $response.ContentType = "application/json; charset=utf-8"
+                $response.AddHeader("Access-Control-Allow-Origin", "*")
+                $responseBytes = [System.Text.Encoding]::UTF8.GetBytes("{`"status`":`"success`"}")
+                $response.OutputStream.Write($responseBytes, 0, $responseBytes.Length)
+            } catch {
+                $response.StatusCode = 500
+                Write-Host "테마 파일 저장 실패: $_" -ForegroundColor Red
+            } finally {
+                $response.Close()
+            }
+            continue
+        }
+        # === POST /api/themes/{name} 파일 저장 처리 끝 ===
+
         # === POST /api/save 요청 처리 시작 ===
         if ($request.HttpMethod -eq "POST" -and $url -eq "/api/save") {
             try {
@@ -100,13 +173,14 @@ try {
             # MIME 타입 설정
             $ext = [System.IO.Path]::GetExtension($filePath).ToLower()
             switch ($ext) {
-                ".html" { $response.ContentType = "text/html; charset=utf-8" }
-                ".json" { $response.ContentType = "application/json; charset=utf-8" }
-                ".js"   { $response.ContentType = "application/javascript" }
-                ".css"  { $response.ContentType = "text/css" }
-                ".png"  { $response.ContentType = "image/png" }
-                ".jpg"  { $response.ContentType = "image/jpeg" }
-                default { $response.ContentType = "application/octet-stream" }
+                ".html"        { $response.ContentType = "text/html; charset=utf-8" }
+                ".json"        { $response.ContentType = "application/json; charset=utf-8" }
+                ".slidetheme"  { $response.ContentType = "application/json; charset=utf-8" }
+                ".js"          { $response.ContentType = "application/javascript" }
+                ".css"         { $response.ContentType = "text/css" }
+                ".png"         { $response.ContentType = "image/png" }
+                ".jpg"         { $response.ContentType = "image/jpeg" }
+                default        { $response.ContentType = "application/octet-stream" }
             }
             
             # CORS 헤더 추가 및 캐시 억제

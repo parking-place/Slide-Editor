@@ -1,0 +1,34 @@
+{
+  "name": "hpe_blue",
+  "displayName": "HPE Blue (Dark)",
+  "version": "1.0",
+  "colors": {
+    "accent":   "#1a73e8",
+    "bgDark":   "#050d1a",
+    "slideBg":  "#0a1628",
+    "boxBg":    "#0f1f3d",
+    "border":   "#1e3a6e",
+    "textMain": "#FFFFFF",
+    "textDim":  "#8ab4f8"
+  },
+  "pptx": {
+    "masterBg":      "0A1628",
+    "coverBg":       "050D1A",
+    "middleCoverBg": "0F1F3D",
+    "accentColor":   "1A73E8",
+    "codeColor":     "8AB4F8",
+    "textColor":     "C8D8F8",
+    "dimColor":      "8AB4F8"
+  },
+  "webGuide": {
+    "headerBg":    "#1a73e8",
+    "accentColor": "#1a73e8",
+    "darkAccent":  "#8ab4f8"
+  },
+  "fonts": {
+    "uiFamily":   "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody":   "Malgun Gothic",
+    "pptxTitle":  "Arial"
+  }
+}

@@ -1,7 +1,20 @@
 // === SAVE DATA START ===
         let slidesData = [];
         // === SAVE DATA END ===
-        
+
+        // === SETTINGS: 브랜딩은 데이터파일에, 테마명은 activeTheme.name으로 관리 ===
+        let projectSettings = {
+            activeTheme: 'hpe_default',
+            branding: {
+                projectName:   'HPE Virtual Machine Essentials (VME)',
+                guideSubtitle: '설치 및 구성 가이드',
+                footerCopy:    'HPE VME Guide'
+            }
+        };
+
+        // 현재 로드된 테마 객체
+        let activeTheme = null;
+
         // 초기 로드 시 기존 데이터가 있으면 에디터 폼을 숨기고, 데이터가 없으면 첫 번째 에디터를 엽니다.
         let activeEditorIndex = null;
         let editingSlideIndex = null;
@@ -82,20 +95,46 @@
             });
         }
 
+        // ===========================
+        // 데이터 로드 호환 파서
+        // - 구버전: 슬라이드 배열([])          → 자동 마이그레이션
+        // - 신버전: { settings, slides } 래퍼  → 정상 파싱
+        // ===========================
+        function parseLoadedData(data) {
+            if (Array.isArray(data)) {
+                // ── 구버전 호환: 순수 배열이면 기본 settings 유지, 슬라이드만 교체
+                console.log('[호환] 구버전 데이터(배열) 감지 → 기본 settings 유지');
+                slidesData = migrateData(data);
+            } else if (data && typeof data === 'object') {
+                if (Array.isArray(data.slides)) {
+                    // ── 신버전 래퍼 구조
+                    slidesData = migrateData(data.slides);
+                    if (data.settings) {
+                        // Deep merge: 빠진 키는 기본값 유지
+                        projectSettings = {
+                            activeTheme: data.settings.activeTheme || projectSettings.activeTheme,
+                            branding: Object.assign({}, projectSettings.branding, data.settings.branding || {})
+                        };
+                    }
+                } else {
+                    console.warn('[호환] 알 수 없는 데이터 구조 → 무시');
+                }
+            }
+        }
+
         // 같은 폴더에 있는 vme_data.json 파일을 자동으로 불러오는 함수
         async function loadInitialData() {
             try {
-                // 웹 서버 환경에서 같은 경로의 json 파일을 시도합니다.
                 const response = await fetch('./data/vme_data.json');
                 if (response.ok) {
                     const data = await response.json();
-                    if (Array.isArray(data)) {
-                        slidesData = migrateData(data);
-                    }
+                    parseLoadedData(data);
                 }
             } catch (e) {
                 console.log('초기 데이터 파일(vme_data.json)이 없거나 로컬 파일 시스템 제약(CORS)으로 불러올 수 없습니다. 수동으로 불러오기를 사용해주세요.', e);
             } finally {
+                // 저장된 테마 자동 로드
+                await loadThemeByName(projectSettings.activeTheme);
                 activeEditorIndex = slidesData.length === 0 ? 0 : null;
                 window.renderPreview();
             }
@@ -689,29 +728,45 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 파일 생성 중...';
 
+            // 테마 및 브랜딩 변수 추출 (없으면 기본값)
+            const tp = (activeTheme && activeTheme.pptx) ? activeTheme.pptx : {};
+            const br = projectSettings.branding;
+            const pMasterBg      = tp.masterBg      || '0D1117';
+            const pCoverBg       = tp.coverBg       || '010409';
+            const pMiddleCoverBg = tp.middleCoverBg || '111827';
+            const pAccent        = tp.accentColor   || '00E676';
+            const pCodeColor     = tp.codeColor     || '00E676';
+            const pTextColor     = tp.textColor     || 'C9D1D9';
+            const pDimColor      = tp.dimColor      || '8B949E';
+            const pFont  = (activeTheme && activeTheme.fonts) ? activeTheme.fonts.pptxBody  || 'Malgun Gothic' : 'Malgun Gothic';
+            const pFontT = (activeTheme && activeTheme.fonts) ? activeTheme.fonts.pptxTitle || 'Arial'         : 'Arial';
+            const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
+            const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
+            const footerCopy    = br.footerCopy    || 'HPE VME Guide';
+
             let pptx = new PptxGenJS();
             pptx.layout = 'LAYOUT_16x9';
 
             // 마스터 정의
             pptx.defineSlideMaster({
                 title: 'VME_MASTER',
-                background: { color: '0D1117' },
+                background: { color: pMasterBg },
                 objects: [
                     { rect: { x: 0.5, y: 5.1, w: 9.0, h: 0.01, fill: { color: '30363D' } } },
-                    { text: { text: 'HPE Virtual Machine Essentials (VME) Installation Guide', options: { x: 0.5, y: 5.2, w: 6, h: 0.3, color: '8B949E', fontSize: 10, fontFace: 'Arial' } } }
+                    { text: { text: footerCopy, options: { x: 0.5, y: 5.2, w: 6, h: 0.3, color: pDimColor, fontSize: 10, fontFace: pFontT } } }
                 ],
-                slideNumber: { x: 9.3, y: 5.2, color: '8B949E', fontSize: 10 }
+                slideNumber: { x: 9.3, y: 5.2, color: pDimColor, fontSize: 10 }
             });
 
             // 1. 표지 슬라이드
             let slide0 = pptx.addSlide();
-            slide0.background = { color: '010409' };
-            slide0.addText('HPE Virtual Machine\nEssentials (VME)', {
-                x: 0.8, y: 1.8, w: 8.5, h: 1.5, fontSize: 44, color: 'FFFFFF', bold: true, fontFace: 'Arial'
+            slide0.background = { color: pCoverBg };
+            slide0.addText(projectName, {
+                x: 0.8, y: 1.8, w: 8.5, h: 1.5, fontSize: 44, color: 'FFFFFF', bold: true, fontFace: pFontT
             });
-            slide0.addShape(pptx.ShapeType.rect, { x: 0.8, y: 3.5, w: 0.04, h: 0.6, fill: { color: '00E676' } });
-            slide0.addText('설치 및 구성 가이드 템플릿', {
-                x: 1.0, y: 3.5, w: 8, h: 0.6, fontSize: 22, color: '8B949E', fontFace: 'Malgun Gothic'
+            slide0.addShape(pptx.ShapeType.rect, { x: 0.8, y: 3.5, w: 0.04, h: 0.6, fill: { color: pAccent } });
+            slide0.addText(guideSubtitle, {
+                x: 1.0, y: 3.5, w: 8, h: 0.6, fontSize: 22, color: pDimColor, fontFace: pFont
             });
 
             // 2. TOC 생성
@@ -724,7 +779,7 @@
                 
                 tocSlide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.5, w: 0.04, h: 0.4, fill: { color: 'FFFFFF' } });
                 tocSlide.addText(`목차 (Table of Contents) ${tocPages > 1 ? `(${p+1}/${tocPages})` : ''}`, {
-                    x: 0.6, y: 0.5, w: 8.5, h: 0.4, fontSize: 24, color: '00E676', bold: true, fontFace: 'Malgun Gothic'
+                    x: 0.6, y: 0.5, w: 8.5, h: 0.4, fontSize: 24, color: pAccent, bold: true, fontFace: pFont
                 });
 
                 let chunk = tocPagesData[p];
@@ -732,13 +787,13 @@
 
                 chunk.forEach(line => {
                     if (line.type === 'chapter') {
-                        tocSlide.addText(line.text, { x: 0.6, y: currentY, w: 8, h: 0.3, fontSize: 16, color: 'FFFFFF', bold: true, fontFace: 'Malgun Gothic' });
+                        tocSlide.addText(line.text, { x: 0.6, y: currentY, w: 8, h: 0.3, fontSize: 16, color: 'FFFFFF', bold: true, fontFace: pFont });
                     } else if (line.type === 'middle') {
-                        tocSlide.addText(line.text, { x: 1.0, y: currentY, w: 7.5, h: 0.3, fontSize: 14, color: '8B949E', bold: true, fontFace: 'Malgun Gothic' });
+                        tocSlide.addText(line.text, { x: 1.0, y: currentY, w: 7.5, h: 0.3, fontSize: 14, color: pDimColor, bold: true, fontFace: pFont });
                     } else if (line.type === 'title') {
                         let pageNum = 1 + tocPages + line.renderableIndex + 1;
-                        tocSlide.addText(line.text, { x: 1.4, y: currentY, w: 6.5, h: 0.3, fontSize: 13, color: 'C9D1D9', fontFace: 'Malgun Gothic' });
-                        tocSlide.addText(pageNum.toString(), { x: 8.5, y: currentY, w: 0.5, h: 0.3, fontSize: 13, color: '00E676', fontFace: 'Malgun Gothic', align: 'right', bold: true });
+                        tocSlide.addText(line.text, { x: 1.4, y: currentY, w: 6.5, h: 0.3, fontSize: 13, color: pTextColor, fontFace: pFont });
+                        tocSlide.addText(pageNum.toString(), { x: 8.5, y: currentY, w: 0.5, h: 0.3, fontSize: 13, color: pAccent, fontFace: pFont, align: 'right', bold: true });
                     }
                     currentY += 0.25; // 줄 간격
                 });
@@ -758,9 +813,9 @@
                 
                 if (mid && mid !== prevMidPPTX) {
                     let coverSlide = pptx.addSlide({ masterName: 'VME_MASTER' });
-                    coverSlide.background = { color: '111827' };
-                    coverSlide.addText(ch, { x: 0.5, y: 2.2, w: 9, h: 0.5, fontSize: 24, color: '00E676', bold: true, align: 'center', fontFace: 'Malgun Gothic' });
-                    coverSlide.addText(mid, { x: 0.5, y: 2.8, w: 9, h: 1.0, fontSize: 44, color: 'FFFFFF', bold: true, align: 'center', fontFace: 'Arial' });
+                    coverSlide.background = { color: pMiddleCoverBg };
+                    coverSlide.addText(ch, { x: 0.5, y: 2.2, w: 9, h: 0.5, fontSize: 24, color: pAccent, bold: true, align: 'center', fontFace: pFont });
+                    coverSlide.addText(mid, { x: 0.5, y: 2.8, w: 9, h: 1.0, fontSize: 44, color: 'FFFFFF', bold: true, align: 'center', fontFace: pFontT });
                     
                     prevMidPPTX = mid;
                 }
@@ -771,20 +826,20 @@
                 let chapterY = data.middleTitle ? 0.25 : 0.4;
                 
                 slide.addText(data.chapter, {
-                    x: 0.5, y: chapterY, w: 9, h: 0.3, fontSize: 11, color: '00E676', bold: true, fontFace: 'Malgun Gothic'
+                    x: 0.5, y: chapterY, w: 9, h: 0.3, fontSize: 11, color: pAccent, bold: true, fontFace: pFont
                 });
 
                 if (data.middleTitle) {
                     slide.addText(data.middleTitle, {
-                        x: 0.5, y: 0.5, w: 9, h: 0.3, fontSize: 14, color: '8B949E', bold: true, fontFace: 'Malgun Gothic'
+                        x: 0.5, y: 0.5, w: 9, h: 0.3, fontSize: 14, color: pDimColor, bold: true, fontFace: pFont
                     });
                 }
 
                 let titleY = data.middleTitle ? 0.8 : 0.7;
 
-                slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: titleY, w: 0.02, h: 0.5, fill: { color: '00E676' } });
+                slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: titleY, w: 0.02, h: 0.5, fill: { color: pAccent } });
                 slide.addText(data.title, {
-                    x: 0.6, y: titleY, w: 9, h: 0.5, fontSize: 26, color: 'FFFFFF', bold: true, fontFace: 'Malgun Gothic'
+                    x: 0.6, y: titleY, w: 9, h: 0.5, fontSize: 26, color: 'FFFFFF', bold: true, fontFace: pFont
                 });
 
                 const hasText = data.text && data.text.trim() !== '';
@@ -802,7 +857,7 @@
                     
                     if (data.imageCaption) {
                         slide.addText(data.imageCaption, {
-                            x: 0.5, y: 1.5 + imgH, w: 9.0, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
+                            x: 0.5, y: 1.5 + imgH, w: 9.0, h: 0.3, fontSize: 11, color: pDimColor, align: 'center', fontFace: pFont
                         });
                     }
                 } else {
@@ -846,7 +901,7 @@
                             });
                             
                             slide.addText(codeContent, {
-                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 11, color: '00E676', fontFace: 'D2Coding', valign: 'top', margin: 10
+                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 11, color: pCodeColor, fontFace: 'D2Coding', valign: 'top', margin: 10
                             });
                             currentY += estimatedHeight + 0.1;
                         } else {
@@ -858,7 +913,7 @@
                             if(cleanPptText.trim() === '') return;
                             
                             slide.addText(cleanPptText, {
-                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 14, color: 'C9D1D9', fontFace: 'Malgun Gothic', valign: 'top', margin: 10
+                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 14, color: pTextColor, fontFace: pFont, valign: 'top', margin: 10
                             });
                             currentY += estimatedHeight + 0.05;
                         }
@@ -876,7 +931,7 @@
                         
                         if (data.imageCaption) {
                             slide.addText(data.imageCaption, {
-                                x: finalImgX, y: 1.5 + imgH, w: finalImgWidth, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
+                                x: finalImgX, y: 1.5 + imgH, w: finalImgWidth, h: 0.3, fontSize: 11, color: pDimColor, align: 'center', fontFace: pFont
                             });
                         }
                     }
@@ -891,6 +946,18 @@
 
         // HTML 웹 가이드 문자열 템플릿 생성 헬퍼
         function generateHTMLContent() {
+            // 테마 및 브랜딩 변수 추출 (없으면 기본값)
+            const th = (activeTheme && activeTheme.webGuide) ? activeTheme.webGuide : { headerBg: '#01a982', accentColor: '#01a982', darkAccent: '#00e676' };
+            const br = projectSettings.branding;
+            const headerBg    = th.headerBg    || '#01a982';
+            const accentColor = th.accentColor || '#01a982';
+            const darkAccent  = th.darkAccent  || '#00e676';
+            const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
+            const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
+            const footerCopy    = br.footerCopy    || 'HPE VME Guide';
+            // 에디터의 현재 다크/라이트 모드를 웹 가이드에 그대로 적용
+            const isLightMode   = document.body.classList.contains('light-mode');
+            const bodyClass     = isLightMode ? '' : 'dark-mode';
 
             // TOC 페이지수 계산을 위해 필요
             const tocLines = generateTocData(slidesData);
@@ -910,13 +977,13 @@
     <style>
         body { margin: 0; padding: 0; background: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; }
         html { scroll-behavior: smooth; }
-        .header { background: #01a982; color: #ffffff; padding: 40px 20px; text-align: center; }
+        .header { background: ${headerBg}; color: #ffffff; padding: 40px 20px; text-align: center; }
         .header h1 { margin: 0 0 10px 0; font-size: 32px; }
         .header p { margin: 0; font-size: 18px; opacity: 0.9; }
         .container { max-width: 1000px; margin: -20px auto 40px auto; padding: 0 20px; position: relative; z-index: 10; }
         .card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; overflow: hidden; border: 1px solid #e5e7eb; }
-        .card-header { padding: 20px 30px; border-bottom: 1px solid #e5e7eb; border-left: 6px solid #01a982; background: #f9fafb; }
-        .chapter { color: #01a982; font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+        .card-header { padding: 20px 30px; border-bottom: 1px solid #e5e7eb; border-left: 6px solid ${accentColor}; background: #f9fafb; }
+        .chapter { color: ${accentColor}; font-weight: 700; font-size: 14px; margin-bottom: 5px; }
         .middle-title { color: #6b7280; font-weight: 600; font-size: 16px; margin-bottom: 5px; }
         .title { font-size: 24px; font-weight: 700; color: #111827; margin: 0; }
         .card-body { display: flex; flex-wrap: wrap; gap: 30px; padding: 30px; }
@@ -929,14 +996,14 @@
         
         /* Markdown HTML Styles */
         .markdown-body p { margin-top: 0; margin-bottom: 0.8em; white-space: pre-wrap; word-break: break-word; }
-        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: #01a982; margin-top: 1em; margin-bottom: 0.5em; font-weight: 700; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: ${accentColor}; margin-top: 1em; margin-bottom: 0.5em; font-weight: 700; }
         .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 25px; margin-bottom: 1em; margin-top: 0; }
         .markdown-body li { margin-bottom: 0.3em; white-space: pre-wrap; word-break: break-word; }
         .markdown-body code { background: #f3f4f6; color: #ef4444; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
         
         /* Markdown Code Block Styles */
-        .markdown-body pre { background: #111827; color: #10b981; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #374151; border-left: 3px solid #01a982;}
+        .markdown-body pre { background: #111827; color: #10b981; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #374151; border-left: 3px solid ${accentColor};}
         .markdown-body pre code { background: transparent; color: inherit; padding: 0; font-size: 14px;}
         
         .markdown-body blockquote { border-left: 4px solid #d1d5db; margin: 0 0 1em 0; padding-left: 15px; color: #6b7280; font-style: italic; }
@@ -990,19 +1057,19 @@
         body.dark-mode .guide-toc-middle:hover { color: #00e676; background: rgba(0,230,118,0.06); }
         body.dark-mode .guide-toc-item { color: #8b949e; }
         body.dark-mode .guide-toc-item:hover { background: rgba(255,255,255,0.04); color: #c9d1d9; }
-        body.dark-mode .guide-toc-item.active { color: #00e676; border-left-color: #00e676; background: rgba(0,230,118,0.08); }
+        body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: rgba(0,230,118,0.08); }
 
         /* Code Block Wrapper & Copy Button */
-        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid #01a982; }
+        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid ${accentColor}; }
         .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 14px; border-bottom: 1px solid #374151; }
-        .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #01a982; font-family: 'D2Coding', monospace; }
+        .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${accentColor}; font-family: 'D2Coding', monospace; }
         .btn-copy-code { background: transparent; border: 1px solid #374151; color: #8b949e; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: sans-serif; }
-        .btn-copy-code:hover, .btn-copy-code.copied { color: #01a982; border-color: #01a982; background: rgba(1,169,130,0.1); }
+        .btn-copy-code:hover, .btn-copy-code.copied { color: ${accentColor}; border-color: ${accentColor}; background: rgba(1,169,130,0.1); }
         .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; }
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>
-<body class="dark-mode">
+<body class="${bodyClass}">
     <!-- 이미지 모달 -->
     <div id="img-modal" class="img-modal-overlay" onclick="closeModal()">
         <img id="img-modal-content" class="img-modal-content" src="">
@@ -1036,8 +1103,8 @@
     <button type="button" class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="테마 전환">☀️</button>
 
     <div class="header" style="position: relative;">
-        <h1>HPE Virtual Machine Essentials (VME)</h1>
-        <p>설치 및 구성 가이드</p>
+        <h1>${escapeHtml(projectName)}</h1>
+        <p>${escapeHtml(guideSubtitle)}</p>
     </div>
     <div class="page-layout">
     <aside class="guide-toc" id="guide-toc">
@@ -1102,7 +1169,7 @@
                     htmlContent += `
         <div class="card" id="slide-cover-${rIndex}" style="background: #111827; border-color: #30363d;">
             <div class="card-body" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                <div style="font-size: 20px; color: #00e676; font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
+                <div style="font-size: 20px; color: ${darkAccent}; font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
                 <div style="font-size: 48px; color: #ffffff; font-weight: bold; line-height: 1.3; letter-spacing: -0.5px;">${escapeHtml(mid)}</div>
             </div>
         </div>`;
@@ -1157,7 +1224,7 @@
     </div>
     </div>
     <div class="footer">
-        &copy; ${new Date().getFullYear()} HPE VME Guide Generated
+        &copy; ${new Date().getFullYear()} ${escapeHtml(footerCopy)} Generated
     </div>
     <script>
         // 복사 버튼 핸들러
@@ -1300,7 +1367,7 @@
                 return;
             }
             
-            const dataStr = JSON.stringify(slidesData, null, 2);
+            const dataStr = JSON.stringify({ settings: projectSettings, slides: slidesData }, null, 2);
 
             try {
                 const response = await fetch('/api/save', {
@@ -1346,7 +1413,7 @@
                 return;
             }
             
-            const dataStr = JSON.stringify(slidesData, null, 2);
+            const dataStr = JSON.stringify({ settings: projectSettings, slides: slidesData }, null, 2);
             
             const now = new Date();
             const year = now.getFullYear().toString().slice(-2);
@@ -1383,29 +1450,376 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // 데이터(JSON) 파일 수동 불러오기
-        window.importData = function(event) {
+        // 데이터(JSON) 파일 수동 불러오기 (구버전/신버전 모두 지원)
+        window.importData = async function(event) {
             const file = event.target.files[0];
             if (!file) return;
             
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
+
+                    // 구버전(배열) 및 신버전(래퍼 객체) 자동 판별
                     if (Array.isArray(importedData)) {
+                        // ── 구버전 호환: 슬라이드만 교체, settings는 현재 값 유지
                         slidesData = migrateData(importedData);
-                        activeEditorIndex = null;
-                        editingSlideIndex = null;
-                        window.renderPreview();
+                        showModal('구버전 데이터를 불러왔습니다. 브랜딩/테마 설정은 현재 값을 유지합니다.');
+                    } else if (importedData && Array.isArray(importedData.slides)) {
+                        // ── 신버전 래퍼 구조
+                        parseLoadedData(importedData);
+                        // 저장된 테마 자동 적용
+                        await loadThemeByName(projectSettings.activeTheme);
+                        // 브랜딩 UI 갱신
+                        syncBrandingUI();
                         showModal('데이터를 성공적으로 불러왔습니다!');
                     } else {
-                        showModal('올바른 데이터 형식이 아닙니다.');
+                        showModal('올바른 데이터 형식이 아닙니다.\n지원 형식: 슬라이드 배열([]) 또는 {settings, slides} 객체');
+                        return;
                     }
+
+                    activeEditorIndex = null;
+                    editingSlideIndex = null;
+                    window.renderPreview();
                 } catch (err) {
-                    console.error("데이터 파일 불러오기 오류:", err);
+                    console.error('데이터 파일 불러오기 오류:', err);
                     showModal('데이터 파일을 읽는 중 오류가 발생했습니다.\n' + err.message);
                 }
                 event.target.value = ''; // input 초기화
             };
             reader.readAsText(file);
+        };
+
+        // ===========================
+        // 테마 엔진
+        // ===========================
+
+        // 기본 테마 오브젝트 (서버 연동 실패 시 폴백)
+        function getDefaultThemeObject() {
+            return {
+                name: 'hpe_default',
+                displayName: 'HPE Default (Dark)',
+                version: '1.0',
+                colors: {
+                    accent:   '#00E676',
+                    bgDark:   '#010409',
+                    slideBg:  '#0D1117',
+                    boxBg:    '#161B22',
+                    border:   '#30363D',
+                    textMain: '#FFFFFF',
+                    textDim:  '#8B949E'
+                },
+                pptx: {
+                    masterBg:      '0D1117',
+                    coverBg:       '010409',
+                    middleCoverBg: '111827',
+                    accentColor:   '00E676',
+                    codeColor:     '00E676',
+                    textColor:     'C9D1D9',
+                    dimColor:      '8B949E'
+                },
+                webGuide: {
+                    headerBg:    '#01a982',
+                    accentColor: '#01a982',
+                    darkAccent:  '#00e676'
+                },
+                fonts: {
+                    uiFamily:   'Pretendard',
+                    codeFamily: 'D2Coding',
+                    pptxBody:   'Malgun Gothic',
+                    pptxTitle:  'Arial'
+                }
+            };
+        }
+
+        // 에디터 CSS 변수를 테마로 교체
+        function applyThemeToEditor(theme) {
+            if (!theme || !theme.colors) return;
+            const root = document.documentElement.style;
+            root.setProperty('--hpe-green',     theme.colors.accent);
+            root.setProperty('--bg-dark',        theme.colors.bgDark);
+            root.setProperty('--slide-bg',       theme.colors.slideBg);
+            root.setProperty('--box-bg',         theme.colors.boxBg);
+            root.setProperty('--border-color',   theme.colors.border);
+            root.setProperty('--text-main',      theme.colors.textMain);
+            root.setProperty('--text-dim',       theme.colors.textDim);
+            activeTheme = theme;
+            projectSettings.activeTheme = theme.name;
+        }
+
+        // 테마 이름으로 서버에서 불러와 적용 (실패 시 기본 테마 폴백)
+        async function loadThemeByName(name) {
+            try {
+                const filename = name.endsWith('.slidetheme') ? name : name + '.slidetheme';
+                const res = await fetch('/api/themes/' + filename);
+                if (res.ok) {
+                    const theme = await res.json();
+                    applyThemeToEditor(theme);
+                    return;
+                }
+            } catch (e) {
+                console.warn('[테마] 서버 로드 실패, 기본 테마 적용:', e);
+            }
+            // 폴백: 기본 테마
+            applyThemeToEditor(getDefaultThemeObject());
+        }
+
+        // 테마 목록 불러오기 (모달용)
+        window.loadThemeList = async function() {
+            try {
+                const res = await fetch('/api/themes');
+                if (res.ok) return await res.json();
+            } catch (e) { console.warn('[테마] 목록 로드 실패:', e); }
+            return [];
+        };
+
+        // 테마 불러오기 및 에디터 적용
+        window.loadTheme = async function(filename) {
+            await loadThemeByName(filename.replace('.slidetheme', ''));
+            renderThemeModal();
+        };
+
+        // 테마 서버 저장
+        window.saveThemeToServer = async function(theme) {
+            const filename = theme.name + '.slidetheme';
+            try {
+                const res = await fetch('/api/themes/' + filename, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(theme, null, 2)
+                });
+                return res.ok;
+            } catch (e) {
+                console.warn('[테마] 저장 실패:', e);
+                return false;
+            }
+        };
+
+        // 테마 파일 브라우저 다운로드
+        window.exportTheme = function() {
+            if (!activeTheme) return;
+            const blob = new Blob([JSON.stringify(activeTheme, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (activeTheme.name || 'custom') + '.slidetheme';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // .slidetheme 파일 불러오기
+        window.importTheme = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const theme = JSON.parse(e.target.result);
+                    applyThemeToEditor(theme);
+                    renderThemeModal();
+                    showModal('테마를 불러왔습니다: ' + (theme.displayName || theme.name));
+                } catch (err) {
+                    showModal('.slidetheme 파일을 읽는 중 오류: ' + err.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        // 브랜딩 UI 동기화 (모달 필드 → projectSettings 반영 or 반대)
+        function syncBrandingUI() {
+            const pn = document.getElementById('branding-project-name');
+            const gs = document.getElementById('branding-guide-subtitle');
+            const fc = document.getElementById('branding-footer-copy');
+            if (pn) pn.value = projectSettings.branding.projectName;
+            if (gs) gs.value = projectSettings.branding.guideSubtitle;
+            if (fc) fc.value = projectSettings.branding.footerCopy;
+        }
+
+        function collectBrandingFromUI() {
+            const pn = document.getElementById('branding-project-name');
+            const gs = document.getElementById('branding-guide-subtitle');
+            const fc = document.getElementById('branding-footer-copy');
+            if (pn) projectSettings.branding.projectName   = pn.value.trim() || projectSettings.branding.projectName;
+            if (gs) projectSettings.branding.guideSubtitle = gs.value.trim() || projectSettings.branding.guideSubtitle;
+            if (fc) projectSettings.branding.footerCopy    = fc.value.trim() || projectSettings.branding.footerCopy;
+        }
+
+        // 테마 모달 렌더링
+        function renderThemeModal() {
+            const modal = document.getElementById('theme-modal');
+            if (!modal) return;
+            const t = activeTheme || getDefaultThemeObject();
+
+            // 테마 목록 비동기 갱신
+            window.loadThemeList().then(files => {
+                const listEl = document.getElementById('theme-list-items');
+                if (!listEl) return;
+                listEl.innerHTML = files.map(f => {
+                    const n = f.replace('.slidetheme', '');
+                    const active = n === (t.name || '') ? 'active' : '';
+                    return `<div class="theme-list-item ${active}" onclick="window.loadTheme('${f}')">${n}</div>`;
+                }).join('');
+            });
+
+            // 색상 편집기 채우기
+            const colorFields = [
+                { key: 'accent',   label: '강조색 (Accent)' },
+                { key: 'bgDark',   label: '에디터 배경 (bgDark)' },
+                { key: 'slideBg',  label: '슬라이드 배경 (slideBg)' },
+                { key: 'boxBg',    label: '박스 배경 (boxBg)' },
+                { key: 'border',   label: '테두리 (border)' },
+                { key: 'textMain', label: '주요 텍스트 (textMain)' },
+                { key: 'textDim',  label: '보조 텍스트 (textDim)' }
+            ];
+            const editorEl = document.getElementById('theme-color-editor');
+            if (editorEl) {
+                editorEl.innerHTML = colorFields.map(({ key, label }) => {
+                    const val = (t.colors && t.colors[key]) || '#000000';
+                    return `
+                    <div class="color-row">
+                        <span class="color-row-label">${label}</span>
+                        <input type="color" id="color-${key}" value="${val}"
+                            oninput="document.getElementById('hex-${key}').value=this.value; applyColorPreview()">
+                        <input type="text" id="hex-${key}" value="${val}" maxlength="7" class="hex-input"
+                            oninput="syncPickerFromHex('${key}')">
+                    </div>`;
+                }).join('');
+            }
+
+            // 테마 이름
+            const nameEl = document.getElementById('theme-name-input');
+            if (nameEl) nameEl.value = t.name || '';
+
+            // 브랜딩 UI
+            syncBrandingUI();
+        }
+
+        // HEX 입력 → 픽커 동기화
+        window.syncPickerFromHex = function(key) {
+            const hexEl = document.getElementById('hex-' + key);
+            const pickerEl = document.getElementById('color-' + key);
+            if (!hexEl || !pickerEl) return;
+            const val = hexEl.value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                pickerEl.value = val;
+                applyColorPreview();
+            }
+        };
+
+        // 색상 변경 → 에디터 실시간 미리보기
+        window.applyColorPreview = function() {
+            const keys = ['accent','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            keys.forEach(key => {
+                const hexEl = document.getElementById('hex-' + key);
+                if (hexEl && /^#[0-9a-fA-F]{6}$/.test(hexEl.value)) {
+                    const map = {
+                        accent: '--hpe-green', bgDark: '--bg-dark', slideBg: '--slide-bg',
+                        boxBg: '--box-bg', border: '--border-color', textMain: '--text-main', textDim: '--text-dim'
+                    };
+                    document.documentElement.style.setProperty(map[key], hexEl.value);
+                }
+            });
+        };
+
+        // 모달에서 현재 색상 수집 → 테마 오브젝트 빌드
+        function buildThemeFromModal() {
+            const keys = ['accent','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            const colors = {};
+            keys.forEach(k => {
+                const hexEl = document.getElementById('hex-' + k);
+                colors[k] = (hexEl && /^#[0-9a-fA-F]{6}$/.test(hexEl.value))
+                    ? hexEl.value : (activeTheme && activeTheme.colors[k] || '#000000');
+            });
+
+            // strip # for pptx
+            const strip = c => c.replace('#', '');
+            const t = activeTheme || getDefaultThemeObject();
+            const nameEl = document.getElementById('theme-name-input');
+            const name = (nameEl ? nameEl.value.trim() : '') || t.name;
+
+            return {
+                name,
+                displayName: name,
+                version: '1.0',
+                colors,
+                pptx: {
+                    masterBg:      strip(colors.slideBg),
+                    coverBg:       strip(colors.bgDark),
+                    middleCoverBg: '111827',
+                    accentColor:   strip(colors.accent),
+                    codeColor:     strip(colors.accent),
+                    textColor:     strip(colors.textMain),
+                    dimColor:      strip(colors.textDim)
+                },
+                webGuide: {
+                    headerBg:    colors.accent,
+                    accentColor: colors.accent,
+                    darkAccent:  colors.accent
+                },
+                fonts: t.fonts || getDefaultThemeObject().fonts
+            };
+        }
+
+        // 모달: 테마 적용 버튼 (브랜딩은 별개 모달에서 관리)
+        window.applyThemeFromModal = function() {
+            const theme = buildThemeFromModal();
+            applyThemeToEditor(theme);
+            showModal('테마가 적용되었습니다!');
+        };
+
+        // 모달: 서버 저장 버튼 (브랜딩은 별개 모달에서 관리)
+        window.saveThemeFromModal = async function() {
+            const theme = buildThemeFromModal();
+            applyThemeToEditor(theme);
+            const ok = await window.saveThemeToServer(theme);
+            if (ok) {
+                renderThemeModal(); // 목록 갱신
+                showModal('테마를 서버에 저장했습니다: ' + theme.name + '.slidetheme');
+            } else {
+                showModal('서버 저장에 실패했습니다. 테마 내보내기를 이용해 수동 저장하세요.');
+            }
+        };
+
+        // 테마 모달 열기/닫기
+        window.openThemeModal = function() {
+            const modal = document.getElementById('theme-modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            renderThemeModal();
+        };
+        window.closeThemeModal = function() {
+            const modal = document.getElementById('theme-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // ===========================
+        // 브랜딩 모달 (별개 UI)
+        // ===========================
+
+        window.openBrandingModal = function() {
+            const modal = document.getElementById('branding-modal');
+            if (!modal) return;
+            // 현재 projectSettings.branding 값을 필드에 채워 넣기
+            syncBrandingUI();
+            modal.style.display = 'flex';
+        };
+
+        window.closeBrandingModal = function() {
+            const modal = document.getElementById('branding-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // 브랜딩 적용: UI 값 수집 → projectSettings 갱신
+        // (데이터 저장은 사용자가 exportData/downloadData 할 때 함께 저장됨)
+        window.applyBrandingFromModal = function() {
+            collectBrandingFromUI();
+            window.closeBrandingModal();
+            showModal(
+                '브랜딩이 적용되었습니다.\n' +
+                '웹 가이드/PPTX 내보내기 시 반영됩니다.\n' +
+                '데이터 저장(저장 버튼)을 하면 다음에도 유지됩니다.'
+            );
         };
