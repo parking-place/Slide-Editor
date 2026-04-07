@@ -955,6 +955,9 @@
             const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
             const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
             const footerCopy    = br.footerCopy    || 'HPE VME Guide';
+            // 에디터의 현재 다크/라이트 모드를 웹 가이드에 그대로 적용
+            const isLightMode   = document.body.classList.contains('light-mode');
+            const bodyClass     = isLightMode ? '' : 'dark-mode';
 
             // TOC 페이지수 계산을 위해 필요
             const tocLines = generateTocData(slidesData);
@@ -1066,7 +1069,7 @@
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>
-<body class="dark-mode">
+<body class="${bodyClass}">
     <!-- 이미지 모달 -->
     <div id="img-modal" class="img-modal-overlay" onclick="closeModal()">
         <img id="img-modal-content" class="img-modal-content" src="">
