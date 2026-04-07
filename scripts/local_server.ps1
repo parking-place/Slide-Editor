@@ -145,7 +145,7 @@ try {
                 $body = $reader.ReadToEnd()
                 $reader.Close()
                 
-                $savePath = [System.IO.Path]::Combine($root, "data", "vme_data.json")
+                $savePath = [System.IO.Path]::Combine($root, "data", "slide_data.json")
                 [System.IO.File]::WriteAllText($savePath, $body, [System.Text.Encoding]::UTF8)
                 
                 $response.StatusCode = 200

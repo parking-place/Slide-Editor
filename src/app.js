@@ -122,16 +122,16 @@
             }
         }
 
-        // 같은 폴더에 있는 vme_data.json 파일을 자동으로 불러오는 함수
+        // 같은 폴더에 있는 slide_data.json 파일을 자동으로 불러오는 함수
         async function loadInitialData() {
             try {
-                const response = await fetch('./data/vme_data.json');
+                const response = await fetch('./data/slide_data.json');
                 if (response.ok) {
                     const data = await response.json();
                     parseLoadedData(data);
                 }
             } catch (e) {
-                console.log('초기 데이터 파일(vme_data.json)이 없거나 로컬 파일 시스템 제약(CORS)으로 불러올 수 없습니다. 수동으로 불러오기를 사용해주세요.', e);
+                console.log('초기 데이터 파일(slide_data.json)이 없거나 로컬 파일 시스템 제약(CORS)으로 불러올 수 없습니다. 수동으로 불러오기를 사용해주세요.', e);
             } finally {
                 // 저장된 테마 자동 로드
                 await loadThemeByName(projectSettings.activeTheme);
@@ -1378,7 +1378,7 @@
                 });
                 
                 if (response.ok) {
-                    showModal('웹 서버(vme_data.json)에 직접 로컬 저장을 성공적으로 완료했습니다!');
+                    showModal('웹 서버(slide_data.json)에 직접 로컬 저장을 성공적으로 완료했습니다!');
                     return;
                 }
             } catch (err) {
