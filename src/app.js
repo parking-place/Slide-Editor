@@ -1501,7 +1501,7 @@
                 name: 'hpe_default',
                 displayName: 'HPE Default (Dark)',
                 version: '1.0',
-                isLightMode: false,
+                isDarkMode: true,
                 colors: {
                     accent:   '#00E676',
                     codeColor:'#00E676',
@@ -1549,7 +1549,13 @@
             root.setProperty('--border-color',   theme.colors.border);
             root.setProperty('--text-main',      theme.colors.textMain);
             root.setProperty('--text-dim',       theme.colors.textDim);
-            document.body.classList.toggle('light-mode', !!theme.isLightMode);
+            
+            if (theme.isDarkMode !== false) {
+                document.body.classList.remove('light-mode');
+            } else {
+                document.body.classList.add('light-mode');
+            }
+
             activeTheme = theme;
             projectSettings.activeTheme = theme.name;
         }
@@ -1697,11 +1703,13 @@
                 }).join('');
             }
 
-            // 테마 이름 및 라이트모드
+            // 테마 이름
             const nameEl = document.getElementById('theme-name-input');
             if (nameEl) nameEl.value = t.name || '';
-            const lmEl = document.getElementById('theme-light-mode-input');
-            if (lmEl) lmEl.checked = !!t.isLightMode;
+
+            // 다크 모드 체크박스
+            const darkEl = document.getElementById('theme-is-dark');
+            if (darkEl) darkEl.checked = t.isDarkMode !== false;
 
             // 브랜딩 UI
             syncBrandingUI();
@@ -1719,8 +1727,14 @@
             }
         };
 
-        // 색상 변경 → 에디터 실시간 미리보기
+        // 색상 및 다크모드 변경 → 에디터 실시간 미리보기
         window.applyColorPreview = function() {
+            const isDark = document.getElementById('theme-is-dark')?.checked;
+            if (isDark !== undefined) {
+                if (isDark) document.body.classList.remove('light-mode');
+                else document.body.classList.add('light-mode');
+            }
+
             const keys = ['accent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
             keys.forEach(key => {
                 const hexEl = document.getElementById('hex-' + key);
@@ -1735,10 +1749,6 @@
                     }
                 }
             });
-            const lmEl = document.getElementById('theme-light-mode-input');
-            if (lmEl) {
-                document.body.classList.toggle('light-mode', lmEl.checked);
-            }
         };
 
         // 모달에서 현재 색상 수집 → 테마 오브젝트 빌드
@@ -1756,19 +1766,19 @@
             const t = activeTheme || getDefaultThemeObject();
             const nameEl = document.getElementById('theme-name-input');
             const name = (nameEl ? nameEl.value.trim() : '') || t.name;
-            const lmEl = document.getElementById('theme-light-mode-input');
-            const isLM = lmEl ? lmEl.checked : false;
+
+            const isDarkMode = document.getElementById('theme-is-dark') ? document.getElementById('theme-is-dark').checked : true;
 
             return {
                 name,
                 displayName: name,
                 version: '1.0',
-                isLightMode: isLM,
+                isDarkMode,
                 colors,
                 pptx: {
                     masterBg:      strip(colors.slideBg),
                     coverBg:       strip(colors.bgDark),
-                    middleCoverBg: strip(colors.boxBg),
+                    middleCoverBg: '111827',
                     accentColor:   strip(colors.accent),
                     codeColor:     strip(colors.codeColor || colors.accent),
                     textColor:     strip(colors.textMain),
@@ -1777,8 +1787,7 @@
                 webGuide: {
                     headerBg:    colors.accent,
                     accentColor: colors.accent,
-                    darkAccent:  colors.codeColor || colors.accent,
-                    codeColor:   colors.codeColor || colors.accent
+                    darkAccent:  colors.accent
                 },
                 fonts: t.fonts || getDefaultThemeObject().fonts
             };

@@ -1,37 +1,36 @@
-{
+﻿{
   "name": "hpe_blue",
-  "displayName": "HPE Blue (Dark)",
+  "displayName": "hpe_blue",
   "version": "1.0",
-  "isLightMode": false,
+  "isDarkMode": false,
   "colors": {
-    "accent":   "#1a73e8",
+    "accent": "#1a73e8",
     "codeColor": "#8ab4f8",
-    "bgDark":   "#050d1a",
-    "slideBg":  "#0a1628",
-    "boxBg":    "#0f1f3d",
-    "border":   "#1e3a6e",
+    "bgDark": "#050d1a",
+    "slideBg": "#0a1628",
+    "boxBg": "#0f1f3d",
+    "border": "#1e3a6e",
     "textMain": "#FFFFFF",
-    "textDim":  "#8ab4f8"
+    "textDim": "#8ab4f8"
   },
   "pptx": {
-    "masterBg":      "0A1628",
-    "coverBg":       "050D1A",
-    "middleCoverBg": "0F1F3D",
-    "accentColor":   "1A73E8",
-    "codeColor":     "8AB4F8",
-    "textColor":     "C8D8F8",
-    "dimColor":      "8AB4F8"
+    "masterBg": "0a1628",
+    "coverBg": "050d1a",
+    "middleCoverBg": "111827",
+    "accentColor": "1a73e8",
+    "codeColor": "8ab4f8",
+    "textColor": "FFFFFF",
+    "dimColor": "8ab4f8"
   },
   "webGuide": {
-    "headerBg":    "#1a73e8",
+    "headerBg": "#1a73e8",
     "accentColor": "#1a73e8",
-    "darkAccent":  "#8ab4f8",
-    "codeColor":   "#8ab4f8"
+    "darkAccent": "#1a73e8"
   },
   "fonts": {
-    "uiFamily":   "Pretendard",
+    "uiFamily": "Pretendard",
     "codeFamily": "D2Coding",
-    "pptxBody":   "Malgun Gothic",
-    "pptxTitle":  "Arial"
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
   }
 }
