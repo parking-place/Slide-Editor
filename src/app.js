@@ -1004,7 +1004,7 @@
         .markdown-body code { background: #f3f4f6; color: #ef4444; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
         
         /* Markdown Code Block Styles */
-        .markdown-body pre { background: #111827; color: #10b981; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #374151; border-left: 3px solid ${accentColor};}
+        .markdown-body pre { background: #1e1e1e; color: ${accentColor}; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #e5e7eb; border-left: 3px solid ${accentColor};}
         .markdown-body pre code { background: transparent; color: inherit; padding: 0; font-size: 14px;}
         
         .markdown-body blockquote { border-left: 4px solid #d1d5db; margin: 0 0 1em 0; padding-left: 15px; color: #6b7280; font-style: italic; }
@@ -1019,9 +1019,13 @@
         body.dark-mode .text-content { color: #c9d1d9; }
         body.dark-mode .title { color: #ffffff; }
         body.dark-mode .middle-title { color: #8b949e; }
-        body.dark-mode .markdown-body pre { background: #010409; color: #00e676; border-color: #30363d; }
+        body.dark-mode .markdown-body pre { background: #010409; color: ${darkAccent}; border-color: #30363d; }
         body.dark-mode .toc-link div { color: #c9d1d9 !important; border-bottom-color: #30363d !important; }
         body.dark-mode .toc-link:hover { background-color: ${darkAccent}0D; }
+        body.dark-mode .code-block-wrapper { border-color: #30363d; }
+        body.dark-mode .code-block-header { background: rgba(0, 0, 0, 0.35); border-bottom-color: #30363d; }
+        body.dark-mode .btn-copy-code { border-color: #30363d; color: #8b949e; }
+        body.dark-mode .code-block-wrapper pre { background: #010409 !important; }
 
         /* Image Modal Styles */
         .img-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
@@ -1061,12 +1065,12 @@
         body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: ${darkAccent}14; }
 
         /* Code Block Wrapper & Copy Button */
-        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid ${codeColor}; }
-        .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 14px; border-bottom: 1px solid #374151; }
+        .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; border-left: 3px solid ${codeColor}; }
+        .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.08); padding: 5px 12px; border-bottom: 1px solid #e5e7eb; }
         .code-lang-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${codeColor}; font-family: 'D2Coding', monospace; }
-        .btn-copy-code { background: transparent; border: 1px solid #374151; color: #8b949e; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: 0.15s; font-family: sans-serif; }
+        .btn-copy-code { background: transparent; border: 1px solid #e5e7eb; color: #4b5563; font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s, color 0.15s, border-color 0.15s; font-family: sans-serif; }
         .btn-copy-code:hover, .btn-copy-code.copied { color: ${codeColor}; border-color: ${codeColor}; background: ${codeColor}1A; }
-        .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #111827 !important; border: none !important; overflow-x: auto; border-radius: 0 !important; }
+        .code-block-wrapper pre { margin: 0 !important; padding: 14px 16px !important; background: #1e1e1e !important; border: none !important; overflow-x: auto; border-radius: 0 !important; }
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>

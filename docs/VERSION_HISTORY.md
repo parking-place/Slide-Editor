@@ -112,7 +112,7 @@
 ## [Unreleased] (fix/toc-hover-theme)
 ### Fixed
 - **웹 가이드 네비게이터 호버 색상 동적 테마 연동**: 하드코딩되었던 `guide-toc-item`과 `toc-link`의 hover 배경색/글자색을 테마 지정 색상의 투명도 옵션(`${accentColor}0D`, `${darkAccent}0D`)으로 동적 적용되도록 수정.
-- **웹 가이드 라이트모드 코드 블록 테두리 깨짐 수정**: `app.js` HTML 생성기의 `.code-block-wrapper pre` CSS에 `border-radius: 0 !important`를 추가하여, 라이트모드에서 래퍼(Wrapper)의 곡률(6px)과 내부 블록(8px) 간의 불일치로 인해 모서리 배경이 비어보이던 문제를 해결.
+- **웹 가이드 코드 블록 래퍼 UI 테마 동기화**: 웹 가이드(`app.js`)의 HTML 생성기에 하드코딩되어 있던 코드 블록 래퍼(`.code-block-wrapper`, 복사 버튼 등)의 CSS가 에디터(`style.css`)와 완전히 동일한 다크/라이트 모드 규칙(테두리, 헤더 배경, 복사 버튼 레이아웃, `codeColor` 테마 속성 연동 등)을 따르도록 재작성하여 디자인 불일치 및 폰트 컬러/배경 들뜸 문제 해결.
 
 ---
 
