@@ -1,4 +1,4 @@
-$targetFile = "HPE_VME_Editor.html"
+$targetFile = "SlideEditor.html"
 $cssFile = "src\style.css"
 $jsFile = "src\app.js"
 
