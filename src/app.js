@@ -1001,7 +1001,7 @@
         .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 25px; margin-bottom: 1em; margin-top: 0; }
         .markdown-body li { margin-bottom: 0.3em; white-space: pre-wrap; word-break: break-word; }
-        .markdown-body code { background: #f3f4f6; color: #ef4444; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
+        .markdown-body code { background: ${codeColor}1A; color: ${codeColor}; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
         
         /* Markdown Code Block Styles */
         .markdown-body pre { background: #1e1e1e; color: ${accentColor}; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #e5e7eb; border-left: 3px solid ${accentColor};}
@@ -1015,7 +1015,7 @@
         /* Dark Mode Variables for Web Guide */
         body.dark-mode { background: #010409; color: #ffffff; }
         body.dark-mode .card { background: #0d1117; border-color: #30363d; }
-        body.dark-mode .card-header { background: #161b22; border-color: #30363d; border-left-color: #00e676; }
+        body.dark-mode .card-header { background: #161b22; border-color: #30363d; border-left-color: ${darkAccent}; }
         body.dark-mode .text-content { color: #c9d1d9; }
         body.dark-mode .title { color: #ffffff; }
         body.dark-mode .middle-title { color: #8b949e; }
@@ -1032,9 +1032,9 @@
         .img-modal-content { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         /* Go to Top Button */
-        .btn-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #01a982; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 9999; }
+        .btn-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: ${accentColor}; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 9999; }
         .btn-top.show { opacity: 1; visibility: visible; }
-        .btn-top:hover { transform: translateY(-5px); background: #008767; }
+        .btn-top:hover { transform: translateY(-5px); filter: brightness(1.1); }
 
 
         /* Guide TOC Navigator */
