@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "hpe_blue",
-  "displayName": "hpe_blue",
+  "displayName": "HPE Blue (Dark)",
   "version": "1.0",
   "isDarkMode": false,
   "colors": {
