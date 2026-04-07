@@ -1760,17 +1760,15 @@
             };
         }
 
-        // 모달: 테마 적용 버튼
+        // 모달: 테마 적용 버튼 (브랜딩은 별개 모달에서 관리)
         window.applyThemeFromModal = function() {
-            collectBrandingFromUI();
             const theme = buildThemeFromModal();
             applyThemeToEditor(theme);
             showModal('테마가 적용되었습니다!');
         };
 
-        // 모달: 서버 저장 버튼
+        // 모달: 서버 저장 버튼 (브랜딩은 별개 모달에서 관리)
         window.saveThemeFromModal = async function() {
-            collectBrandingFromUI();
             const theme = buildThemeFromModal();
             applyThemeToEditor(theme);
             const ok = await window.saveThemeToServer(theme);
@@ -1782,7 +1780,7 @@
             }
         };
 
-        // 모달 열기/닫기
+        // 테마 모달 열기/닫기
         window.openThemeModal = function() {
             const modal = document.getElementById('theme-modal');
             if (!modal) return;
@@ -1792,4 +1790,33 @@
         window.closeThemeModal = function() {
             const modal = document.getElementById('theme-modal');
             if (modal) modal.style.display = 'none';
+        };
+
+        // ===========================
+        // 브랜딩 모달 (별개 UI)
+        // ===========================
+
+        window.openBrandingModal = function() {
+            const modal = document.getElementById('branding-modal');
+            if (!modal) return;
+            // 현재 projectSettings.branding 값을 필드에 채워 넣기
+            syncBrandingUI();
+            modal.style.display = 'flex';
+        };
+
+        window.closeBrandingModal = function() {
+            const modal = document.getElementById('branding-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // 브랜딩 적용: UI 값 수집 → projectSettings 갱신
+        // (데이터 저장은 사용자가 exportData/downloadData 할 때 함께 저장됨)
+        window.applyBrandingFromModal = function() {
+            collectBrandingFromUI();
+            window.closeBrandingModal();
+            showModal(
+                '브랜딩이 적용되었습니다.\n' +
+                '웹 가이드/PPTX 내보내기 시 반영됩니다.\n' +
+                '데이터 저장(저장 버튼)을 하면 다음에도 유지됩니다.'
+            );
         };
