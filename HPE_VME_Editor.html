@@ -1604,7 +1604,7 @@
                 });
                 
                 if (response.ok) {
-                    window.open('/HPE_VME_Web_Guide.html?t=' + new Date().getTime(), '_blank');
+                    window.open('/exports/HPE_VME_Web_Guide.html?t=' + new Date().getTime(), '_blank');
                 } else {
                     console.warn('서버 저장 실패. 로컬 다운로드 전환');
                     window.exportToHTML();
