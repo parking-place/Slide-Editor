@@ -1,7 +1,10 @@
 import codecs
 import re
+import os
 
-with codecs.open(r'h:\HPE VME\Editor\HPE_VME_Editor.html', 'r', 'utf-8') as f:
+target_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'HPE_VME_Editor.html')
+
+with codecs.open(target_file, 'r', 'utf-8') as f:
     text = f.read()
 
 # 1. generateTocData
@@ -252,6 +255,6 @@ replacement11 = '''        </div>`;
     </div>'''
 text = text.replace(target11.replace('\r\n', '\n'), replacement11)
 
-with codecs.open(r'h:\HPE VME\Editor\HPE_VME_Editor.html', 'w', 'utf-8') as f:
+with codecs.open(target_file, 'w', 'utf-8') as f:
     f.write(text)
 print('Done!')

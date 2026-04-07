@@ -1,5 +1,5 @@
 ﻿$port = 8000
-$root = $PSScriptRoot
+$root = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, ".."))
 
 # 포트 중복 검사 및 할당 (8000번 사용 중이면 다음 포트 탐색)
 while ($true) {
@@ -47,7 +47,7 @@ try {
                 $body = $reader.ReadToEnd()
                 $reader.Close()
                 
-                $savePath = [System.IO.Path]::Combine($root, "HPE_VME_Web_Guide.html")
+                $savePath = [System.IO.Path]::Combine($root, "exports", "HPE_VME_Web_Guide.html")
                 [System.IO.File]::WriteAllText($savePath, $body, [System.Text.Encoding]::UTF8)
                 
                 $response.StatusCode = 200
@@ -72,7 +72,7 @@ try {
                 $body = $reader.ReadToEnd()
                 $reader.Close()
                 
-                $savePath = [System.IO.Path]::Combine($root, "vme_data.json")
+                $savePath = [System.IO.Path]::Combine($root, "data", "vme_data.json")
                 [System.IO.File]::WriteAllText($savePath, $body, [System.Text.Encoding]::UTF8)
                 
                 $response.StatusCode = 200

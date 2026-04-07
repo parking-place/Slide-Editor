@@ -648,7 +648,7 @@
         async function loadInitialData() {
             try {
                 // 웹 서버 환경에서 같은 경로의 json 파일을 시도합니다.
-                const response = await fetch('./vme_data.json');
+                const response = await fetch('./data/vme_data.json');
                 if (response.ok) {
                     const data = await response.json();
                     if (Array.isArray(data)) {
