@@ -1041,24 +1041,24 @@
         .page-layout { display: flex; align-items: flex-start; max-width: 1400px; margin: -20px auto 40px; padding: 0 20px; }
         .guide-toc { width: 240px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; padding: 20px 14px; background: #ffffff; border-right: 1px solid #e5e7eb; border-radius: 12px 0 0 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .guide-toc::-webkit-scrollbar { width: 3px; } .guide-toc::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-        .guide-toc-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #01a982; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
-        .guide-toc-chapter { font-size: 12px; font-weight: 700; color: #01a982; margin-top: 14px; margin-bottom: 3px; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-toc-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${accentColor}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+        .guide-toc-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 3px; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-toc-chapter:first-child { margin-top: 0; }
         .guide-toc-middle { font-size: 12px; font-weight: 600; color: #4b5563; padding: 3px 4px 3px 14px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; }
-        .guide-toc-middle:hover { color: #01a982; background: rgba(1,169,130,0.06); }
+        .guide-toc-middle:hover { color: ${accentColor}; background: ${accentColor}1A; }
         .guide-toc-item { font-size: 11.5px; color: #6b7280; padding: 3px 4px 3px 26px; border-radius: 4px; border-left: 2px solid transparent; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; margin-bottom: 1px; }
         .guide-toc-item:hover { color: #374151; background: rgba(0,0,0,0.03); }
-        .guide-toc-item.active { color: #01a982; border-left-color: #01a982; font-weight: 600; background: rgba(1,169,130,0.07); }
+        .guide-toc-item.active { color: ${accentColor}; border-left-color: ${accentColor}; font-weight: 600; background: ${accentColor}1A; }
         .container { flex: 1; min-width: 0; max-width: none; margin: 0; }
         /* Dark mode TOC */
         body.dark-mode .guide-toc { background: #0d1117; border-right-color: #30363d; }
-        body.dark-mode .guide-toc-header { color: #00e676; border-bottom-color: #30363d; }
-        body.dark-mode .guide-toc-chapter { color: #00e676; }
+        body.dark-mode .guide-toc-header { color: ${darkAccent}; border-bottom-color: #30363d; }
+        body.dark-mode .guide-toc-chapter { color: ${darkAccent}; }
         body.dark-mode .guide-toc-middle { color: #8b949e; }
-        body.dark-mode .guide-toc-middle:hover { color: #00e676; background: rgba(0,230,118,0.06); }
+        body.dark-mode .guide-toc-middle:hover { color: ${darkAccent}; background: ${darkAccent}14; }
         body.dark-mode .guide-toc-item { color: #8b949e; }
         body.dark-mode .guide-toc-item:hover { background: rgba(255,255,255,0.04); color: #c9d1d9; }
-        body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: rgba(0,230,118,0.08); }
+        body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: ${darkAccent}14; }
 
         /* Code Block Wrapper & Copy Button */
         .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid ${codeColor}; }
@@ -1118,7 +1118,7 @@
             if (tocLines.length > 0) {
                 htmlContent += `
         <div class="card">
-            <div class="card-header" style="border-left: 6px solid #111827;">
+            <div class="card-header" style="border-left: 6px solid ${accentColor};">
                 <h2 class="title">목차 (Table of Contents)</h2>
             </div>
             <div class="card-body" style="display: block;">
@@ -1126,14 +1126,14 @@
                 
                 tocLines.forEach(line => {
                     if (line.type === 'chapter') {
-                        htmlContent += `<div style="font-size: 18px; color: #01a982; font-weight: bold; margin-top: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px;">${escapeHtml(line.text)}</div>`;
+                        htmlContent += `<div style="font-size: 18px; color: ${accentColor}; font-weight: bold; margin-top: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px;">${escapeHtml(line.text)}</div>`;
                     } else if (line.type === 'middle') {
                         let anchor = line.slideIndex !== undefined ? `slide-${line.slideIndex}` : `slide-cover-${line.renderableIndex}`;
                         let pageNum = 1 + tocPages + line.renderableIndex + 1;
                         htmlContent += `<a href="#${anchor}" class="toc-link" style="padding-left:0px; display:block; text-decoration:none;">
                             <div style="font-size: 16px; color: #4b5563; font-weight: bold; padding-left: 20px; display: flex; justify-content: space-between; margin-top: 10px;">
                                 <span>${escapeHtml(line.text)}</span>
-                                <span style="color: #01a982; font-weight: bold; font-size:14px;">Page ${pageNum}</span>
+                                <span style="color: ${accentColor}; font-weight: bold; font-size:14px;">Page ${pageNum}</span>
                             </div>
                         </a>`;
                     } else if (line.type === 'title') {
@@ -1141,7 +1141,7 @@
                         htmlContent += `<a href="#slide-${line.slideIndex}" class="toc-link">
                             <div style="font-size: 15px; color: #1f2937; padding-left: 40px; display: flex; justify-content: space-between; margin-top: 8px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 4px; padding-right: 10px;">
                                 <span>${escapeHtml(line.text)}</span>
-                                <span style="color: #01a982; font-weight: bold;">Page ${pageNum}</span>
+                                <span style="color: ${accentColor}; font-weight: bold;">Page ${pageNum}</span>
                             </div>
                         </a>`;
                     }
@@ -1541,6 +1541,7 @@
             if (!theme || !theme.colors) return;
             const root = document.documentElement.style;
             root.setProperty('--hpe-green',     theme.colors.accent);
+            root.setProperty('--hpe-green-alpha', theme.colors.accent + '14');
             root.setProperty('--code-color',    theme.colors.codeColor || theme.colors.accent);
             root.setProperty('--code-bg',       (theme.colors.codeColor || theme.colors.accent) + '1A');
             root.setProperty('--bg-dark',        theme.colors.bgDark);

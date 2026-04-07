@@ -739,7 +739,7 @@
             text-overflow: ellipsis;
         }
         .toc-nav-middle:hover {
-            background: rgba(0, 230, 118, 0.07);
+            background: var(--hpe-green-alpha);
             color: var(--hpe-green);
             padding-left: 18px;
         }
@@ -764,7 +764,7 @@
         }
         .toc-nav-title.active {
             color: var(--hpe-green);
-            background: rgba(0, 230, 118, 0.08);
+            background: var(--hpe-green-alpha);
             border-left: 2px solid var(--hpe-green);
             font-weight: 600;
         }
@@ -774,13 +774,13 @@
             border-right-color: var(--border-color);
         }
         body.light-mode .toc-nav-title.active {
-            background: rgba(1, 169, 130, 0.1);
-            color: #01a982;
-            border-left-color: #01a982;
+            background: var(--hpe-green-alpha);
+            color: var(--hpe-green);
+            border-left-color: var(--hpe-green);
         }
-        body.light-mode .toc-nav-chapter { color: #01a982; }
-        body.light-mode .toc-nav-middle:hover { color: #01a982; background: rgba(1, 169, 130, 0.07); }
-        body.light-mode .toc-nav-title:hover { background: rgba(0,0,0,0.04); color: #111827; }
+        body.light-mode .toc-nav-chapter { color: var(--hpe-green); }
+        body.light-mode .toc-nav-middle:hover { color: var(--hpe-green); background: var(--hpe-green-alpha); }
+        body.light-mode .toc-nav-title:hover { background: rgba(0,0,0,0.04); color: var(--text-main); }
 
         /* ============================
            테마 관리 모달
