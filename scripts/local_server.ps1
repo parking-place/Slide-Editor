@@ -1,4 +1,4 @@
-$port = 8000
+﻿$port = 8000
 $root = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, ".."))
 
 # 포트 중복 검사 및 할당 (8000번 사용 중이면 다음 포트 탐색)
