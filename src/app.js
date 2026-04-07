@@ -1,0 +1,1144 @@
+﻿// === SAVE DATA START ===
+        let slidesData = [];
+        // === SAVE DATA END ===
+        
+        // 초기 로드 시 기존 데이터가 있으면 에디터 폼을 숨기고, 데이터가 없으면 첫 번째 에디터를 엽니다.
+        let activeEditorIndex = null;
+        let editingSlideIndex = null;
+
+        // 구버전(bashCode 필드 포함) 데이터를 새 마크다운 구조로 마이그레이션하는 함수 (안정성 강화)
+        function migrateData(slides) {
+            return slides.map(slide => {
+                if (!slide) return slide;
+                
+                if (slide.bashCode) {
+                    let code = slide.bashCode;
+                    let text = slide.text || '';
+                    
+                    if (typeof text === 'string' && text.trim() !== '') {
+                        text += '\n\n';
+                    } else if (typeof text !== 'string') {
+                        text = String(text || '');
+                        if (text.trim() !== '') text += '\n\n';
+                    }
+                    
+                    text += '```bash\n' + code + '\n```';
+                    slide.text = text;
+                    delete slide.bashCode;
+                }
+                
+                if (slide.textRatio === undefined) {
+                    slide.textRatio = 50;
+                }
+                return slide;
+            });
+        }
+
+        // 같은 폴더에 있는 vme_data.json 파일을 자동으로 불러오는 함수
+        async function loadInitialData() {
+            try {
+                // 웹 서버 환경에서 같은 경로의 json 파일을 시도합니다.
+                const response = await fetch('./data/vme_data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data)) {
+                        slidesData = migrateData(data);
+                    }
+                }
+            } catch (e) {
+                console.log('초기 데이터 파일(vme_data.json)이 없거나 로컬 파일 시스템 제약(CORS)으로 불러올 수 없습니다. 수동으로 불러오기를 사용해주세요.', e);
+            } finally {
+                activeEditorIndex = slidesData.length === 0 ? 0 : null;
+                window.renderPreview();
+            }
+        }
+
+        // 초기 화면 렌더링 실행 (자동 불러오기 포함)
+        window.onload = loadInitialData;
+
+        // 이미지 확대 모달 제어 함수
+        window.openImageModal = function(src) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('image-modal-content');
+            img.src = src;
+            modal.style.display = 'flex';
+        };
+
+        window.closeImageModal = function() {
+            const modal = document.getElementById('image-modal');
+            modal.style.display = 'none';
+        };
+
+        // 이스케이프 함수 (HTML 태그 깨짐 방지 - 마크다운 렌더링 전에는 사용하지 않고 xss 필터링 용도로 필요 시 사용)
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // 커스텀 모달 제어 함수
+        function showModal(message, isConfirm = false, onConfirm = null) {
+            const modal = document.getElementById('custom-modal');
+            const msgEl = document.getElementById('modal-message');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+
+            msgEl.innerText = message;
+            
+            if (isConfirm) {
+                btnCancel.style.display = 'inline-block';
+                btnConfirm.innerText = '삭제';
+                btnConfirm.onclick = function() {
+                    if(onConfirm) onConfirm();
+                    modal.style.display = 'none';
+                };
+            } else {
+                btnCancel.style.display = 'none';
+                btnConfirm.innerText = '확인';
+                btnConfirm.onclick = function() {
+                    modal.style.display = 'none';
+                };
+            }
+            
+            btnCancel.onclick = function() {
+                modal.style.display = 'none';
+            };
+
+            modal.style.display = 'flex';
+        }
+
+        // TOC(목차) 데이터를 추출하는 함수
+        function generateTocData(slides) {
+            let lines = [];
+            let prevCh = null;
+            let prevMid = null;
+            let prevTit = null;
+            let rIndex = 0;
+
+            slides.forEach((s, i) => {
+                let ch = s.chapter || '대제목 미지정';
+                let mid = s.middleTitle || '';
+                let tit = s.title || '소제목 없음';
+
+                if (ch === prevCh && mid === prevMid && tit === prevTit) {
+                    return;
+                }
+
+                if (ch !== prevCh) {
+                    lines.push({ type: 'chapter', text: ch });
+                    prevCh = ch;
+                    prevMid = null; // 대제목이 바뀌면 중제목 초기화
+                }
+                if (mid && mid !== prevMid) {
+                    lines.push({ type: 'middle', text: mid, renderableIndex: rIndex });
+                    rIndex++;
+                    prevMid = mid;
+                }
+                
+                lines.push({ type: 'title', text: tit, slideIndex: i, renderableIndex: rIndex });
+                rIndex++;
+                prevTit = tit;
+            });
+            return lines;
+        }
+
+        // TOC 데이터를 페이지별로 분할하는 함수 (대제목 기준 및 최대 라인 수 기준)
+        function paginateTocData(tocLines) {
+            const LINES_PER_TOC_SLIDE = 15;
+            let pages = [];
+            let currentPage = [];
+            let currentLineCount = 0;
+            
+            for (let i = 0; i < tocLines.length; i++) {
+                let line = tocLines[i];
+                
+                // 대제목이 나타났는데, 현재 페이지가 이미 뭔가 채워져 있다면 분리
+                if ((line.type === 'chapter' && currentPage.length > 0) || currentLineCount >= LINES_PER_TOC_SLIDE) {
+                    pages.push(currentPage);
+                    currentPage = [];
+                    currentLineCount = 0;
+                }
+                
+                currentPage.push(line);
+                currentLineCount++;
+            }
+            if (currentPage.length > 0) {
+                pages.push(currentPage);
+            }
+            return pages;
+        }
+
+        // -------------------------
+        // 슬라이드 '추가' 관련 로직
+        // -------------------------
+        window.openEditor = function(index) {
+            activeEditorIndex = index;
+            editingSlideIndex = null; // 수정 모드 닫기
+            window.renderPreview();
+        };
+
+        window.cancelEditor = function() {
+            activeEditorIndex = null;
+            window.renderPreview();
+        };
+
+        window.insertNewSlide = function(insertIndex) {
+            const chapter = document.getElementById('input-chapter').value.trim() || '대제목 미지정';
+            const middleTitle = document.getElementById('input-middle-title').value.trim();
+            const title = document.getElementById('input-title').value.trim() || '소제목 없음';
+            const text = document.getElementById('input-text').value.trim();
+            const imageInput = document.getElementById('input-image');
+            const imageCaption = document.getElementById('input-image-caption').value.trim();
+            const textRatioInput = document.getElementById('input-text-ratio');
+            const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
+
+            if (imageInput.files && imageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: e.target.result, textRatio });
+                    activeEditorIndex = null;
+                    window.renderPreview();
+                };
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                slidesData.splice(insertIndex, 0, { chapter, middleTitle, title, text, imageCaption, image: null, textRatio });
+                activeEditorIndex = null;
+                window.renderPreview();
+            }
+        };
+
+        // -------------------------
+        // 슬라이드 '수정' 관련 로직
+        // -------------------------
+        window.openEditSlide = function(index) {
+            editingSlideIndex = index;
+            activeEditorIndex = null; // 새 슬라이드 폼 닫기
+            window.renderPreview();
+        };
+
+        window.cancelEditSlide = function() {
+            editingSlideIndex = null;
+            window.renderPreview();
+        };
+
+        window.saveEditSlide = function(index) {
+            const chapter = document.getElementById('edit-chapter').value.trim() || '대제목 미지정';
+            const middleTitle = document.getElementById('edit-middle-title').value.trim();
+            const title = document.getElementById('edit-title').value.trim() || '소제목 없음';
+            const text = document.getElementById('edit-text').value.trim();
+            const imageInput = document.getElementById('edit-image');
+            const imageCaption = document.getElementById('edit-image-caption').value.trim();
+            const deleteImageChecked = document.getElementById('edit-delete-image')?.checked;
+            const textRatioInput = document.getElementById('edit-text-ratio');
+            const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
+
+            if (imageInput.files && imageInput.files[0]) {
+                // 새 이미지 업로드 시
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: e.target.result, textRatio };
+                    editingSlideIndex = null;
+                    window.renderPreview();
+                };
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                // 이미지 업로드 안 한 경우 (기존 이미지 유지 혹은 삭제)
+                const existingImage = deleteImageChecked ? null : slidesData[index].image;
+                slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: existingImage, textRatio };
+                editingSlideIndex = null;
+                window.renderPreview();
+            }
+        };
+
+        // -------------------------
+        // 슬라이드 '삭제' 관련 로직
+        // -------------------------
+        window.deleteSlide = function(index) {
+            showModal('이 슬라이드를 삭제하시겠습니까?', true, function() {
+                slidesData.splice(index, 1);
+                activeEditorIndex = null;
+                editingSlideIndex = null;
+                window.renderPreview();
+            });
+        };
+
+        // -------------------------
+        // 렌더링
+        // -------------------------
+        window.renderPreview = function() {
+            const area = document.getElementById('preview-area');
+            const status = document.getElementById('status-text');
+            
+            area.innerHTML = '';
+
+            // TOC 라인 및 페이지 수 계산
+            const tocLines = generateTocData(slidesData);
+            const tocPagesData = slidesData.length > 0 ? paginateTocData(tocLines) : [];
+            const tocPages = tocPagesData.length;
+
+            // 1. 표지 고정 노출
+            const coverDiv = document.createElement('div');
+            coverDiv.className = 'slide-preview cover-preview';
+            coverDiv.innerHTML = `
+                <h1>HPE Virtual Machine<br><span>Essentials (VME)</span></h1>
+                <p class="sub">설치 및 구성 가이드 템플릿</p>
+            `;
+            area.appendChild(coverDiv);
+
+            // 2. 목차 (TOC) 렌더링
+            for (let p = 0; p < tocPages; p++) {
+                let chunk = tocPagesData[p];
+                
+                let tocHtml = `<div class="toc-container">`;
+                chunk.forEach(line => {
+                    if (line.type === 'chapter') {
+                        tocHtml += `<div class="toc-chapter">${escapeHtml(line.text)}</div>`;
+                    } else if (line.type === 'middle') {
+                        let anchor = line.slideIndex !== undefined ? `preview-slide-${line.slideIndex}` : `preview-cover-${line.renderableIndex}`;
+                        let pageNum = 1 + tocPages + line.renderableIndex + 1;
+                        tocHtml += `<div class="toc-middle" onclick="document.getElementById('${anchor}').scrollIntoView({behavior: 'smooth', block: 'start'})" style="cursor:pointer;" title="Page ${pageNum}">${escapeHtml(line.text)}</div>`;
+                    } else if (line.type === 'title') {
+                        let pageNum = 1 + tocPages + line.renderableIndex + 1; 
+                        tocHtml += `<div class="toc-title" onclick="document.getElementById('preview-slide-${line.slideIndex}').scrollIntoView({behavior: 'smooth', block: 'start'})">
+                            <span>${escapeHtml(line.text)}</span> 
+                            <span class="toc-page">Page ${pageNum}</span>
+                        </div>`;
+                    }
+                });
+                tocHtml += `</div>`;
+
+                const tocDiv = document.createElement('div');
+                tocDiv.className = 'slide-preview';
+                tocDiv.innerHTML = `
+                    <div class="preview-header" style="border-left: 4px solid var(--text-main);">
+                        <div class="preview-title" style="color: var(--hpe-green);">목차 (Table of Contents) ${tocPages > 1 ? `(${p+1}/${tocPages})` : ''}</div>
+                    </div>
+                    <div class="preview-body" style="flex-direction: column;">
+                        <div class="box" style="background: transparent; border: none; padding: 0;">
+                            ${tocHtml}
+                        </div>
+                    </div>
+                    <div class="preview-footer">
+                        <span>HPE VME Guide</span>
+                        <span>PAGE ${p + 2}</span>
+                    </div>
+                `;
+                area.appendChild(tocDiv);
+            }
+
+            // 3. 본문 슬라이드 루프
+            let rIndex = 0;
+            let prevCh = null;
+            let prevMid = null;
+            for (let i = 0; i <= slidesData.length; i++) {
+                
+                // [1] '새 슬라이드 추가' 폼 또는 구분선
+                if (activeEditorIndex === i) {
+                    
+                    // 직전 슬라이드의 챕터, 중제목, 소제목 가져오기 (하위 호환성 적용)
+                    let defaultChapter = '';
+                    let defaultMiddleTitle = '';
+                    let defaultTitle = '';
+                    if (i > 0 && slidesData[i - 1]) {
+                        defaultChapter = escapeHtml(slidesData[i - 1].chapter);
+                        defaultMiddleTitle = escapeHtml(slidesData[i - 1].middleTitle || '');
+                        defaultTitle = escapeHtml(slidesData[i - 1].title);
+                    }
+                    
+                    const editorDiv = document.createElement('div');
+                    editorDiv.className = 'editor-section';
+                    editorDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 번째 슬라이드 작성하기' : '새 슬라이드 추가'}</h3>
+                            <button type="button" class="btn-cancel" onclick="window.cancelEditor()"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="input-chapter" value="${defaultChapter}" placeholder="대제목 (예: 1. 시스템 설정)">
+                            <input type="text" id="input-middle-title" value="${defaultMiddleTitle}" placeholder="중제목 (예: 1.1 네트워크 설정) - 선택">
+                            <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 (예: 1.1.1 관리 IP 설정)">
+                        </div>
+                        <textarea id="input-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)\n## 소제목\n* 설명\n\n\`\`\`bash\n코드 블록 작성 시 여기에 코드를 넣으세요.\n\`\`\`"></textarea>
+                        <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                            <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
+                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="document.getElementById('input-layout-ratio-container').style.display='flex'">
+                            <span style="font-size: 12px; color: #484f58; flex: 1;">(선택) 스크린샷 이미지 업로드</span>
+                            <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                        </div>
+                        <div class="file-upload-wrapper" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
+                                <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                                <span id="input-ratio-text">50% : 50%</span>
+                                <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                            </div>
+                            <input type="range" id="input-text-ratio" min="20" max="80" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('input-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                            <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
+                        </div>
+                        <button type="button" class="btn-add" onclick="window.insertNewSlide(${i})">
+                            <i class="fa-solid fa-plus"></i> 슬라이드 생성
+                        </button>
+                    `;
+                    area.appendChild(editorDiv);
+                } else {
+                    const dividerDiv = document.createElement('div');
+                    dividerDiv.className = 'add-divider';
+                    dividerDiv.innerHTML = `
+                        <button type="button" onclick="window.openEditor(${i})" title="새 슬라이드 추가"><i class="fa-solid fa-plus"></i></button>
+                    `;
+                    area.appendChild(dividerDiv);
+                }
+
+                // [2] 기존 슬라이드 프리뷰 또는 '수정' 폼
+                if (i < slidesData.length) {
+                    const slide = slidesData[i];
+                    
+                    let ch = slide.chapter || '대제목 미지정';
+                    let mid = slide.middleTitle || '';
+                    if (ch !== prevCh) {
+                        prevCh = ch;
+                        prevMid = null;
+                    }
+                    if (mid && mid !== prevMid) {
+                        const coverDiv = document.createElement('div');
+                        coverDiv.className = 'slide-preview cover-preview middle-cover';
+                        coverDiv.id = `preview-cover-${rIndex}`;
+                        coverDiv.style.background = '#111827';
+                        coverDiv.style.borderLeft = '6px solid var(--hpe-green)';
+                        coverDiv.innerHTML = `
+                            <div style="font-size: 20px; color: var(--hpe-green); font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
+                            <div style="font-size: 48px; color: #fff; line-height: 1.3; font-weight: bold; letter-spacing: -0.5px;">${escapeHtml(mid)}</div>
+                        `;
+                        area.appendChild(coverDiv);
+                        rIndex++; // 가상 표지가 1페이지 차지
+                        prevMid = mid;
+                    }
+
+                    if (editingSlideIndex === i) {
+                        // ==== 수정 모드 폼 ====
+                        const editDiv = document.createElement('div');
+                        editDiv.className = 'editor-section edit-mode';
+                        
+                        const existingImageDeleteCheck = slide.image ? `
+                            <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" id="edit-delete-image" style="width: auto; cursor: pointer;">
+                                <label for="edit-delete-image" style="cursor:pointer; color: #ff5c5c;"><i class="fa-solid fa-trash-can"></i> 기존 사진 삭제하기</label>
+                            </div>
+                        ` : '';
+
+                        editDiv.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> 슬라이드 수정 중</h3>
+                                <button type="button" class="btn-cancel" onclick="window.cancelEditSlide()"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="edit-chapter" value="${escapeHtml(slide.chapter)}" placeholder="대제목">
+                                <input type="text" id="edit-middle-title" value="${escapeHtml(slide.middleTitle || '')}" placeholder="중제목 (선택)">
+                                <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="소제목">
+                            </div>
+                            <textarea id="edit-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)">${escapeHtml(slide.text)}</textarea>
+                            <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                                <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
+                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="if(this.files.length) document.getElementById('edit-layout-ratio-container').style.display='flex'">
+                                <span style="font-size: 12px; color: #484f58; flex: 1;">
+                                    ${slide.image ? '(선택) 새 이미지 업로드 시 기존 이미지 교체' : '(선택) 스크린샷 이미지 업로드'}
+                                </span>
+                                <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                            </div>
+                            <div class="file-upload-wrapper" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
+                                    <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                                    <span id="edit-ratio-text">${slide.textRatio || 50}% : ${100 - (slide.textRatio || 50)}%</span>
+                                    <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                                </div>
+                                <input type="range" id="edit-text-ratio" min="20" max="80" value="${slide.textRatio || 50}" style="width: 100%; cursor: pointer;" oninput="document.getElementById('edit-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                                <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
+                            </div>
+                            ${existingImageDeleteCheck}
+                            <button type="button" class="btn-add" onclick="window.saveEditSlide(${i})">
+                                <i class="fa-solid fa-check"></i> 변경사항 저장
+                            </button>
+                        `;
+                        area.appendChild(editDiv);
+
+                    } else {
+                        // ==== 일반 프리뷰 모드 ====
+                        const contentPageNumber = 1 + tocPages + rIndex + 1; // 표지(1) + TOC페이지들 + 실 페이지 수 + 1
+                        
+                        // 텍스트/이미지 유무 판별
+                        const hasText = slide.text && slide.text.trim() !== '';
+                        const hasImage = !!slide.image;
+
+                        // Markdown 파싱
+                        const parsedMarkdownText = marked.parse(slide.text || '');
+
+                        let currentRatio = slide.textRatio || 50;
+                        let txtFlex = (hasImage && hasText) ? currentRatio : 100;
+                        let imgFlex = (hasImage && hasText) ? (100 - currentRatio) : 100;
+
+                        let textContentHtml = '';
+                        if (hasText) {
+                            textContentHtml = `
+                                <div class="box" style="flex: ${txtFlex};">
+                                    <div class="markdown-body">${parsedMarkdownText}</div>
+                                </div>
+                            `;
+                        } else if (!hasText && !hasImage) {
+                            // 완전히 비어있을 경우 레이아웃 유지를 위한 빈 박스
+                            textContentHtml = `<div class="box"></div>`;
+                        }
+
+                        let imageHtml = '';
+                        if (hasImage) {
+                            let captionHtml = slide.imageCaption ? `<div style="font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
+                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${slide.image}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                        }
+
+                        const middleTitleHtml = slide.middleTitle 
+                            ? `<div class="preview-middle-title">${escapeHtml(slide.middleTitle)}</div>` 
+                            : '';
+
+                        const slideDiv = document.createElement('div');
+                        slideDiv.className = 'slide-preview';
+                        slideDiv.id = `preview-slide-${i}`;
+                        slideDiv.innerHTML = `
+                            <div class="btn-action-group">
+                                <button type="button" class="btn-icon btn-edit" onclick="window.openEditSlide(${i})" title="수정">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn-icon btn-delete" onclick="window.deleteSlide(${i})" title="삭제">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                            <div class="preview-header">
+                                <div class="preview-chapter">${escapeHtml(slide.chapter)}</div>
+                                ${middleTitleHtml}
+                                <div class="preview-title">${escapeHtml(slide.title)}</div>
+                            </div>
+                            <div class="preview-body">
+                                ${textContentHtml}
+                                ${imageHtml}
+                            </div>
+                            <div class="preview-footer">
+                                <span>HPE VME Guide</span>
+                                <span>PAGE ${contentPageNumber}</span>
+                            </div>
+                        `;
+                        area.appendChild(slideDiv);
+                    }
+                    rIndex++; // 본문 페이지 카운트 +1
+                }
+            }
+
+            if(slidesData.length > 0) {
+                status.innerHTML = `현재 <strong>표지 1장 + 목차 ${tocPages}장 + 본문 ${slidesData.length}장</strong>의 슬라이드가 작성되었습니다.`;
+            } else {
+                status.innerHTML = `시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.`;
+            }
+        };
+
+        // PPTX 파일 생성 다운로드
+        window.exportToPPTX = async function() {
+            if (slidesData.length === 0) {
+                showModal('다운로드할 슬라이드를 먼저 추가해주세요!');
+                return;
+            }
+
+            const btn = document.getElementById('dl-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 파일 생성 중...';
+
+            let pptx = new PptxGenJS();
+            pptx.layout = 'LAYOUT_16x9';
+
+            // 마스터 정의
+            pptx.defineSlideMaster({
+                title: 'VME_MASTER',
+                background: { color: '0D1117' },
+                objects: [
+                    { rect: { x: 0.5, y: 5.1, w: 9.0, h: 0.01, fill: { color: '30363D' } } },
+                    { text: { text: 'HPE Virtual Machine Essentials (VME) Installation Guide', options: { x: 0.5, y: 5.2, w: 6, h: 0.3, color: '8B949E', fontSize: 10, fontFace: 'Arial' } } }
+                ],
+                slideNumber: { x: 9.3, y: 5.2, color: '8B949E', fontSize: 10 }
+            });
+
+            // 1. 표지 슬라이드
+            let slide0 = pptx.addSlide();
+            slide0.background = { color: '010409' };
+            slide0.addText('HPE Virtual Machine\nEssentials (VME)', {
+                x: 0.8, y: 1.8, w: 8.5, h: 1.5, fontSize: 44, color: 'FFFFFF', bold: true, fontFace: 'Arial'
+            });
+            slide0.addShape(pptx.ShapeType.rect, { x: 0.8, y: 3.5, w: 0.04, h: 0.6, fill: { color: '00E676' } });
+            slide0.addText('설치 및 구성 가이드 템플릿', {
+                x: 1.0, y: 3.5, w: 8, h: 0.6, fontSize: 22, color: '8B949E', fontFace: 'Malgun Gothic'
+            });
+
+            // 2. TOC 생성
+            const tocLines = generateTocData(slidesData);
+            const tocPagesData = slidesData.length > 0 ? paginateTocData(tocLines) : [];
+            const tocPages = tocPagesData.length;
+
+            for (let p = 0; p < tocPages; p++) {
+                let tocSlide = pptx.addSlide({ masterName: 'VME_MASTER' });
+                
+                tocSlide.addShape(pptx.ShapeType.rect, { x: 0.5, y: 0.5, w: 0.04, h: 0.4, fill: { color: 'FFFFFF' } });
+                tocSlide.addText(`목차 (Table of Contents) ${tocPages > 1 ? `(${p+1}/${tocPages})` : ''}`, {
+                    x: 0.6, y: 0.5, w: 8.5, h: 0.4, fontSize: 24, color: '00E676', bold: true, fontFace: 'Malgun Gothic'
+                });
+
+                let chunk = tocPagesData[p];
+                let currentY = 1.3;
+
+                chunk.forEach(line => {
+                    if (line.type === 'chapter') {
+                        tocSlide.addText(line.text, { x: 0.6, y: currentY, w: 8, h: 0.3, fontSize: 16, color: 'FFFFFF', bold: true, fontFace: 'Malgun Gothic' });
+                    } else if (line.type === 'middle') {
+                        tocSlide.addText(line.text, { x: 1.0, y: currentY, w: 7.5, h: 0.3, fontSize: 14, color: '8B949E', bold: true, fontFace: 'Malgun Gothic' });
+                    } else if (line.type === 'title') {
+                        let pageNum = 1 + tocPages + line.renderableIndex + 1;
+                        tocSlide.addText(line.text, { x: 1.4, y: currentY, w: 6.5, h: 0.3, fontSize: 13, color: 'C9D1D9', fontFace: 'Malgun Gothic' });
+                        tocSlide.addText(pageNum.toString(), { x: 8.5, y: currentY, w: 0.5, h: 0.3, fontSize: 13, color: '00E676', fontFace: 'Malgun Gothic', align: 'right', bold: true });
+                    }
+                    currentY += 0.25; // 줄 간격
+                });
+            }
+
+            // 3. 본문 슬라이드 생성
+            let prevChPPTX = null;
+            let prevMidPPTX = null;
+            slidesData.forEach(data => {
+                let ch = data.chapter || '대제목 미지정';
+                let mid = data.middleTitle || '';
+                
+                if (ch !== prevChPPTX) {
+                    prevChPPTX = ch;
+                    prevMidPPTX = null;
+                }
+                
+                if (mid && mid !== prevMidPPTX) {
+                    let coverSlide = pptx.addSlide({ masterName: 'VME_MASTER' });
+                    coverSlide.background = { color: '111827' };
+                    coverSlide.addText(ch, { x: 0.5, y: 2.2, w: 9, h: 0.5, fontSize: 24, color: '00E676', bold: true, align: 'center', fontFace: 'Malgun Gothic' });
+                    coverSlide.addText(mid, { x: 0.5, y: 2.8, w: 9, h: 1.0, fontSize: 44, color: 'FFFFFF', bold: true, align: 'center', fontFace: 'Arial' });
+                    
+                    prevMidPPTX = mid;
+                }
+
+                let slide = pptx.addSlide({ masterName: 'VME_MASTER' });
+
+                // 중제목 유무에 따라 상단 제목부의 Y 위치 조절
+                let chapterY = data.middleTitle ? 0.25 : 0.4;
+                
+                slide.addText(data.chapter, {
+                    x: 0.5, y: chapterY, w: 9, h: 0.3, fontSize: 11, color: '00E676', bold: true, fontFace: 'Malgun Gothic'
+                });
+
+                if (data.middleTitle) {
+                    slide.addText(data.middleTitle, {
+                        x: 0.5, y: 0.5, w: 9, h: 0.3, fontSize: 14, color: '8B949E', bold: true, fontFace: 'Malgun Gothic'
+                    });
+                }
+
+                let titleY = data.middleTitle ? 0.8 : 0.7;
+
+                slide.addShape(pptx.ShapeType.rect, { x: 0.5, y: titleY, w: 0.02, h: 0.5, fill: { color: '00E676' } });
+                slide.addText(data.title, {
+                    x: 0.6, y: titleY, w: 9, h: 0.5, fontSize: 26, color: 'FFFFFF', bold: true, fontFace: 'Malgun Gothic'
+                });
+
+                const hasText = data.text && data.text.trim() !== '';
+                const hasImage = !!data.image;
+                const isImageOnly = !hasText && hasImage;
+
+                if (isImageOnly) {
+                    // 이미지만 있을 경우 전체 영역 차지
+                    let imgH = data.imageCaption ? 3.0 : 3.3; // 캡션이 있으면 이미지 높이를 조금 줄임
+                    slide.addImage({
+                        data: data.image,
+                        x: 0.5, y: 1.5, w: 9.0, h: imgH, 
+                        sizing: { type: 'contain', w: 9.0, h: imgH }
+                    });
+                    
+                    if (data.imageCaption) {
+                        slide.addText(data.imageCaption, {
+                            x: 0.5, y: 1.5 + imgH, w: 9.0, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
+                        });
+                    }
+                } else {
+                    // 기존 레이아웃 (텍스트 + 이미지, 또는 텍스트 단독)
+                    let currentRatio = data.textRatio || 50;
+                    let textWidth = 8.8; 
+                    let boxWidth = 9.0;
+                    let imgWidth = 0;
+                    let imgX = 5.2;
+
+                    if (hasImage && hasText) {
+                        boxWidth = 8.6 * (currentRatio / 100);
+                        textWidth = boxWidth - 0.2;
+                        imgWidth = 8.6 * ((100 - currentRatio) / 100);
+                        imgX = 0.5 + boxWidth + 0.4;
+                    } else if (hasImage) {
+                        textWidth = 4.1;
+                        boxWidth = 4.3;
+                    }
+
+                    slide.addShape(pptx.ShapeType.rect, {
+                        x: 0.5, y: 1.5, w: boxWidth, h: 3.3, fill: { color: '161B22' }, line: { color: '30363D', width: 1 }
+                    });
+                    
+                    // Markdown 파싱하여 일반 텍스트와 코드 블록 분리 렌더링
+                    let currentY = 1.6;
+                    const parts = (data.text || '').split(/(```[\s\S]*?```)/g);
+
+                    parts.forEach(part => {
+                        if (!part) return;
+                        
+                        let lines = part.split('\n').length;
+                        let estimatedHeight = lines * 0.25; 
+                        
+                        if (part.startsWith('```')) {
+                            // 코드 블록 (터미널 스타일 렌더링)
+                            let codeContent = part.replace(/```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '');
+                            
+                            slide.addShape(pptx.ShapeType.rect, {
+                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fill: { color: '010409' }, line: { color: '30363D', width: 1 }
+                            });
+                            
+                            slide.addText(codeContent, {
+                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 11, color: '00E676', fontFace: 'D2Coding', valign: 'top', margin: 10
+                            });
+                            currentY += estimatedHeight + 0.1;
+                        } else {
+                            // 일반 텍스트 (마크다운 기호 제거)
+                            let cleanPptText = part.replace(/\*\*(.*?)\*\*/g, '$1')
+                                                   .replace(/__(.*?)__/g, '$1')
+                                                   .replace(/`(.*?)`/g, '$1')
+                                                   .replace(/^#+\s/gm, '');
+                            if(cleanPptText.trim() === '') return;
+                            
+                            slide.addText(cleanPptText, {
+                                x: 0.6, y: currentY, w: textWidth, h: estimatedHeight, fontSize: 14, color: 'C9D1D9', fontFace: 'Malgun Gothic', valign: 'top', margin: 10
+                            });
+                            currentY += estimatedHeight + 0.05;
+                        }
+                    });
+
+                    if (hasImage) {
+                        let finalImgWidth = (hasImage && hasText) ? imgWidth : 4.3;
+                        let finalImgX = (hasImage && hasText) ? imgX : 5.2;
+                        let imgH = data.imageCaption ? 3.0 : 3.3; // 캡션이 있으면 이미지 높이를 조금 줄임
+                        slide.addImage({
+                            data: data.image,
+                            x: finalImgX, y: 1.5, w: finalImgWidth, h: imgH, 
+                            sizing: { type: 'contain', w: finalImgWidth, h: imgH }
+                        });
+                        
+                        if (data.imageCaption) {
+                            slide.addText(data.imageCaption, {
+                                x: finalImgX, y: 1.5 + imgH, w: finalImgWidth, h: 0.3, fontSize: 11, color: '8B949E', align: 'center', fontFace: 'Malgun Gothic'
+                            });
+                        }
+                    }
+                }
+            });
+
+            await pptx.writeFile({ fileName: `HPE_VME_Custom_Guide.pptx` });
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-file-export"></i> PPTX 다운로드';
+        };
+
+        // HTML 웹 가이드 문자열 템플릿 생성 헬퍼
+        function generateHTMLContent() {
+
+            // TOC 페이지수 계산을 위해 필요
+            const tocLines = generateTocData(slidesData);
+            const tocPagesData = slidesData.length > 0 ? paginateTocData(tocLines) : [];
+            const tocPages = tocPagesData.length;
+
+            let htmlContent = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HPE VME Installation Guide</title>
+    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css](https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css)">
+    
+    <style>
+        body { margin: 0; padding: 0; background: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; }
+        html { scroll-behavior: smooth; }
+        .header { background: #01a982; color: #ffffff; padding: 40px 20px; text-align: center; }
+        .header h1 { margin: 0 0 10px 0; font-size: 32px; }
+        .header p { margin: 0; font-size: 18px; opacity: 0.9; }
+        .container { max-width: 1000px; margin: -20px auto 40px auto; padding: 0 20px; position: relative; z-index: 10; }
+        .card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .card-header { padding: 20px 30px; border-bottom: 1px solid #e5e7eb; border-left: 6px solid #01a982; background: #f9fafb; }
+        .chapter { color: #01a982; font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+        .middle-title { color: #6b7280; font-weight: 600; font-size: 16px; margin-bottom: 5px; }
+        .title { font-size: 24px; font-weight: 700; color: #111827; margin: 0; }
+        .card-body { display: flex; flex-wrap: wrap; gap: 30px; padding: 30px; }
+        .text-content { flex: 1; min-width: 300px; font-size: 15px; line-height: 1.7; color: #4b5563; }
+        .img-content { flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: flex-start; }
+        .img-content img { max-width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: zoom-in; transition: transform 0.2s; }
+        .img-content img:hover { transform: scale(1.02); }
+        .no-img { padding: 40px; text-align: center; border: 1px dashed #d1d5db; border-radius: 8px; color: #9ca3af; width: 100%; }
+        .footer { text-align: center; padding: 30px; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; margin-top: 50px; }
+        
+        /* Markdown HTML Styles */
+        .markdown-body p { margin-top: 0; margin-bottom: 0.8em; white-space: pre-wrap; word-break: break-word; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: #01a982; margin-top: 1em; margin-bottom: 0.5em; font-weight: 700; }
+        .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
+        .markdown-body ul, .markdown-body ol { padding-left: 25px; margin-bottom: 1em; margin-top: 0; }
+        .markdown-body li { margin-bottom: 0.3em; white-space: pre-wrap; word-break: break-word; }
+        .markdown-body code { background: #f3f4f6; color: #ef4444; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
+        
+        /* Markdown Code Block Styles */
+        .markdown-body pre { background: #111827; color: #10b981; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 0; margin-bottom: 1em; border: 1px solid #374151; border-left: 3px solid #01a982;}
+        .markdown-body pre code { background: transparent; color: inherit; padding: 0; font-size: 14px;}
+        
+        .markdown-body blockquote { border-left: 4px solid #d1d5db; margin: 0 0 1em 0; padding-left: 15px; color: #6b7280; font-style: italic; }
+        
+        .toc-link { text-decoration: none; display: block; transition: 0.2s; border-radius: 6px; }
+        .toc-link:hover { background-color: #f9fafb; padding-left: 5px; }
+
+        /* Dark Mode Variables for Web Guide */
+        body.dark-mode { background: #010409; color: #ffffff; }
+        body.dark-mode .card { background: #0d1117; border-color: #30363d; }
+        body.dark-mode .card-header { background: #161b22; border-color: #30363d; border-left-color: #00e676; }
+        body.dark-mode .text-content { color: #c9d1d9; }
+        body.dark-mode .title { color: #ffffff; }
+        body.dark-mode .middle-title { color: #8b949e; }
+        body.dark-mode .markdown-body pre { background: #010409; color: #00e676; border-color: #30363d; }
+        body.dark-mode .toc-link div { color: #c9d1d9 !important; border-bottom-color: #30363d !important; }
+        body.dark-mode .toc-link:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+        /* Image Modal Styles */
+        .img-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
+        .img-modal-content { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* Go to Top Button */
+        .btn-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #01a982; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 9999; }
+        .btn-top.show { opacity: 1; visibility: visible; }
+        .btn-top:hover { transform: translateY(-5px); background: #008767; }
+    </style>
+</head>
+<body>
+    <!-- 이미지 모달 -->
+    <div id="img-modal" class="img-modal-overlay" onclick="closeModal()">
+        <img id="img-modal-content" class="img-modal-content" src="">
+    </div>
+
+    <script>
+        function openModal(src) {
+            document.getElementById('img-modal-content').src = src;
+            document.getElementById('img-modal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('img-modal').style.display = 'none';
+        }
+        window.addEventListener('scroll', function() {
+            const btn = document.getElementById('btn-top');
+            if (!btn) return;
+            if (window.scrollY > 300 || document.documentElement.scrollTop > 300) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        });
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    <\/script>
+
+    <button type="button" class="btn-top" id="btn-top" onclick="scrollToTop()">▲</button>
+
+    <div class="header" style="position: relative;">
+        <button onclick="document.body.classList.toggle('dark-mode')" style="position: absolute; right: 20px; top: 20px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-family: inherit;">테마 전환</button>
+        <h1>HPE Virtual Machine Essentials (VME)</h1>
+        <p>설치 및 구성 가이드</p>
+    </div>
+    <div class="container">`;
+
+            // HTML용 TOC 영역 렌더링
+            if (tocLines.length > 0) {
+                htmlContent += `
+        <div class="card">
+            <div class="card-header" style="border-left: 6px solid #111827;">
+                <h2 class="title">목차 (Table of Contents)</h2>
+            </div>
+            <div class="card-body" style="display: block;">
+                <div class="toc-html-container">`;
+                
+                tocLines.forEach(line => {
+                    if (line.type === 'chapter') {
+                        htmlContent += `<div style="font-size: 18px; color: #01a982; font-weight: bold; margin-top: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px;">${escapeHtml(line.text)}</div>`;
+                    } else if (line.type === 'middle') {
+                        let anchor = line.slideIndex !== undefined ? `slide-${line.slideIndex}` : `slide-cover-${line.renderableIndex}`;
+                        let pageNum = 1 + tocPages + line.renderableIndex + 1;
+                        htmlContent += `<a href="#${anchor}" class="toc-link" style="padding-left:0px; display:block; text-decoration:none;">
+                            <div style="font-size: 16px; color: #4b5563; font-weight: bold; padding-left: 20px; display: flex; justify-content: space-between; margin-top: 10px;">
+                                <span>${escapeHtml(line.text)}</span>
+                                <span style="color: #01a982; font-weight: bold; font-size:14px;">Page ${pageNum}</span>
+                            </div>
+                        </a>`;
+                    } else if (line.type === 'title') {
+                        let pageNum = 1 + tocPages + line.renderableIndex + 1;
+                        htmlContent += `<a href="#slide-${line.slideIndex}" class="toc-link">
+                            <div style="font-size: 15px; color: #1f2937; padding-left: 40px; display: flex; justify-content: space-between; margin-top: 8px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 4px; padding-right: 10px;">
+                                <span>${escapeHtml(line.text)}</span>
+                                <span style="color: #01a982; font-weight: bold;">Page ${pageNum}</span>
+                            </div>
+                        </a>`;
+                    }
+                });
+
+                htmlContent += `
+                </div>
+            </div>
+        </div>`;
+            }
+
+            // 본문 내용 렌더링
+            let prevChHTML = null;
+            let prevMidHTML = null;
+            let rIndex = 0;
+            slidesData.forEach((slide, index) => {
+                let ch = slide.chapter || '대제목 미지정';
+                let mid = slide.middleTitle || '';
+                
+                if (ch !== prevChHTML) {
+                    prevChHTML = ch;
+                    prevMidHTML = null;
+                }
+                
+                if (mid && mid !== prevMidHTML) {
+                    htmlContent += `
+        <div class="card" id="slide-cover-${rIndex}" style="background: #111827; border-color: #30363d;">
+            <div class="card-body" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <div style="font-size: 20px; color: #00e676; font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
+                <div style="font-size: 48px; color: #ffffff; font-weight: bold; line-height: 1.3; letter-spacing: -0.5px;">${escapeHtml(mid)}</div>
+            </div>
+        </div>`;
+                    rIndex++; // 가상 표지가 1페이지 차지
+                    prevMidHTML = mid;
+                }
+
+                const parsedMarkdownText = marked.parse(slide.text || '');
+                
+                const hasText = slide.text && slide.text.trim() !== '';
+                const hasImage = !!slide.image;
+
+                let currentRatio = slide.textRatio || 50;
+                let txtFlex = (hasImage && hasText) ? currentRatio : 100;
+                let imgFlex = (hasImage && hasText) ? (100 - currentRatio) : 100;
+
+                let textContentHtml = '';
+                if (hasText) {
+                    textContentHtml = `
+                        <div class="text-content" style="flex: ${txtFlex};">
+                            <div class="markdown-body">${parsedMarkdownText}</div>
+                        </div>
+                    `;
+                }
+
+                let imgContentHtml = '';
+                if (hasImage) {
+                    let captionHtml = slide.imageCaption ? `<div style="font-size: 13px; color: #6b7280; text-align: center; margin-top: 8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
+                    imgContentHtml = `<div class="img-content" style="flex: ${imgFlex}; flex-direction: column; align-items: center;"><img src="${slide.image}" alt="Slide ${index + 1} Image" onclick="openModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                }
+
+                const middleTitleHtml = slide.middleTitle 
+                    ? `<div class="middle-title">${escapeHtml(slide.middleTitle)}</div>` 
+                    : '';
+
+                htmlContent += `
+        <div class="card" id="slide-${index}">
+            <div class="card-header">
+                <div class="chapter">${escapeHtml(slide.chapter)}</div>
+                ${middleTitleHtml}
+                <h2 class="title">${escapeHtml(slide.title)}</h2>
+            </div>
+            <div class="card-body">
+                ${textContentHtml}
+                ${imgContentHtml}
+            </div>
+        </div>`;
+                rIndex++;
+            });
+
+            htmlContent += `
+    </div>
+    <div class="footer">
+        &copy; ${new Date().getFullYear()} HPE VME Guide Generated
+    </div>
+</body>
+</html>`;
+
+            return htmlContent;
+        }
+
+        // 웹 가이드 서버 배포 및 새 탭 창 열기
+        window.viewWebGuide = async function() {
+            if (slidesData.length === 0) {
+                showModal('배포할 슬라이드 내용을 하나 이상 작성해주세요.');
+                return;
+            }
+            
+            const btn = document.getElementById('dl-html-view-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중...';
+            
+            const htmlContent = generateHTMLContent();
+
+            try {
+                const response = await fetch('/api/saveHtml', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/html' },
+                    body: htmlContent
+                });
+                
+                if (response.ok) {
+                    window.open('/exports/HPE_VME_Web_Guide.html?t=' + new Date().getTime(), '_blank');
+                } else {
+                    console.warn('서버 저장 실패. 로컬 다운로드 전환');
+                    window.exportToHTML();
+                }
+            } catch (err) {
+                console.warn('통신 오류. 로컬 다운로드 전환:', err);
+                window.exportToHTML();
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-book-open"></i> 가이드 보기';
+            }
+        };
+
+        // 수동 웹 가이드 다운로드
+        window.exportToHTML = function() {
+            if (slidesData.length === 0) {
+                showModal('다운로드할 슬라이드가 없습니다!');
+                return;
+            }
+            
+            const htmlContent = generateHTMLContent();
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'HPE_VME_Web_Guide.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // 데이터(JSON) 파일 저장
+        window.exportData = async function() {
+            if (slidesData.length === 0) {
+                showModal('저장할 슬라이드 데이터가 없습니다.');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(slidesData, null, 2);
+
+            try {
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: dataStr
+                });
+                
+                if (response.ok) {
+                    showModal('웹 서버(vme_data.json)에 직접 로컬 저장을 성공적으로 완료했습니다!');
+                    return;
+                }
+            } catch (err) {
+                console.warn('서버 저장 실패, 기존 다운로드 방식으로 돌아갑니다.', err);
+            }
+            
+            // 날짜 데이터 포맷 생성 (_YYMMDDhhmmss)
+            const now = new Date();
+            const year = now.getFullYear().toString().slice(-2);
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+            
+            const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vme_data_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showModal('웹 서버 연동을 실패하여 브라우저 다운로드 방식을 통해 백업본으로 저장(다운로드)했습니다.');
+        };
+
+        // 수동 데이터(JSON) 파일 다운로드 (PC 로컬)
+        window.downloadData = function() {
+            if (slidesData.length === 0) {
+                showModal('다운로드할 슬라이드 데이터가 없습니다.');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(slidesData, null, 2);
+            
+            const now = new Date();
+            const year = now.getFullYear().toString().slice(-2);
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+            
+            const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vme_data_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // 맨 위로가기 로직
+        window.onscroll = function() {
+            const btn = document.getElementById('btn-top-editor');
+            if (!btn) return;
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        };
+
+        window.scrollToTop = function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // 데이터(JSON) 파일 수동 불러오기
+        window.importData = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        slidesData = migrateData(importedData);
+                        activeEditorIndex = null;
+                        editingSlideIndex = null;
+                        window.renderPreview();
+                        showModal('데이터를 성공적으로 불러왔습니다!');
+                    } else {
+                        showModal('올바른 데이터 형식이 아닙니다.');
+                    }
+                } catch (err) {
+                    console.error("데이터 파일 불러오기 오류:", err);
+                    showModal('데이터 파일을 읽는 중 오류가 발생했습니다.\n' + err.message);
+                }
+                event.target.value = ''; // input 초기화
+            };
+            reader.readAsText(file);
+        };

@@ -1,3 +1,4 @@
 data/vme_data.json
 exports/HPE_VME_Web_Guide.html
 .agentmem
+plans/*.*
