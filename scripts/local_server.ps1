@@ -1,4 +1,4 @@
-﻿$port = 8000
+$port = 8000
 $root = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, ".."))
 
 # 포트 중복 검사 및 할당 (8000번 사용 중이면 다음 포트 탐색)
@@ -18,7 +18,7 @@ $listener.Prefixes.Add("http://localhost:$port/")
 $listener.Start()
 
 Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host "       HPE VME 가이드 에디터 로컬 웹 서버" -ForegroundColor Cyan
+Write-Host "       Slide Editor 로컬 웹 서버" -ForegroundColor Cyan
 Write-Host "===============================================" -ForegroundColor Cyan
 Write-Host "  -> 서버가 정상적으로 실행되었습니다." -ForegroundColor Green
 Write-Host "  -> 주소: http://localhost:$port/" -ForegroundColor Yellow
@@ -28,7 +28,7 @@ Write-Host "  ※ 주의: 이 검은색 창을 닫으면 접속이 끊깁니다.
 Write-Host "===============================================" -ForegroundColor Cyan
 
 # 기본 브라우저 실행
-Start-Process "http://localhost:$port/HPE_VME_Editor.html"
+Start-Process "http://localhost:$port/SlideEditor.html"
 
 try {
     while ($listener.IsListening) {
@@ -47,7 +47,7 @@ try {
                 $body = $reader.ReadToEnd()
                 $reader.Close()
                 
-                $savePath = [System.IO.Path]::Combine($root, "exports", "HPE_VME_Web_Guide.html")
+                $savePath = [System.IO.Path]::Combine($root, "exports", "SlideEditor_Web_Guide.html")
                 [System.IO.File]::WriteAllText($savePath, $body, [System.Text.Encoding]::UTF8)
                 
                 $response.StatusCode = 200
@@ -163,7 +163,7 @@ try {
         }
         # === POST /api/save 요청 처리 끝 ===
 
-        if ($url -eq "/") { $url = "/HPE_VME_Editor.html" }
+        if ($url -eq "/") { $url = "/SlideEditor.html" }
         
         $filePath = [System.IO.Path]::Combine($root, $url.TrimStart('/').Replace('/', '\'))
         

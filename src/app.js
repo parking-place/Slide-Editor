@@ -6,9 +6,9 @@
         let projectSettings = {
             activeTheme: 'hpe_default',
             branding: {
-                projectName:   'HPE Virtual Machine Essentials (VME)',
-                guideSubtitle: '설치 및 구성 가이드',
-                footerCopy:    'HPE VME Guide'
+                projectName:   'My Guide',
+                guideSubtitle: '가이드 부제',
+                footerCopy:    'My Guide'
             }
         };
 
@@ -366,8 +366,8 @@
             const coverDiv = document.createElement('div');
             coverDiv.className = 'slide-preview cover-preview';
             coverDiv.innerHTML = `
-                <h1>HPE Virtual Machine<br><span>Essentials (VME)</span></h1>
-                <p class="sub">설치 및 구성 가이드 템플릿</p>
+                <h1>${escapeHtml(projectSettings.branding.projectName || 'My Guide')}</h1>
+                <p class="sub">${escapeHtml(projectSettings.branding.guideSubtitle || '')}</p>
             `;
             area.appendChild(coverDiv);
 
@@ -405,7 +405,7 @@
                         </div>
                     </div>
                     <div class="preview-footer">
-                        <span>HPE VME Guide</span>
+                        <span>${escapeHtml(projectSettings.branding.footerCopy || 'My Guide')}</span>
                         <span>PAGE ${p + 2}</span>
                     </div>
                 `;
@@ -604,7 +604,7 @@
                                 ${imageHtml}
                             </div>
                             <div class="preview-footer">
-                                <span>HPE VME Guide</span>
+                                <span>${escapeHtml(projectSettings.branding.footerCopy || 'My Guide')}</span>
                                 <span>PAGE ${contentPageNumber}</span>
                             </div>
                         `;
@@ -740,9 +740,9 @@
             const pDimColor      = tp.dimColor      || '8B949E';
             const pFont  = (activeTheme && activeTheme.fonts) ? activeTheme.fonts.pptxBody  || 'Malgun Gothic' : 'Malgun Gothic';
             const pFontT = (activeTheme && activeTheme.fonts) ? activeTheme.fonts.pptxTitle || 'Arial'         : 'Arial';
-            const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
-            const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
-            const footerCopy    = br.footerCopy    || 'HPE VME Guide';
+            const projectName   = br.projectName   || 'My Guide';
+            const guideSubtitle = br.guideSubtitle || '';
+            const footerCopy    = br.footerCopy    || 'My Guide';
 
             let pptx = new PptxGenJS();
             pptx.layout = 'LAYOUT_16x9';
@@ -938,7 +938,7 @@
                 }
             });
 
-            await pptx.writeFile({ fileName: `HPE_VME_Custom_Guide.pptx` });
+            await pptx.writeFile({ fileName: `SlideEditor_Guide.pptx` });
             
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-file-export"></i> PPTX 다운로드';
@@ -955,7 +955,7 @@
             const codeColor   = th.codeColor   || darkAccent;
             const projectName   = br.projectName   || 'HPE Virtual Machine Essentials (VME)';
             const guideSubtitle = br.guideSubtitle || '설치 및 구성 가이드';
-            const footerCopy    = br.footerCopy    || 'HPE VME Guide';
+            const footerCopy    = br.footerCopy    || 'My Guide';
             // 에디터의 현재 다크/라이트 모드를 웹 가이드에 그대로 적용
             const isLightMode   = document.body.classList.contains('light-mode');
             const bodyClass     = isLightMode ? '' : 'dark-mode';
@@ -970,7 +970,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HPE VME Installation Guide</title>
+    <title>Slide Editor - Web Guide</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"><\/script>
@@ -1329,7 +1329,7 @@
                 });
                 
                 if (response.ok) {
-                    window.open('/exports/HPE_VME_Web_Guide.html?t=' + new Date().getTime(), '_blank');
+                    window.open('/exports/SlideEditor_Web_Guide.html?t=' + new Date().getTime(), '_blank');
                 } else {
                     console.warn('서버 저장 실패. 로컬 다운로드 전환');
                     window.exportToHTML();
@@ -1354,7 +1354,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'HPE_VME_Web_Guide.html';
+            a.download = 'SlideEditor_Web_Guide.html';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
