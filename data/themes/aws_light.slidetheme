@@ -1,0 +1,36 @@
+{
+  "name": "aws_light",
+  "displayName": "AWS Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#e07000",
+    "codeColor": "#e07000",
+    "bgDark": "#faf3e8",
+    "slideBg": "#ffffff",
+    "boxBg": "#fef9f0",
+    "border": "#f0d9b0",
+    "textMain": "#16191f",
+    "textDim": "#5a6879"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "faf3e8",
+    "middleCoverBg": "232f3e",
+    "accentColor": "e07000",
+    "codeColor": "e07000",
+    "textColor": "16191f",
+    "dimColor": "5a6879"
+  },
+  "webGuide": {
+    "headerBg": "#e07000",
+    "accentColor": "#e07000",
+    "darkAccent": "#c05f00"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

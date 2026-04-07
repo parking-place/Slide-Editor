@@ -1,0 +1,36 @@
+{
+  "name": "google_dark",
+  "displayName": "Google Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#4285F4",
+    "codeColor": "#34A853",
+    "bgDark": "#050a14",
+    "slideBg": "#0d1b2a",
+    "boxBg": "#152032",
+    "border": "#1e3a5f",
+    "textMain": "#FFFFFF",
+    "textDim": "#8ab4f8"
+  },
+  "pptx": {
+    "masterBg": "0d1b2a",
+    "coverBg": "050a14",
+    "middleCoverBg": "0d2137",
+    "accentColor": "4285F4",
+    "codeColor": "34A853",
+    "textColor": "FFFFFF",
+    "dimColor": "8ab4f8"
+  },
+  "webGuide": {
+    "headerBg": "#4285F4",
+    "accentColor": "#4285F4",
+    "darkAccent": "#8ab4f8"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

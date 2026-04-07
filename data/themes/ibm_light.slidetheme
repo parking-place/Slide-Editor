@@ -1,0 +1,36 @@
+{
+  "name": "ibm_light",
+  "displayName": "IBM Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#0043ce",
+    "codeColor": "#198038",
+    "bgDark": "#e0e0e0",
+    "slideBg": "#ffffff",
+    "boxBg": "#f4f4f4",
+    "border": "#c6c6c6",
+    "textMain": "#161616",
+    "textDim": "#525252"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "e0e0e0",
+    "middleCoverBg": "0043ce",
+    "accentColor": "0043ce",
+    "codeColor": "198038",
+    "textColor": "161616",
+    "dimColor": "525252"
+  },
+  "webGuide": {
+    "headerBg": "#0043ce",
+    "accentColor": "#0043ce",
+    "darkAccent": "#0f62fe"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

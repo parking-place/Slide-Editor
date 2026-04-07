@@ -1,0 +1,36 @@
+{
+  "name": "intel_dark",
+  "displayName": "Intel Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#0071C5",
+    "codeColor": "#00C7FD",
+    "bgDark": "#010812",
+    "slideBg": "#051525",
+    "boxBg": "#081f35",
+    "border": "#0d3255",
+    "textMain": "#FFFFFF",
+    "textDim": "#80b8e0"
+  },
+  "pptx": {
+    "masterBg": "051525",
+    "coverBg": "010812",
+    "middleCoverBg": "081f35",
+    "accentColor": "0071C5",
+    "codeColor": "00C7FD",
+    "textColor": "FFFFFF",
+    "dimColor": "80b8e0"
+  },
+  "webGuide": {
+    "headerBg": "#0071C5",
+    "accentColor": "#0071C5",
+    "darkAccent": "#2490e0"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

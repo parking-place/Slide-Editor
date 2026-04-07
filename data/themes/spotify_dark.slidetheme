@@ -1,0 +1,36 @@
+{
+  "name": "spotify_dark",
+  "displayName": "Spotify Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#1DB954",
+    "codeColor": "#1DB954",
+    "bgDark": "#000000",
+    "slideBg": "#121212",
+    "boxBg": "#212121",
+    "border": "#2a2a2a",
+    "textMain": "#FFFFFF",
+    "textDim": "#b3b3b3"
+  },
+  "pptx": {
+    "masterBg": "121212",
+    "coverBg": "000000",
+    "middleCoverBg": "212121",
+    "accentColor": "1DB954",
+    "codeColor": "1DB954",
+    "textColor": "FFFFFF",
+    "dimColor": "b3b3b3"
+  },
+  "webGuide": {
+    "headerBg": "#1DB954",
+    "accentColor": "#1DB954",
+    "darkAccent": "#1ed760"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

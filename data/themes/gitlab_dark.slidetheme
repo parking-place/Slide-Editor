@@ -1,0 +1,36 @@
+{
+  "name": "gitlab_dark",
+  "displayName": "GitLab Dark",
+  "version": "1.0",
+  "isDarkMode": true,
+  "colors": {
+    "accent": "#FC6D26",
+    "codeColor": "#e8a069",
+    "bgDark": "#0e0e0e",
+    "slideBg": "#1f1f1f",
+    "boxBg": "#2d2d2d",
+    "border": "#404040",
+    "textMain": "#FFFFFF",
+    "textDim": "#c0c0c0"
+  },
+  "pptx": {
+    "masterBg": "1f1f1f",
+    "coverBg": "0e0e0e",
+    "middleCoverBg": "2d2d2d",
+    "accentColor": "FC6D26",
+    "codeColor": "e8a069",
+    "textColor": "FFFFFF",
+    "dimColor": "c0c0c0"
+  },
+  "webGuide": {
+    "headerBg": "#FC6D26",
+    "accentColor": "#FC6D26",
+    "darkAccent": "#fd8c55"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}

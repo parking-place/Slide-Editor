@@ -1,0 +1,36 @@
+{
+  "name": "microsoft_light",
+  "displayName": "Microsoft Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#0078D4",
+    "codeColor": "#107C10",
+    "bgDark": "#e1f0fb",
+    "slideBg": "#ffffff",
+    "boxBg": "#f3f9ff",
+    "border": "#cce4f6",
+    "textMain": "#1b1b1b",
+    "textDim": "#616161"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "e1f0fb",
+    "middleCoverBg": "0078D4",
+    "accentColor": "0078D4",
+    "codeColor": "107C10",
+    "textColor": "1b1b1b",
+    "dimColor": "616161"
+  },
+  "webGuide": {
+    "headerBg": "#0078D4",
+    "accentColor": "#0078D4",
+    "darkAccent": "#005a9e"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Segoe UI"
+  }
+}

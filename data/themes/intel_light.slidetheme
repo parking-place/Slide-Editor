@@ -1,0 +1,36 @@
+{
+  "name": "intel_light",
+  "displayName": "Intel Light",
+  "version": "1.0",
+  "isDarkMode": false,
+  "colors": {
+    "accent": "#0071C5",
+    "codeColor": "#0050a0",
+    "bgDark": "#dceefa",
+    "slideBg": "#ffffff",
+    "boxBg": "#f0f8ff",
+    "border": "#b3d6f0",
+    "textMain": "#1a1a1a",
+    "textDim": "#4a6680"
+  },
+  "pptx": {
+    "masterBg": "ffffff",
+    "coverBg": "dceefa",
+    "middleCoverBg": "0071C5",
+    "accentColor": "0071C5",
+    "codeColor": "0050a0",
+    "textColor": "1a1a1a",
+    "dimColor": "4a6680"
+  },
+  "webGuide": {
+    "headerBg": "#0071C5",
+    "accentColor": "#0071C5",
+    "darkAccent": "#005ba5"
+  },
+  "fonts": {
+    "uiFamily": "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody": "Malgun Gothic",
+    "pptxTitle": "Arial"
+  }
+}
