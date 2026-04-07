@@ -143,5 +143,6 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased]
-*(현재 없음)*
+## [Unreleased] (docs/add-readme)
+### Added
+- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 구조, 실행 가이드 등이 종합적으로 포함된 루트 레벨 `README.md` 파일 신규 추가.
