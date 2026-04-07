@@ -2,7 +2,7 @@
   "name": "hpe_default",
   "displayName": "hpe_default",
   "version": "1.0",
-  "isLightMode": false,
+  "isDarkMode": true,
   "colors": {
     "accent": "#00E676",
     "codeColor": "#01a982",
