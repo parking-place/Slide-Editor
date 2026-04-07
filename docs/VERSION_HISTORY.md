@@ -31,11 +31,11 @@
 - **테마 내보내기/불러오기**: `.slidetheme` 파일 브라우저 다운로드 및 파일 선택 불러오기 지원.
 
 ### Changed
-- **`vme_data.json` 구조 변경**: 슬라이드 배열(`[]`)에서 `{ settings, slides }` 래퍼 객체로 확장. `settings.activeTheme`(선택된 테마명)과 `settings.branding`(프로젝트명·부제·footer) 영역 추가.
+- **`slide_data.json` 구조 변경**: 슬라이드 배열(`[]`)에서 `{ settings, slides }` 래퍼 객체로 확장. `settings.activeTheme`(선택된 테마명)과 `settings.branding`(프로젝트명·부제·footer) 영역 추가.
 - **구버전 데이터 자동 호환**: `parseLoadedData()` 함수 도입. 구버전 배열 형식 → 슬라이드만 교체(기존 settings 유지), 신버전 래퍼 구조 → 완전 복원(Deep merge).
 - **`generateHTMLContent()` 파라미터화**: 웹 가이드 출력물의 헤더 배경, 강조색, footer 문구, 제목/부제를 `activeTheme.webGuide`와 `projectSettings.branding`으로 동적 주입.
 - **`exportToPPTX()` 파라미터화**: 슬라이드 마스터 배경, 강조색, 폰트, footer 문구, 표지 텍스트를 `activeTheme.pptx`와 `projectSettings.branding`으로 동적 주입.
-- **브랜딩 정보 데이터 분리**: 프로젝트명·부제·footer 문구는 `.slidetheme` 파일이 아닌 `vme_data.json`(settings.branding)에 저장하여 프로젝트별 독립 관리.
+- **브랜딩 정보 데이터 분리**: 프로젝트명·부제·footer 문구는 `.slidetheme` 파일이 아닌 `slide_data.json`(settings.branding)에 저장하여 프로젝트별 독립 관리.
 - **헤더 버튼 UI 소형화**: 소형 버튼 시스템(`.btn-hdr`) 도입. 패딩 축소(5px 11px), 높이 30px, 12px 폰트. 색상 variant(`--amber`, `--indigo`, `--purple`, `--blue`, `--green`) 클래스 체계화. 구분선(`.hdr-divider`) 추가.
 - **브랜딩 모달 분리**: 테마 모달에서 브랜딩 섹션 완전 제거, 독립된 `브랜딩` 버튼 및 전용 모달 UI로 분리. 프로젝트명·부제·Footer 세 필드와 적용 대상 힌트 제공.
 - **웹 가이드 다크/라이트 모드 동기화**: `가이드 보기` / `HTML 다운로드` 실행 시점의 에디터 모드(`light-mode` 클래스 유무)를 감지하여 웹 가이드 `<body>` 클래스에 동일하게 적용.
@@ -128,3 +128,8 @@
   - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
   - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
   - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`
+
+## [chore/rebrand-slide-data] - 2026-04-07
+### Changed
+- **데이터 저장 파일명 변경**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
+  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.

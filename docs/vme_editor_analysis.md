@@ -36,7 +36,7 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 ## 4. 데이터 구조 (State Management)
 앱의 핵심 데이터는 전역 변수 `slidesData`, `projectSettings`, `activeTheme`으로 관리됩니다.
 
-**`vme_data.json` 저장 구조** (`feat/custom-theme-builder` 이후)
+**`slide_data.json` 저장 구조** (`feat/custom-theme-builder` 이후)
 ```json
 {
   "settings": {
@@ -79,7 +79,7 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 ## 5. 핵심 모듈 및 기능 (Functions)
 
 ### 5.1 데이터 로드 및 저장 (Data & File I/O)
-- `loadInitialData()`: 에디터 로드 시 `vme_data.json`을 자동으로 가져온 뒤 `parseLoadedData()`로 파싱, 이후 저장된 테마(`projectSettings.activeTheme`)를 자동 로드합니다.
+- `loadInitialData()`: 에디터 로드 시 `slide_data.json`을 자동으로 가져온 뒤 `parseLoadedData()`로 파싱, 이후 저장된 테마(`projectSettings.activeTheme`)를 자동 로드합니다.
 - `parseLoadedData(data)`: 구버전(배열)/신버전(래퍼 객체) 데이터를 자동 판별하여 `slidesData`와 `projectSettings`를 갱신하는 호환 파서입니다.
 - `migrateData(slides)`: 구버전 `bashCode` 필드를 마크다운 코드 블록으로 변환하는 역방향 호환 함수.
 - `exportData()` / `downloadData()`: 현재 `{ settings, slides }` 래퍼 객체를 JSON 파일로 서버 저장 또는 브라우저 다운로드합니다.
@@ -147,5 +147,5 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 2. **에러 핸들링**: PPTX 내보내기 시 텍스트가 매우 길어 높이를 초과할 경우 슬라이드 밖으로 벗어나는 한계가 있을 수 있습니다(현재 라인 수 곱하기로 대략적인 높이 산정 `estimatedHeight`).
 3. **스타일 격리**: `exportToHTML` 문자열 안의 CSS는 `activeTheme.webGuide`를 통해 동적으로 주입되므로, 에디터 CSS와 내보내기 CSS를 함께 수정해야 합니다.
 4. **TOC Observer 재등록 비용**: `renderPreview()` 호출마다 `IntersectionObserver`를 `disconnect` 후 재등록하기 때문에, 슬라이드 수가 매우 많은 경우 (수십 장 이상) Observer 성능 영향을 확인해야 합니다. 필요시 Debounce 도입 검토.
-5. **`vme_data.json` 구조 변경 주의**: `feat/custom-theme-builder` 이후 저장 포맷이 배열에서 `{ settings, slides }` 래퍼 객체로 바뀌었습니다. 불러오기는 하위 호환되지만, 새로 저장한 파일은 구버전 에디터에서 열 수 없습니다.
+5. **`slide_data.json` 구조 변경 주의**: `feat/custom-theme-builder` 이후 저장 포맷이 배열에서 `{ settings, slides }` 래퍼 객체로 바뀌었습니다. 불러오기는 하위 호환되지만, 새로 저장한 파일은 구버전 에디터에서 열 수 없습니다.
 6. **테마 서버 의존성**: 테마 기능은 `/api/themes` 엔드포인트(local_server.ps1)에 의존합니다. 서버 없이 동작 시 `getDefaultThemeObject()` 폴백으로 기본 테마가 적용됩니다.
