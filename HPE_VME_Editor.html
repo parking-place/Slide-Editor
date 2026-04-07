@@ -52,6 +52,9 @@
             <button type="button" class="btn-secondary-download" style="border-color: var(--text-dim); color: var(--text-dim); background: transparent;" onclick="document.body.classList.toggle('light-mode')">
                 <i class="fa-solid fa-circle-half-stroke"></i> 테마 전환
             </button>
+            <button type="button" class="btn-secondary-download" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1);" onclick="window.openThemeModal()">
+                <i class="fa-solid fa-palette"></i> 테마 관리
+            </button>
             <input type="file" id="import-data-input" accept=".json" style="display: none;" onchange="window.importData(event)">
             <button type="button" class="btn-secondary-download" style="border-color: #a855f7; color: #a855f7; background: rgba(168, 85, 247, 0.1);" onclick="document.getElementById('import-data-input').click()">
                 <i class="fa-solid fa-folder-open"></i> 불러오기
@@ -92,6 +95,66 @@
     </div>
 
     <script src="src/app.js"></script>
+
+    <!-- 테마 관리 모달 -->
+    <div id="theme-modal" class="theme-modal-overlay" style="display:none;">
+        <div class="theme-modal-content">
+            <div class="theme-modal-header">
+                <span><i class="fa-solid fa-palette"></i> 테마 관리</span>
+                <button type="button" class="btn-cancel" onclick="window.closeThemeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="theme-modal-body">
+                <!-- 좌: 테마 목록 -->
+                <div class="theme-list">
+                    <div class="theme-list-title">저장된 테마</div>
+                    <div id="theme-list-items"></div>
+                    <div class="theme-list-actions">
+                        <button type="button" class="theme-action-btn" onclick="document.getElementById('import-theme-input').click()">
+                            <i class="fa-solid fa-folder-open"></i> 불러오기
+                        </button>
+                        <button type="button" class="theme-action-btn" onclick="window.exportTheme()">
+                            <i class="fa-solid fa-download"></i> 내보내기
+                        </button>
+                        <input type="file" id="import-theme-input" accept=".slidetheme" style="display:none;" onchange="window.importTheme(event)">
+                    </div>
+                </div>
+                <!-- 우: 테마 편집기 -->
+                <div class="theme-editor">
+                    <div class="theme-editor-section">
+                        <label class="theme-section-label">테마 이름</label>
+                        <input type="text" id="theme-name-input" class="theme-text-input" placeholder="예: my_company_theme">
+                    </div>
+                    <div class="theme-editor-section">
+                        <label class="theme-section-label">색상 설정</label>
+                        <div id="theme-color-editor"></div>
+                    </div>
+                    <div class="theme-editor-section">
+                        <label class="theme-section-label">브랜딩 (데이터 파일에 저장됨)</label>
+                        <div class="branding-row">
+                            <label>프로젝트명</label>
+                            <input type="text" id="branding-project-name" class="theme-text-input" placeholder="HPE VME Guide">
+                        </div>
+                        <div class="branding-row">
+                            <label>부제</label>
+                            <input type="text" id="branding-guide-subtitle" class="theme-text-input" placeholder="설치 및 구성 가이드">
+                        </div>
+                        <div class="branding-row">
+                            <label>Footer</label>
+                            <input type="text" id="branding-footer-copy" class="theme-text-input" placeholder="HPE VME Guide">
+                        </div>
+                    </div>
+                    <div class="theme-modal-footer">
+                        <button type="button" class="theme-btn-apply" onclick="window.applyThemeFromModal()">
+                            <i class="fa-solid fa-check"></i> 적용
+                        </button>
+                        <button type="button" class="theme-btn-save" onclick="window.saveThemeFromModal()">
+                            <i class="fa-solid fa-floppy-disk"></i> 서버에 저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

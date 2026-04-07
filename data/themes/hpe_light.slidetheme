@@ -1,0 +1,34 @@
+{
+  "name": "hpe_light",
+  "displayName": "HPE Light",
+  "version": "1.0",
+  "colors": {
+    "accent":   "#01a982",
+    "bgDark":   "#f3f4f6",
+    "slideBg":  "#ffffff",
+    "boxBg":    "#f9fafb",
+    "border":   "#e5e7eb",
+    "textMain": "#111827",
+    "textDim":  "#4b5563"
+  },
+  "pptx": {
+    "masterBg":      "F9FAFB",
+    "coverBg":       "FFFFFF",
+    "middleCoverBg": "F3F4F6",
+    "accentColor":   "01A982",
+    "codeColor":     "01A982",
+    "textColor":     "1F2937",
+    "dimColor":      "6B7280"
+  },
+  "webGuide": {
+    "headerBg":    "#01a982",
+    "accentColor": "#01a982",
+    "darkAccent":  "#019272"
+  },
+  "fonts": {
+    "uiFamily":   "Pretendard",
+    "codeFamily": "D2Coding",
+    "pptxBody":   "Malgun Gothic",
+    "pptxTitle":  "Arial"
+  }
+}
