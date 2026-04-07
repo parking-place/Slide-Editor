@@ -7,6 +7,18 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.5.4] - 2026-04-07
+### Added
+- **코드 블록 구문 강조 (Syntax Highlighting)**: `highlight.js 11.10.0` + `atom-one-dark` 테마를 도입하여 `bash`, `powershell`, `sql`, `python` 등 언어별 문법 색상 강조 적용.
+- **원클릭 복사 버튼**: 코드 블록 상단에 언어 레이블과 함께 '복사' 버튼 배치. 클릭 시 "복사됨!" 2초 피드백 후 원복. `navigator.clipboard` API + `execCommand` fallback 지원.
+- **코드 블록 래퍼 UI**: 언어명·복사 버튼을 포함한 헤더 바와 코드 영역으로 구성된 `.code-block-wrapper` 컴포넌트 적용. 다크/라이트 모드 모두 대응.
+- **웹 가이드 – 테마 전환 플로팅 버튼**: 헤더 인라인 버튼 → 우측 하단 원형 플로팅 버튼(bottom: 90px)으로 변경. 스크롤 위치와 무관하게 항상 접근 가능.
+- **웹 가이드 – 동적 TOC 네비게이터**: 좌측 고정 사이드바(`guide-toc`) 추가. 대제목/중제목/소제목 계층 트리 렌더링, IntersectionObserver 스크롤 하이라이팅.
+- **웹 가이드 – 다크모드 기본 적용**: `<body class="dark-mode">` 로 변경하여 최초 로드 시 다크 테마로 표시.
+
+### Changed
+- **HTML 내보내기 동기화**: 내보낸 웹 가이드에도 hljs CDN, 코드 블록 UI, 복사 버튼, TOC 네비게이터 전부 포함.
+
 ## [v0.5.3] - 2026-04-07
 ### Added
 - **동적 목차(TOC) 사이드바 네비게이터**: 에디터 좌측에 `Navigator` 사이드바가 고정 노출되도록 레이아웃 도입. 항목 클릭 시 해당 슬라이드로 부드럽게 자동 스크롤(`scrollIntoView`) 연동.
@@ -20,8 +32,8 @@
 - CSS와 JS를 `src/style.css`, `src/app.js`로 모듈화하여 `HPE_VME_Editor.html` 코드를 단순화.
 
 ### Fixed
-- **같은 소제목 중복 표시 문제**: 같은 대제목+중제목+소제목 조합의 복합키를 사용하여 Navigator에서 중복 항목을 하나로 합치도록 수정. 중복 슬라이드는 내부 맵(`slideToTocId`)으로 첫 항목에 연결하여 하이라이팅은 정상 동작.
-- **Navigator 사이드바 자동 스크롤 제거**: 본문 스크롤 시 Navigator의 활성 항목 표시는 유지하되, 사이드바 자체가 강제로 스크롤되는 동작 제거. 사용자 탐색 위치가 흔들리지 않도록 개선.
+- **같은 소제목 중복 표시 문제**: 같은 대제목+중제목+소제목 조합의 복합키를 사용하여 Navigator에서 중복 항목을 하나로 합치도록 수정.
+- **Navigator 사이드바 자동 스크롤 제거**: 본문 스크롤 시 Navigator의 활성 항목 표시는 유지하되, 사이드바 자체가 강제로 스크롤되는 동작 제거.
 
 ## [v0.5.1] - 2026-04-07
 ### Added
@@ -45,11 +57,4 @@
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
 *(현재 없음)*
-
-## [Unreleased] (feat/syntax-highlight)
-### Added
-- **코드 블록 구문 강조 (Syntax Highlighting)**: `highlight.js 11.10.0` + `atom-one-dark` 테마를 도입하여 `bash`, `powershell`, `sql`, `python` 등 언어별 문법 색상 강조 적용.
-- **원클릭 복사 버튼**: 코드 블록 상단에 언어 레이블과 함께 '복사' 버튼 배치. 클릭 시 "복사됨!" 2초 피드백 후 원복. `navigator.clipboard` API + `execCommand` fallback 지원.
-- **코드 블록 래퍼 UI**: 언어명·복사 버튼을 포함한 헤더 바와 코드 영역으로 구성된 `.code-block-wrapper` 컴포넌트 적용. 다크/라이트 모드 모두 대응.
-- **HTML 내보내기 동기화**: 내보낸 웹 가이드(HTML) 파일에도 동일한 hljs CDN, 코드 블록 UI, 복사 버튼 기능이 포함되도록 `generateHTMLContent()` 함수 업데이트.
 

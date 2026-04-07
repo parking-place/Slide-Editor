@@ -964,6 +964,34 @@
         .btn-top.show { opacity: 1; visibility: visible; }
         .btn-top:hover { transform: translateY(-5px); background: #008767; }
 
+        /* Theme Toggle Floating Button */
+        .btn-theme { position: fixed; bottom: 90px; right: 30px; width: 50px; height: 50px; background: #374151; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.3s; }
+        .btn-theme:hover { transform: translateY(-3px); background: #4b5563; }
+        body.dark-mode .btn-theme { background: #4b5563; }
+
+        /* Guide TOC Navigator */
+        .page-layout { display: flex; align-items: flex-start; max-width: 1400px; margin: -20px auto 40px; padding: 0 20px; }
+        .guide-toc { width: 240px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; padding: 20px 14px; background: #ffffff; border-right: 1px solid #e5e7eb; border-radius: 12px 0 0 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .guide-toc::-webkit-scrollbar { width: 3px; } .guide-toc::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .guide-toc-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #01a982; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+        .guide-toc-chapter { font-size: 12px; font-weight: 700; color: #01a982; margin-top: 14px; margin-bottom: 3px; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-toc-chapter:first-child { margin-top: 0; }
+        .guide-toc-middle { font-size: 12px; font-weight: 600; color: #4b5563; padding: 3px 4px 3px 14px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; }
+        .guide-toc-middle:hover { color: #01a982; background: rgba(1,169,130,0.06); }
+        .guide-toc-item { font-size: 11.5px; color: #6b7280; padding: 3px 4px 3px 26px; border-radius: 4px; border-left: 2px solid transparent; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.15s; text-decoration: none; display: block; margin-bottom: 1px; }
+        .guide-toc-item:hover { color: #374151; background: rgba(0,0,0,0.03); }
+        .guide-toc-item.active { color: #01a982; border-left-color: #01a982; font-weight: 600; background: rgba(1,169,130,0.07); }
+        .container { flex: 1; min-width: 0; max-width: none; margin: 0; }
+        /* Dark mode TOC */
+        body.dark-mode .guide-toc { background: #0d1117; border-right-color: #30363d; }
+        body.dark-mode .guide-toc-header { color: #00e676; border-bottom-color: #30363d; }
+        body.dark-mode .guide-toc-chapter { color: #00e676; }
+        body.dark-mode .guide-toc-middle { color: #8b949e; }
+        body.dark-mode .guide-toc-middle:hover { color: #00e676; background: rgba(0,230,118,0.06); }
+        body.dark-mode .guide-toc-item { color: #8b949e; }
+        body.dark-mode .guide-toc-item:hover { background: rgba(255,255,255,0.04); color: #c9d1d9; }
+        body.dark-mode .guide-toc-item.active { color: #00e676; border-left-color: #00e676; background: rgba(0,230,118,0.08); }
+
         /* Code Block Wrapper & Copy Button */
         .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #374151; border-left: 3px solid #01a982; }
         .code-block-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 14px; border-bottom: 1px solid #374151; }
@@ -974,7 +1002,7 @@
         .code-block-wrapper pre code.hljs { padding: 0 !important; background: transparent !important; font-family: 'D2Coding', monospace !important; font-size: 13px !important; line-height: 1.6; }
     </style>
 </head>
-<body>
+<body class="dark-mode">
     <!-- 이미지 모달 -->
     <div id="img-modal" class="img-modal-overlay" onclick="closeModal()">
         <img id="img-modal-content" class="img-modal-content" src="">
@@ -988,27 +1016,34 @@
         function closeModal() {
             document.getElementById('img-modal').style.display = 'none';
         }
+        // 위로 가기 버튼
         window.addEventListener('scroll', function() {
             const btn = document.getElementById('btn-top');
             if (!btn) return;
-            if (window.scrollY > 300 || document.documentElement.scrollTop > 300) {
-                btn.classList.add('show');
-            } else {
-                btn.classList.remove('show');
-            }
+            btn.classList.toggle('show', window.scrollY > 300);
         });
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        // 테마 전환
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            document.getElementById('btn-theme').textContent = isDark ? '\u2600\ufe0f' : '\ud83c\udf19';
+        }
     <\/script>
 
     <button type="button" class="btn-top" id="btn-top" onclick="scrollToTop()">▲</button>
+    <button type="button" class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="테마 전환">☀️</button>
 
     <div class="header" style="position: relative;">
-        <button onclick="document.body.classList.toggle('dark-mode')" style="position: absolute; right: 20px; top: 20px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-family: inherit;">테마 전환</button>
         <h1>HPE Virtual Machine Essentials (VME)</h1>
         <p>설치 및 구성 가이드</p>
     </div>
+    <div class="page-layout">
+    <aside class="guide-toc" id="guide-toc">
+        <div class="guide-toc-header">📋 Navigator</div>
+        <!-- JS가 TOC 항목을 여기에 렌더링합니다 -->
+    </aside>
     <div class="container">`;
 
             // HTML용 TOC 영역 렌더링
@@ -1120,6 +1155,7 @@
 
             htmlContent += `
     </div>
+    </div>
     <div class="footer">
         &copy; ${new Date().getFullYear()} HPE VME Guide Generated
     </div>
@@ -1128,18 +1164,79 @@
         function copyCode(btn) {
             var code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
             navigator.clipboard.writeText(code).then(function() {
-                btn.innerHTML = '✓ 복사됨!';
+                btn.innerHTML = '\u2713 복사됨!';
                 btn.classList.add('copied');
                 setTimeout(function() { btn.innerHTML = '복사'; btn.classList.remove('copied'); }, 2000);
             });
         }
-        // 맨 위로 버튼
+        // 위로 가기 및 테마 버튼 스크롤 핸들러
         window.addEventListener('scroll', function() {
             document.getElementById('btn-top') && (document.getElementById('btn-top').classList.toggle('show', window.scrollY > 300));
         });
+        // TOC 사이드바 생성
+        (function buildToc() {
+            var toc = document.getElementById('guide-toc');
+            if (!toc) return;
+            var slides = document.querySelectorAll('.card[id^="slide-"]');
+            if (!slides.length) return;
+            var html = '<div class="guide-toc-header">📋 Navigator</div>';
+            var prevCh = null, prevMid = null, seenKey = {};
+            slides.forEach(function(card) {
+                var idx    = card.id.replace('slide-', '');
+                var chEl   = card.querySelector('.chapter');
+                var midEl  = card.querySelector('.middle-title');
+                var titEl  = card.querySelector('.title');
+                var ch  = chEl  ? chEl.textContent.trim()  : '';
+                var mid = midEl ? midEl.textContent.trim() : '';
+                var tit = titEl ? titEl.textContent.trim() : '';
+                if (ch && ch !== prevCh) {
+                    html += '<div class="guide-toc-chapter" title="' + ch + '">' + ch + '</div>';
+                    prevCh = ch; prevMid = null;
+                }
+                if (mid && mid !== prevMid) {
+                    html += '<a class="guide-toc-middle" href="#slide-' + idx + '" title="' + mid + '">' + mid + '</a>';
+                    prevMid = mid;
+                }
+                var key = ch + '||' + mid + '||' + tit;
+                if (!seenKey[key]) {
+                    seenKey[key] = idx;
+                    html += '<a class="guide-toc-item" data-slide="' + idx + '" href="#slide-' + idx + '" title="' + tit + '">' + tit + '</a>';
+                }
+            });
+            toc.innerHTML = html;
+            // IntersectionObserver 스크롤 연동
+            var items = toc.querySelectorAll('.guide-toc-item[data-slide]');
+            var seenFirst = {};
+            slides.forEach(function(card) {
+                var idx    = card.id.replace('slide-', '');
+                var chEl   = card.querySelector('.chapter');
+                var midEl  = card.querySelector('.middle-title');
+                var titEl  = card.querySelector('.title');
+                var key = (chEl?chEl.textContent.trim():'') + '||' + (midEl?midEl.textContent.trim():'') + '||' + (titEl?titEl.textContent.trim():'');
+                if (!seenFirst[key]) seenFirst[key] = idx;
+            });
+            var ob = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (!e.isIntersecting) return;
+                    var card = e.target;
+                    var chEl   = card.querySelector('.chapter');
+                    var midEl  = card.querySelector('.middle-title');
+                    var titEl  = card.querySelector('.title');
+                    var key = (chEl?chEl.textContent.trim():'') + '||' + (midEl?midEl.textContent.trim():'') + '||' + (titEl?titEl.textContent.trim():'');
+                    items.forEach(function(t) { t.classList.remove('active'); });
+                    var firstIdx = seenFirst[key];
+                    if (firstIdx !== undefined) {
+                        var active = toc.querySelector('.guide-toc-item[data-slide="' + firstIdx + '"]');
+                        if (active) active.classList.add('active');
+                    }
+                });
+            }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+            slides.forEach(function(el) { ob.observe(el); });
+        })();
     <\/script>
 </body>
 </html>`;
+
 
             return htmlContent;
         }
