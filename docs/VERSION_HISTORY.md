@@ -121,3 +121,10 @@
   - `local_server.ps1`: 서버 배너 문구 및 기본 오픈 URL/저장 경로 반영
   - `scripts/split.ps1`: 대상 파일명 반영
   - `에디터_웹서버_실행.bat`: 콘솔 창 타이틀 `Slide Editor Server`로 변경
+
+## [bugfix/hpe-theme-display-names] - 2026-04-07
+### Fixed
+- **HPE 기본 테마 displayName 복구**: 그래프 정리 과정의 머지 충돌로 인해 3개 HPE 기본 테마의 `displayName`이 내부 ID로 덮어씌워진 문제 수정.
+  - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
+  - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
+  - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`

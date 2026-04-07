@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "hpe_light",
-  "displayName": "hpe_light",
+  "displayName": "HPE Light",
   "version": "1.0",
   "isDarkMode": false,
   "colors": {

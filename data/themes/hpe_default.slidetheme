@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "hpe_default",
-  "displayName": "hpe_default",
+  "displayName": "HPE Default (Dark)",
   "version": "1.0",
   "isDarkMode": true,
   "colors": {
