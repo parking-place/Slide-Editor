@@ -7,6 +7,32 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.6.0a] - 2026-04-07
+### Fixed
+- **웹 가이드 네비게이터 호버 색상 동적 테마 연동**: 하드코딩되었던 `guide-toc-item`과 `toc-link`의 hover 배경색/글자색을 테마 지정 색상의 투명도 옵션(`${accentColor}0D`, `${darkAccent}0D`)으로 동적 적용되도록 수정.
+- **웹 가이드 코드 블록 래퍼 UI 테마 동기화**: 웹 가이드(`app.js`)의 HTML 생성기에 하드코딩되어 있던 코드 블록 래퍼(`.code-block-wrapper`, 복사 버튼 등)의 CSS가 에디터(`style.css`)와 완전히 동일한 다크/라이트 모드 규칙(테두리, 헤더 배경, 복사 버튼 레이아웃, `codeColor` 테마 속성 연동 등)을 따르도록 재작성하여 디자인 불일치 및 폰트 컬러/배경 들뜸 문제 해결.
+
+## [v0.6.0] - 2026-04-07
+### Changed
+- **프로젝트 리브랜딩 1차**: 도구 이름을 `HPE VME Guide Creator` → `Slide Editor`로 변경. HPE VME 특화 도구에서 범용 슬라이드 편집 도구로 전환.
+  - `HPE_VME_Editor.html` → `SlideEditor.html` 파일명 변경
+  - 브라우저 탭·헤더 로고: `HPE VME Guide Creator` → `Slide Editor`
+  - `app.js` 기본 브랜딩 값 중립화: `projectName`, `guideSubtitle`, `footerCopy` 기본값을 HPE VME 전용 문구에서 범용 값(`My Guide` 등)으로 변경
+  - 에디터 프리뷰 표지 슬라이드: 하드코딩된 HPE VME 텍스트 → `projectSettings.branding` 변수 동적 반영으로 교체
+  - PPTX 출력 파일명: `HPE_VME_Custom_Guide.pptx` → `SlideEditor_Guide.pptx`
+  - 웹 가이드 출력 파일명: `HPE_VME_Web_Guide.html` → `SlideEditor_Web_Guide.html`
+  - `local_server.ps1`: 서버 배너 문구 및 기본 오픈 URL/저장 경로 반영
+  - `scripts/split.ps1`: 대상 파일명 반영
+  - `에디터_웹서버_실행.bat`: 콘솔 창 타이틀 `Slide Editor Server`로 변경
+- **데이터 저장 파일명 변경 (리브랜딩 2차)**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
+  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.
+
+### Fixed
+- **HPE 기본 테마 displayName 복구**: 그래프 정리 과정의 머지 충돌로 인해 3개 HPE 기본 테마의 `displayName`이 내부 ID로 덮어씌워진 문제 수정.
+  - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
+  - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
+  - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`
+
 ## [v0.5.5b] - 2026-04-07
 ### Fixed
 - **웹 가이드 및 에디터 네비게이터 테마 연동 오류 수정**: TOC(목차) 네비게이터의 활성화 색상 및 호버 배경색이 테마 색상이 아닌 하드코딩된 특정 색상(`rgba(0, 230, 118)` 등)으로 고정되어 있던 문제 수정.
@@ -109,30 +135,5 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased] (fix/toc-hover-theme)
-### Fixed
-- **웹 가이드 네비게이터 호버 색상 동적 테마 연동**: 하드코딩되었던 `guide-toc-item`과 `toc-link`의 hover 배경색/글자색을 테마 지정 색상의 투명도 옵션(`${accentColor}0D`, `${darkAccent}0D`)으로 동적 적용되도록 수정.
-- **웹 가이드 코드 블록 래퍼 UI 테마 동기화**: 웹 가이드(`app.js`)의 HTML 생성기에 하드코딩되어 있던 코드 블록 래퍼(`.code-block-wrapper`, 복사 버튼 등)의 CSS가 에디터(`style.css`)와 완전히 동일한 다크/라이트 모드 규칙(테두리, 헤더 배경, 복사 버튼 레이아웃, `codeColor` 테마 속성 연동 등)을 따르도록 재작성하여 디자인 불일치 및 폰트 컬러/배경 들뜸 문제 해결.
-
----
-
-## [v0.6.0] - 2026-04-07
-### Changed
-- **프로젝트 리브랜딩 1차**: 도구 이름을 `HPE VME Guide Creator` → `Slide Editor`로 변경. HPE VME 특화 도구에서 범용 슬라이드 편집 도구로 전환.
-  - `HPE_VME_Editor.html` → `SlideEditor.html` 파일명 변경
-  - 브라우저 탭·헤더 로고: `HPE VME Guide Creator` → `Slide Editor`
-  - `app.js` 기본 브랜딩 값 중립화: `projectName`, `guideSubtitle`, `footerCopy` 기본값을 HPE VME 전용 문구에서 범용 값(`My Guide` 등)으로 변경
-  - 에디터 프리뷰 표지 슬라이드: 하드코딩된 HPE VME 텍스트 → `projectSettings.branding` 변수 동적 반영으로 교체
-  - PPTX 출력 파일명: `HPE_VME_Custom_Guide.pptx` → `SlideEditor_Guide.pptx`
-  - 웹 가이드 출력 파일명: `HPE_VME_Web_Guide.html` → `SlideEditor_Web_Guide.html`
-  - `local_server.ps1`: 서버 배너 문구 및 기본 오픈 URL/저장 경로 반영
-  - `scripts/split.ps1`: 대상 파일명 반영
-  - `에디터_웹서버_실행.bat`: 콘솔 창 타이틀 `Slide Editor Server`로 변경
-- **데이터 저장 파일명 변경 (리브랜딩 2차)**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
-  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.
-
-### Fixed
-- **HPE 기본 테마 displayName 복구**: 그래프 정리 과정의 머지 충돌로 인해 3개 HPE 기본 테마의 `displayName`이 내부 ID로 덮어씌워진 문제 수정.
-  - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
-  - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
-  - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`
+## [Unreleased]
+*(현재 없음)*
