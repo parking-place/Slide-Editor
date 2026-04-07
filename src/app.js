@@ -1036,10 +1036,6 @@
         .btn-top.show { opacity: 1; visibility: visible; }
         .btn-top:hover { transform: translateY(-5px); background: #008767; }
 
-        /* Theme Toggle Floating Button */
-        .btn-theme { position: fixed; bottom: 90px; right: 30px; width: 50px; height: 50px; background: #374151; color: #fff; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.3s; }
-        .btn-theme:hover { transform: translateY(-3px); background: #4b5563; }
-        body.dark-mode .btn-theme { background: #4b5563; }
 
         /* Guide TOC Navigator */
         .page-layout { display: flex; align-items: flex-start; max-width: 1400px; margin: -20px auto 40px; padding: 0 20px; }
@@ -1097,15 +1093,11 @@
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        // 테마 전환
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            document.getElementById('btn-theme').textContent = isDark ? '\u2600\ufe0f' : '\ud83c\udf19';
-        }
+
     <\/script>
 
     <button type="button" class="btn-top" id="btn-top" onclick="scrollToTop()">▲</button>
-    <button type="button" class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="테마 전환">☀️</button>
+
 
     <div class="header" style="position: relative;">
         <h1>${escapeHtml(projectName)}</h1>
