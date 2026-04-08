@@ -3,10 +3,83 @@
 const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
+const crypto  = require('crypto');
 
 const app  = express();
 const PORT = process.env.PORT || 8000;
 const ROOT = path.join(__dirname, '..'); // /app (프로젝트 루트)
+const IMAGE_DATA_DIR = path.join(ROOT, 'data', 'image_data');
+
+function ensureDir(dirPath) {
+    fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function getImageExtension(mimeType) {
+    const normalized = String(mimeType || '').toLowerCase();
+    const extMap = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/bmp': 'bmp',
+        'image/svg+xml': 'svg'
+    };
+    return extMap[normalized] || 'bin';
+}
+
+function normalizeStoredImagePath(imagePath) {
+    if (typeof imagePath !== 'string') return imagePath;
+    return imagePath.replace(/\\/g, '/').replace(/^\.?\/?data\/image_data\//, '/data/image_data/');
+}
+
+function persistInlineImage(imageValue) {
+    if (typeof imageValue !== 'string' || !imageValue.startsWith('data:image/')) {
+        return normalizeStoredImagePath(imageValue);
+    }
+
+    const matched = imageValue.match(/^data:(image\/[a-zA-Z0-9.+-]+(?:\+xml)?);base64,(.+)$/);
+    if (!matched) {
+        return imageValue;
+    }
+
+    const mimeType = matched[1];
+    const base64Data = matched[2];
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+    const imageHash = crypto.createHash('sha1').update(imageBuffer).digest('hex');
+    const imageFileName = `${imageHash}.${getImageExtension(mimeType)}`;
+    const imagePath = path.join(IMAGE_DATA_DIR, imageFileName);
+
+    ensureDir(IMAGE_DATA_DIR);
+    if (!fs.existsSync(imagePath)) {
+        fs.writeFileSync(imagePath, imageBuffer);
+    }
+
+    return `/data/image_data/${imageFileName}`;
+}
+
+function prepareSlidesForSave(slides) {
+    if (!Array.isArray(slides)) return slides;
+    return slides.map(slide => {
+        if (!slide || typeof slide !== 'object') return slide;
+        return Object.assign({}, slide, {
+            image: persistInlineImage(slide.image)
+        });
+    });
+}
+
+function normalizeSavePayload(body) {
+    const payload = typeof body === 'string' ? JSON.parse(body) : body;
+    if (Array.isArray(payload)) {
+        return prepareSlidesForSave(payload);
+    }
+    if (payload && typeof payload === 'object' && Array.isArray(payload.slides)) {
+        return Object.assign({}, payload, {
+            slides: prepareSlidesForSave(payload.slides)
+        });
+    }
+    return payload;
+}
 
 // ── 미들웨어 ──────────────────────────────────────────────────
 // CORS 및 캐시 억제 헤더 (기존 PowerShell 서버 동일)
@@ -103,8 +176,8 @@ app.post('/api/save', (req, res) => {
     const savePath = path.join(ROOT, 'data', 'slide_data.json');
     try {
         fs.mkdirSync(path.dirname(savePath), { recursive: true });
-        const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2);
-        fs.writeFileSync(savePath, body, 'utf8');
+        const payload = normalizeSavePayload(req.body);
+        fs.writeFileSync(savePath, JSON.stringify(payload, null, 2), 'utf8');
         res.json({ status: 'success' });
     } catch (err) {
         console.error('[POST /api/save]', err);

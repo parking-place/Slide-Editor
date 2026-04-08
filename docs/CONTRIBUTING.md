@@ -1,6 +1,6 @@
 # HPE VME Editor — 개발 규칙 및 워크플로우 가이드
 
-이 문서는 HPE VME Editor 프로젝트의 **Git 브랜치 전략, 버전 관리, 문서 업데이트 규칙**을 정의합니다.
+이 문서는 HPE VME Editor 프로젝트의 **Git 브랜치 전략, 버전 관리, Docker 릴리즈, 문서 업데이트 규칙**을 정의합니다.
 AI 어시스턴트(Antigravity)와 협업 시에도 이 규칙을 동일하게 적용합니다.
 
 ---
@@ -83,7 +83,15 @@ v{Major}.{Minor}.{Patch}
 2. 피처 브랜치에 docs 커밋        ← git commit -m "docs: finalize VERSION_HISTORY for vX.X.X"
 3. main에 --no-ff 머지            ← git merge feat/xxx --no-ff -m "release: vX.X.X - ..."
 4. Git 태그 생성                  ← git tag vX.X.X
+5. Docker 이미지 빌드            ← 릴리즈 버전과 동일한 태그(vX.X.X) 사용
+6. Docker Hub push               ← Docker 이미지 태그는 Git 릴리즈 버전과 반드시 동일
 ```
+
+**Docker 릴리즈 규칙**
+
+- Docker 이미지 태그는 반드시 **Git 릴리즈 버전과 동일한 문자열**을 사용한다.
+- 예: Git 릴리즈가 `v0.6.1`이면 Docker 이미지 태그도 `v0.6.1`이어야 한다.
+- 공식 릴리즈에는 코드/문서 릴리즈와 Docker Hub 배포를 **같은 배포 단위**로 취급한다.
 
 ### 2.3 비릴리즈 머지 절차
 
@@ -156,6 +164,7 @@ git commit -m "docs: update analysis for feat/syntax-highlight"
 - [ ] 신규 함수/모듈을 추가했다면 `vme_editor_analysis.md`가 갱신되었는가?
 - [ ] 커밋 메시지가 Conventional Commits 규칙을 따르는가?
 - [ ] 브랜치가 `main`이 아닌 피처 브랜치인가?
+- [ ] 릴리즈 작업이라면 Git 태그와 Docker 이미지 태그가 동일한 버전명으로 준비되었는가?
 
 ---
 
@@ -163,6 +172,7 @@ git commit -m "docs: update analysis for feat/syntax-highlight"
 
 - AI는 **항상 커밋 전 `VERSION_HISTORY.md` 언릴리즈 업데이트를 먼저** 수행한다.
 - 릴리즈 요청 시 반드시 **레이블링된 버전 번호**를 확인 후 진행한다.
+- 릴리즈 요청 시 Docker 이미지를 빌드한 뒤 Docker Hub에 push하며, **Docker 태그는 릴리즈 버전과 동일하게** 맞춘다.
 - 계획(implementation_plan.md) → 실행(task.md) → 완료(walkthrough.md) 순서를 유지한다.
 - 새 기능 브랜치는 항상 최신 `main`에서 분기(`git checkout main → checkout -b`)한다.
 - `main`에 직접 커밋하는 것은 긴급 hotfix를 제외하고 금지한다.

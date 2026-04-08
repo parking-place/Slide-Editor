@@ -14,6 +14,7 @@
 
         // 현재 로드된 테마 객체
         let activeTheme = null;
+        const IMAGE_DATA_PREFIX = '/data/image_data/';
 
         // 초기 로드 시 기존 데이터가 있으면 에디터 폼을 숨기고, 데이터가 없으면 첫 번째 에디터를 엽니다.
         let activeEditorIndex = null;
@@ -160,6 +161,68 @@
         function escapeHtml(str) {
             if (!str) return "";
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function isInlineImageData(imageValue) {
+            return typeof imageValue === 'string' && imageValue.startsWith('data:image/');
+        }
+
+        function isStoredImagePath(imageValue) {
+            return typeof imageValue === 'string' &&
+                !isInlineImageData(imageValue) &&
+                imageValue.replace(/\\/g, '/').includes('/data/image_data/');
+        }
+
+        function getSlideImageSrc(imageValue) {
+            if (typeof imageValue !== 'string' || imageValue.trim() === '') {
+                return null;
+            }
+            return imageValue.replace(/\\/g, '/').replace(/^\.?\/?data\/image_data\//, IMAGE_DATA_PREFIX);
+        }
+
+        function cloneSlides(slides) {
+            return slides.map(slide => Object.assign({}, slide));
+        }
+
+        function blobToDataUrl(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function fetchImageAsDataUrl(imageValue) {
+            const imageSrc = getSlideImageSrc(imageValue);
+            if (!imageSrc) return null;
+            const response = await fetch(imageSrc);
+            if (!response.ok) {
+                throw new Error(`이미지 로드 실패: ${imageSrc}`);
+            }
+            return blobToDataUrl(await response.blob());
+        }
+
+        async function buildPortableSlides(slides) {
+            const portableSlides = cloneSlides(slides);
+            await Promise.all(portableSlides.map(async (slide) => {
+                if (!slide || !slide.image || isInlineImageData(slide.image) || !isStoredImagePath(slide.image)) {
+                    return;
+                }
+                slide.image = await fetchImageAsDataUrl(slide.image);
+            }));
+            return portableSlides;
+        }
+
+        async function buildPptxSlides(slides) {
+            const pptxSlides = cloneSlides(slides);
+            await Promise.all(pptxSlides.map(async (slide) => {
+                if (!slide || !slide.image || isInlineImageData(slide.image)) {
+                    return;
+                }
+                slide.image = await fetchImageAsDataUrl(slide.image);
+            }));
+            return pptxSlides;
         }
 
         // 커스텀 모달 제어 함수
@@ -574,8 +637,9 @@
 
                         let imageHtml = '';
                         if (hasImage) {
+                            const imageSrc = getSlideImageSrc(slide.image);
                             let captionHtml = slide.imageCaption ? `<div style="font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${slide.image}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${imageSrc}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                         }
 
                         const middleTitleHtml = slide.middleTitle 
@@ -799,10 +863,12 @@
                 });
             }
 
+            const pptxSlides = await buildPptxSlides(slidesData);
+
             // 3. 본문 슬라이드 생성
             let prevChPPTX = null;
             let prevMidPPTX = null;
-            slidesData.forEach(data => {
+            pptxSlides.forEach(data => {
                 let ch = data.chapter || '대제목 미지정';
                 let mid = data.middleTitle || '';
                 
@@ -1194,8 +1260,9 @@
 
                 let imgContentHtml = '';
                 if (hasImage) {
+                    const imageSrc = getSlideImageSrc(slide.image);
                     let captionHtml = slide.imageCaption ? `<div style="font-size: 13px; color: #6b7280; text-align: center; margin-top: 8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                    imgContentHtml = `<div class="img-content" style="flex: ${imgFlex}; flex-direction: column; align-items: center;"><img src="${slide.image}" alt="Slide ${index + 1} Image" onclick="openModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                    imgContentHtml = `<div class="img-content" style="flex: ${imgFlex}; flex-direction: column; align-items: center;"><img src="${imageSrc}" alt="Slide ${index + 1} Image" onclick="openModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                 }
 
                 const middleTitleHtml = slide.middleTitle 
@@ -1391,7 +1458,15 @@
             const seconds = now.getSeconds().toString().padStart(2, '0');
             const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
             
-            const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+            let fallbackDataStr = dataStr;
+            try {
+                const portableSlides = await buildPortableSlides(slidesData);
+                fallbackDataStr = JSON.stringify({ settings: projectSettings, slides: portableSlides }, null, 2);
+            } catch (portableErr) {
+                console.warn('이식형 백업 생성 실패, 현재 메모리 데이터를 그대로 다운로드합니다.', portableErr);
+            }
+
+            const blob = new Blob([fallbackDataStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1404,13 +1479,22 @@
         };
 
         // 수동 데이터(JSON) 파일 다운로드 (PC 로컬)
-        window.downloadData = function() {
+        window.downloadData = async function() {
             if (slidesData.length === 0) {
                 showModal('다운로드할 슬라이드 데이터가 없습니다.');
                 return;
             }
-            
-            const dataStr = JSON.stringify({ settings: projectSettings, slides: slidesData }, null, 2);
+
+            let portableSlides;
+            try {
+                portableSlides = await buildPortableSlides(slidesData);
+            } catch (err) {
+                console.error('이미지 포함 백업 생성 중 오류:', err);
+                showModal('이미지 데이터를 백업 파일로 변환하는 중 오류가 발생했습니다.\n' + err.message);
+                return;
+            }
+
+            const dataStr = JSON.stringify({ settings: projectSettings, slides: portableSlides }, null, 2);
             
             const now = new Date();
             const year = now.getFullYear().toString().slice(-2);

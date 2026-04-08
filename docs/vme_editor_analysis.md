@@ -16,6 +16,7 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 - **`/src`**: 에디터 프론트엔드를 구성하는 `style.css`, `app.js` 모듈화 파일 (소스 3 모듈 분리로 HTML 코드 선 축소)
 - **`/data`**: 로컬 시스템의 데이터 영속성을 위한 JSON 저장소 (초기화 및 스냅샷 보관용)
   - **`/data/themes`**: `.slidetheme` 형식의 커스텀 테마 파일 저장 디렉토리
+  - **`/data/image_data`**: 슬라이드 본문 이미지 바이너리를 별도 파일로 저장하는 디렉토리. `slide_data.json`에는 이 경로를 참조하는 문자열만 기록
 - **`/docs`**: 프로젝트 기록(버전노트, 기능분석) 마크다운 백서 
 - **`/scripts`**: 포트 스캐닝 및 HTML/JSON 렌더링 내보내기를 담당하는 로컬 Poweshell 서버 스크립트와 정규식 파이썬 패치 코드 보관
 - **`/exports`**: 사용자가 브라우저에서 '웹 가이드'를 추출할 때 떨어지는 최종 배포 HTML 산출물 저장 경로
@@ -83,6 +84,8 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 - `parseLoadedData(data)`: 구버전(배열)/신버전(래퍼 객체) 데이터를 자동 판별하여 `slidesData`와 `projectSettings`를 갱신하는 호환 파서입니다.
 - `migrateData(slides)`: 구버전 `bashCode` 필드를 마크다운 코드 블록으로 변환하는 역방향 호환 함수.
 - `exportData()` / `downloadData()`: 현재 `{ settings, slides }` 래퍼 객체를 JSON 파일로 서버 저장 또는 브라우저 다운로드합니다.
+- 서버 저장 시(`exportData`) 인라인 base64 이미지는 `/data/image_data/` 아래 파일로 분리 저장되고, `slide_data.json`에는 해당 경로만 기록됩니다.
+- 로컬 백업 다운로드 시(`downloadData`)는 이식성을 위해 이미지 경로를 다시 data URL로 복원한 포터블 JSON을 생성합니다.
 - `importData(event)`:  불러온 JSON이 구버전 배열이면 슬라이드만 교체, 신버전 래퍼 구조면 settings·theme까지 함께 복원합니다.
 
 ### 5.2 화면 렌더링 및 UI 처리 (UI Rendering)
@@ -149,3 +152,4 @@ v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가
 4. **TOC Observer 재등록 비용**: `renderPreview()` 호출마다 `IntersectionObserver`를 `disconnect` 후 재등록하기 때문에, 슬라이드 수가 매우 많은 경우 (수십 장 이상) Observer 성능 영향을 확인해야 합니다. 필요시 Debounce 도입 검토.
 5. **`slide_data.json` 구조 변경 주의**: `feat/custom-theme-builder` 이후 저장 포맷이 배열에서 `{ settings, slides }` 래퍼 객체로 바뀌었습니다. 불러오기는 하위 호환되지만, 새로 저장한 파일은 구버전 에디터에서 열 수 없습니다.
 6. **테마 서버 의존성**: 테마 기능은 `/api/themes` 엔드포인트(local_server.ps1)에 의존합니다. 서버 없이 동작 시 `getDefaultThemeObject()` 폴백으로 기본 테마가 적용됩니다.
+7. **이미지 저장 이원화**: 서버 저장본은 이미지 경로 참조 방식, 로컬 다운로드 백업은 data URL 포함 방식으로 목적이 다릅니다. 경로 참조 이미지는 서버 또는 Docker 볼륨의 `/data/image_data`가 함께 유지되어야 정상 복원됩니다.

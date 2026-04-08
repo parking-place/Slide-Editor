@@ -16,7 +16,7 @@ services:
       - PORT=8000
     restart: unless-stopped        # 서버 재기동 시 자동 재시작 (수동 stop 제외)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8000/SlideEditor.html"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/SlideEditor.html"]
       interval: 30s
       timeout: 5s
       retries: 3

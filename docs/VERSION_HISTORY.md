@@ -7,13 +7,24 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0] - 2026-04-08
+### Added
+- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 디렉토리 구조, Docker/로컬 실행 가이드 등을 포함한 루트 레벨 `README.md` 문서를 추가.
+- **Docker 지원 (크로스플랫폼 서버)**: Windows 전용 PowerShell 서버(`local_server.ps1`)를 대체하는 Node.js/Express 기반 크로스플랫폼 서버(`scripts/server.js`)를 추가하고 기존 저장/테마 API 명세를 동일하게 구현.
+- **Docker 실행 자산 추가**: `Dockerfile`, `docker-compose.yml`, `package.json`, 윈도우용 `docker-compose-up.bat`, 리눅스용 `docker-compose-up.sh`를 추가해 컨테이너 기반 실행과 재기동 절차를 표준화.
+
+### Changed
+- **이미지 데이터 저장 분리**: 슬라이드 JSON 저장 시 base64 이미지를 `slide_data.json`에 직접 인라인하지 않고 `/data/image_data/` 아래 별도 파일로 저장하도록 구조를 개편해 초기 로드 부담을 줄임.
+- **구버전 데이터 호환 유지**: 기존 `data:image/...` 인라인 이미지가 포함된 JSON 파일도 그대로 불러올 수 있도록 로드/임포트 호환성을 유지하고, 브라우저 로컬 다운로드 JSON은 이식성을 위해 기존처럼 인라인 이미지를 포함하도록 유지.
+- **ignore 규칙 보강**: `data/image_data` 내부의 실제 이미지 데이터가 Git 및 Docker 빌드 컨텍스트에 포함되지 않도록 `.gitignore`, `.dockerignore` 규칙을 추가하고 `.gitkeep`만 예외 허용.
+- **릴리즈 규칙 확장**: 공식 릴리즈 시 Git 태그 생성 후 동일한 버전명으로 Docker 이미지를 빌드하고 Docker Hub에 push하는 절차를 `CONTRIBUTING.md`에 반영.
+
+### Fixed
+- **Docker Compose 헬스체크 호환성 수정**: 컨테이너 내부 `localhost`가 IPv6로 우선 해석되어 헬스체크가 실패하던 문제를 방지하기 위해 `127.0.0.1` 기준으로 헬스체크 URL을 고정.
+
 ## [v0.6.0c] - 2026-04-07
 ### Changed
 - **웹 가이드 내 하드코딩된 테마색상 완전 제거 및 동적 변수화**: 다크모드 카드 헤더 좌측 테두리, 위로 가기 버튼(`.btn-top`), 인라인 마크다운 코드 블록(`.markdown-body code`) 등에 남아있던 특정 하드코딩 컬러값 `#00e676`, `#01a982`, `#ef4444` 등을 모두 사용자가 지정한 테마 변수 `${accentColor}`, `${darkAccent}`, `${codeColor}`로 교체하여 웹 가이드가 100% 동적 브랜딩을 지원하도록 개선. 호버 이벤트 또한 하드코딩된 색상 대신 CSS `filter: brightness()`를 통해 구현.
-
-## [Unreleased] (docs/add-readme)
-### Added
-- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 구조, 실행 가이드 등이 종합적으로 포함된 루트 레벨 `README.md` 파일 신규 추가.
 
 ## [v0.6.0b] - 2026-04-07
 ### Changed
@@ -145,10 +156,5 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased] (feat/dockerize)
-### Added
-- **Docker 지원 (크로스플랫폼 서버)**: Windows 전용 PowerShell 서버(`local_server.ps1`)를 대체하는 Node.js/Express 기반 크로스플랫폼 서버(`scripts/server.js`) 추가. 기존 PowerShell 서버의 모든 API 명세(`/api/save`, `/api/saveHtml`, `/api/themes` GET/POST) 동일 구현.
-- **`Dockerfile`**: `node:22-alpine` 기반 경량 이미지. `linux/amd64` + `linux/arm64` 멀티플랫폼 지원. 비루트 사용자(`USER node`) 실행. 레이어 캐시 최적화 적용.
-- **`docker-compose.yml`**: `./data`, `./exports` 호스트 볼륨 마운트로 사용자 데이터 영속 보장. `restart: unless-stopped` 정책 적용. 헬스체크 설정 포함. 포트 `.env` 변수 오버라이드 지원.
-- **`.dockerignore`**: 이미지에서 `.git`, `node_modules`, `data/slide_data.json`, 사용자 문서, Windows 전용 스크립트 제외하여 이미지 크기 최소화.
-- **`package.json`**: Node.js 서버 의존성 정의 (`express` 단일 의존성).
+## [Unreleased]
+*(현재 없음)*
