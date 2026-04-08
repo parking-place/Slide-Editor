@@ -849,23 +849,32 @@
 
         // TOC 데이터를 페이지별로 분할하는 함수 (대제목 기준 및 최대 라인 수 기준)
         function paginateTocData(tocLines) {
-            const LINES_PER_TOC_SLIDE = 15;
+            const MAX_TOC_UNITS_PER_SLIDE = 12.5;
+            const TOC_LINE_UNITS = {
+                chapter: 1.8,
+                middle: 1.3,
+                title: 1
+            };
             let pages = [];
             let currentPage = [];
-            let currentLineCount = 0;
+            let currentLineUnits = 0;
             
             for (let i = 0; i < tocLines.length; i++) {
                 let line = tocLines[i];
+                let lineUnits = TOC_LINE_UNITS[line.type] || 1;
                 
                 // 대제목이 나타났는데, 현재 페이지가 이미 뭔가 채워져 있다면 분리
-                if ((line.type === 'chapter' && currentPage.length > 0) || currentLineCount >= LINES_PER_TOC_SLIDE) {
+                if (
+                    (line.type === 'chapter' && currentPage.length > 0) ||
+                    (currentPage.length > 0 && currentLineUnits + lineUnits > MAX_TOC_UNITS_PER_SLIDE)
+                ) {
                     pages.push(currentPage);
                     currentPage = [];
-                    currentLineCount = 0;
+                    currentLineUnits = 0;
                 }
                 
                 currentPage.push(line);
-                currentLineCount++;
+                currentLineUnits += lineUnits;
             }
             if (currentPage.length > 0) {
                 pages.push(currentPage);
