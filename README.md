@@ -1,79 +1,128 @@
 # 🎨 Slide Editor
 
 [![Powered by Antigravity](https://img.shields.io/badge/Powered%20by-Antigravity-blueviolet?style=for-the-badge)](https://antigravity.google)
-[![Version](https://img.shields.io/badge/version-v0.6.0c-blue?style=for-the-badge)](#)
+[![Powered by Codex](https://img.shields.io/badge/Powered%20by-Codex-111111?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.7.0c-blue?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 
-> **"이 프로젝트의 모든 코드와 리브랜딩, 아키텍처 설계는 Google DeepMind 기반의 최첨단 AI 코딩 어시스턴트인 [Antigravity](https://antigravity.google)를 통해 설계되고 제작되었습니다."**
+> **이 프로젝트의 설계, 구현, 리브랜딩, 문서화에는 Antigravity와 Codex를 포함한 AI 코딩 어시스턴트가 적극적으로 활용되었습니다.**
 
-**Slide Editor**는 웹 브라우저 환경에서 동작하는 전문적인 슬라이드 및 웹 가이드 제작 도구입니다. 복잡한 설치 없이 로컬 웹 서버만으로 즉시 구동되며, 사용자가 작성한 문서를 **고품질 PPTX 파일**과 **인터랙티브 HTML 웹 가이드** 두 가지 포맷으로 동시에 내보낼 수 있는 강력한 기능을 제공합니다.
-
----
-
-## ✨ 주요 기능 (Key Features)
-
-* **멀티 포맷 내보내기**: 작성된 하나의 문서를 파워포인트(`.pptx`)와 단일 HTML 웹 가이드로 원클릭 자동 생성.
-* **강력한 테마 시스템**: 🎨 내장된 `커스텀 테마 빌더`로 28개 이상의 다크/라이트 기업 브랜드 테마 제공 및 자유로운 컬러·폰트 수정 가능 (`.slidetheme` 파일 관리).
-* **동적 TOC (웹 가이드)**: 좌측에 스크롤에 반응하는 목차형 네비게이터를 제공하며, 테마 옵션과 연동된 완벽한 반응형 뷰 지원.
-* **개발자 친화적 에디터**: Markdown 유사 문법, 코드 블록 구문 강조(`highlight.js`), 클릭하여 복사 기능 등 기술 문서 작성에 최적화된 편의 기능 탑재.
-* **자동 문서 호환**: 구버전 데이터 구조(배열)를 신규 데이터 포맷(객체 래퍼)으로 원활하게 자동 호환 및 마이그레이션.
+**Slide Editor**는 브라우저에서 동작하는 슬라이드 및 웹 가이드 제작 도구입니다. 하나의 원본 문서를 기반으로 **PPTX 파일**과 **인터랙티브 HTML 웹 가이드**를 함께 생성할 수 있으며, 테마 시스템과 브랜딩 설정, 이미지 포함 슬라이드 편집, 서버 저장 기능까지 포함합니다.
 
 ---
 
-## 🚀 시작하기 (Getting Started)
+## ✨ 주요 기능
 
-이 프로젝트는 브라우저 보안 정책 상 로컬 파일을 읽고 쓰기 위해 웹 서버 구동이 필요합니다.
+- **멀티 포맷 내보내기**: 슬라이드 데이터를 PPTX와 단일 HTML 웹 가이드로 내보냅니다.
+- **테마 및 브랜딩 관리**: `.slidetheme` 파일 기반 테마와 프로젝트별 브랜딩 텍스트를 분리 관리합니다.
+- **동적 TOC 가이드**: 웹 가이드에 스크롤 반응형 TOC 네비게이터를 포함합니다.
+- **개발 문서 친화 편집**: Markdown 유사 문법, 코드 블록 하이라이팅, 복사 버튼 등을 제공합니다.
+- **이미지 데이터 분리 저장**: 서버 저장 시 이미지는 `/data/image_data`에 별도 파일로 저장해 `slide_data.json`의 부하를 줄입니다.
+- **구버전 데이터 호환**: 예전 배열형 JSON 및 인라인 base64 이미지 데이터도 계속 불러올 수 있습니다.
 
-### 1단계: 프로젝트 클론
+---
+
+## 🚀 시작하기
+
+### 권장 방식: Docker Compose
+
+1. 저장소를 클론합니다.
+
 ```bash
 git clone https://github.com/parking-place/Slide-Editor.git
 cd Slide-Editor
 ```
 
-### 2단계: 로컬 서버 실행
-프로젝트 루트 폴더에 포함된 구동 스크립트를 실행하여 로컬 서버를 올립니다.
+2. 운영체제에 맞는 실행 스크립트를 사용합니다.
 
-* **Windows의 경우**: `에디터_웹서버_실행.bat` 파일을 더블 클릭하여 실행합니다. 
-* **수동 실행 필요 시 (Terminal)**:
-  ```powershell
-  # 파워쉘에서 실행 권한이 필요할 수 있습니다
-  ./local_server.ps1
-  ```
+- Windows: `docker-compose-up.bat`
+- Linux/macOS: `chmod +x docker-compose-up.sh && ./docker-compose-up.sh`
 
-### 3단계: 시작
-스크립트가 정상적으로 구동되면 브라우저에 배너와 함께 서버 주소가 출력되며, 보통 `http://localhost:8000/SlideEditor.html` 로 자동 진입하여 바로 에디터를 사용할 수 있습니다.
+3. 또는 직접 실행할 수도 있습니다.
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+4. 브라우저에서 아래 주소로 접속합니다.
+
+```text
+http://localhost:8000/SlideEditor.html
+```
+
+### 데이터 영속성
+
+- `./data -> /app/data`
+- `./exports -> /app/exports`
+
+`slide_data.json`, 테마 파일, 분리된 이미지 파일(`data/image_data`)은 호스트 볼륨에 유지됩니다.
+
+### Docker Hub 이미지
+
+기본 배포 이미지는 아래 태그를 사용합니다.
+
+```text
+parkingplace/slide-editor:latest
+```
+
+버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.7.0b` 등)를 사용할 수 있습니다.
 
 ---
 
-## 📂 프로젝트 구조 (Directory Structure)
+## 🧰 대체 실행 방식
 
-```text
-📦 Slide-Editor
-┣ 📂 src/             # 에디터 구동을 위한 코어 소스코드 (app.js, style.css)
-┣ 📂 data/            # 유저 작성 콘텐츠(slide_data.json) 및 테마 설정(.slidetheme) 저장소
-┣ 📂 docs/            # 기여 가이드 및 릴리즈 버전 히스토리 (VERSION_HISTORY.md)
-┣ 📂 exports/         # 다운로드된 pptx 및 html 가이드 결과물 보관 장소
-┣ 📂 scripts/         # 빌드, 데이터 분할 등의 보조용 유틸리티/스크립트 저장소
-┣ 📜 SlideEditor.html # 에디터 메인 파일 (HTML UI 및 서드파티 라이브러리 로드)
-┣ 📜 local_server.ps1 # 자동 API 및 로컬 웹 서버 실행 구동 엔진
-┗ 📜 에디터_웹서버_실행.bat # 사용자 친화적 1-Click 실행 배치 파일
+현재 기본 실행 경로는 Docker 기반입니다. 다만 참고용 또는 레거시 호환 용도로 아래 스크립트들이 남아 있습니다.
+
+- `scripts/server.js`: Node.js/Express 기반 크로스플랫폼 서버
+- `scripts/local_server.ps1`: 초기 Windows PowerShell 서버
+
+직접 Node 서버를 실행하려면 의존성을 설치한 뒤 실행합니다.
+
+```bash
+npm install
+node scripts/server.js
 ```
 
 ---
 
-## 🤝 기여하기 (Contributing)
+## 📂 프로젝트 구조
 
-이 프로젝트는 **Github Flow** 워크플로우를 엄격히 준수합니다. 기여하고자 하신다면, 아래 규정을 참고해주세요.
-1. 모든 기능 추가 및 버그 수정은 `main` 브랜치에서 분기한 새로운 피처/버그 브랜치 (`feat/xxx`, `fix/xxx`)에서 진행되어야 합니다.
-2. 커밋 전 반드시 `docs/VERSION_HISTORY.md`의 `언릴리즈` 섹션을 최신화해야 합니다.
-3. 머지 시에는 Fast-forward가 아닌 명시적 머지(`--no-ff`)를 사용하여 히스토리를 유지합니다.
-
-자세한 Git 정책 및 변경 승인 절차는 [CONTRIBUTING.md](./docs/CONTRIBUTING.md) 기여 가이드라인을 확인해 주십시오.
+```text
+Slide-Editor/
+├─ src/                    # 프론트엔드 핵심 코드 (app.js, style.css)
+├─ scripts/                # 서버/유틸리티 스크립트
+├─ data/
+│  ├─ slide_data.json      # 기본 슬라이드 데이터
+│  ├─ themes/              # .slidetheme 파일 저장소
+│  └─ image_data/          # 서버 저장 시 분리되는 이미지 파일
+├─ exports/                # 생성된 HTML 가이드 저장 위치
+├─ docs/                   # 기여 규칙, 버전 이력, 분석 문서
+├─ SlideEditor.html        # 메인 HTML 엔트리
+├─ Dockerfile              # 배포용 이미지 빌드 정의
+├─ docker-compose.yml      # 컨테이너 실행 정의
+├─ docker-compose-up.bat   # Windows용 실행 스크립트
+└─ docker-compose-up.sh    # Linux/macOS용 실행 스크립트
+```
 
 ---
 
-## 🛠️ 기술 스택 (Tech Stack)
+## 🛠 기술 스택
 
-* **언어**: HTML5, Vanilla JavaScript (ES6+), Vanilla CSS3
-* **서버**: Python 3 (http.server), PowerShell
-* **서드파티**: [PptxGenJS](https://gitbrent.github.io/PptxGenJS/), [Marked.js](https://marked.js.org/), [Highlight.js](https://highlightjs.org/)
+- **Frontend**: HTML5, Vanilla JavaScript (ES6+), CSS3
+- **Runtime Server**: Node.js + Express
+- **Container**: Docker, Docker Compose
+- **Libraries**: PptxGenJS, Marked.js, Highlight.js, Font Awesome
+
+---
+
+## 🤝 기여하기
+
+이 프로젝트는 `Github Flow`와 문서화 중심 워크플로우를 따릅니다.
+
+- 모든 작업은 `main`에서 분기한 전용 브랜치에서 진행합니다.
+- 커밋 전 `docs/VERSION_HISTORY.md`의 언릴리즈 섹션을 먼저 갱신합니다.
+- 릴리즈 및 hotfix 버전은 `docs/CONTRIBUTING.md`의 `vX1.X2.X3(a)` 규칙을 따릅니다.
+- 공식 릴리즈 시 Git 태그와 Docker 이미지 태그를 동일하게 맞춥니다.
+
+자세한 규칙은 [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)를 참고해 주세요.

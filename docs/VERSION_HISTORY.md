@@ -7,6 +7,11 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0c] - 2026-04-08
+### Changed
+- **README 최신화**: 실행 가이드를 Docker Compose 중심으로 재작성하고, 현재 버전 및 Docker Hub 이미지 기준, 데이터 영속성, `Powered by Codex` 표기를 반영.
+- **분석 문서 최신화**: `vme_editor_analysis.md`를 현재 `Slide Editor` 구조에 맞춰 리브랜딩, Node/Express 서버, Docker 배포 흐름, 이미지 분리 저장 구조 기준으로 전면 갱신.
+
 ## [v0.7.0b] - 2026-04-08
 ### Changed
 - **Docker Compose 실행 기준 정리**: `docker-compose.yml`에서 obsolete `version` 필드를 제거하고, Docker Hub의 `parkingplace/slide-editor:latest`를 직접 사용하는 배포 기준에 맞춰 로컬 `build` 정의를 제거.

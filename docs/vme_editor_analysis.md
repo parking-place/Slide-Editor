@@ -1,155 +1,179 @@
-# HPE VME Editor 코드 분석 문서
+# Slide Editor 코드 분석 문서
 
-이 문서는 `HPE_VME_Editor.html` 단일 파일로 구성된 "HPE VME 가이드 제작 도구" 애플리케이션의 아키텍처, 데이터 구조 및 핵심 기능들을 분석하고 정리한 문서입니다. 향후 수정 작업이나 유지 보수를 진행할 때 참고 지침으로 사용됩니다.
+이 문서는 현재 `Slide Editor` 프로젝트의 구조, 데이터 흐름, 실행 방식, 핵심 모듈을 유지보수 관점에서 정리한 문서입니다. 초기의 HPE VME 전용 단일 HTML 도구에서 출발했지만, 현재는 **범용 슬라이드 편집기 + Node 기반 로컬 서버 + Docker 배포 흐름**으로 확장된 상태를 기준으로 설명합니다.
 
-## 1. 개요 (Overview)
-- **앱 성격**: 단일 페이지 웹 애플리케이션(SPA) 에디터
-- **목적**: HPE Virtual Machine Essentials (VME) 설치 및 구성 가이드를 작성, 저장하고, 이를 다양한 형식(PPTX, 배포용 HTML)으로 변환하여 내보냅니다.
-- **주요 스택**: HTML5, Vanilla JavaScript, CSS3
-- **주요 특징**: 별도의 백엔드 데이터베이스 없이 프론트엔드의 메모리(JS 배열)에서 데이터를 관리하고 JSON 파일 형식으로 로컬과 상호작용합니다.
+## 1. 개요
 
----
-
-## 2. 디렉토리 구조 및 역할 (Directory Structure)
-v0.5.2 버전을 기점으로 유지보수 및 파일 성격에 따라 폴더가 분리되었습니다.
-- **`/` (Root)**: 메인 애플리케이션 `HPE_VME_Editor.html` 및 초기 실행 배치 스크립트(`.bat`) 위치
-- **`/src`**: 에디터 프론트엔드를 구성하는 `style.css`, `app.js` 모듈화 파일 (소스 3 모듈 분리로 HTML 코드 선 축소)
-- **`/data`**: 로컬 시스템의 데이터 영속성을 위한 JSON 저장소 (초기화 및 스냅샷 보관용)
-  - **`/data/themes`**: `.slidetheme` 형식의 커스텀 테마 파일 저장 디렉토리
-  - **`/data/image_data`**: 슬라이드 본문 이미지 바이너리를 별도 파일로 저장하는 디렉토리. `slide_data.json`에는 이 경로를 참조하는 문자열만 기록
-- **`/docs`**: 프로젝트 기록(버전노트, 기능분석) 마크다운 백서 
-- **`/scripts`**: 포트 스캐닝 및 HTML/JSON 렌더링 내보내기를 담당하는 로컬 Poweshell 서버 스크립트와 정규식 파이썬 패치 코드 보관
-- **`/exports`**: 사용자가 브라우저에서 '웹 가이드'를 추출할 때 떨어지는 최종 배포 HTML 산출물 저장 경로
-- **`/plans`**: 기능 기획 및 개발 예정 목록 문서 (배포에 포함되지 않는 내부 문서)
+- **앱 성격**: 브라우저 기반 단일 페이지 슬라이드 편집기
+- **주요 출력물**: PPTX, 정적 HTML 웹 가이드
+- **실행 방식**: Docker Compose 기반 실행이 기본, Node.js 직접 실행도 가능
+- **현재 포지셔닝**: HPE 전용 내부 도구에서 범용 `Slide Editor`로 리브랜딩 완료
 
 ---
 
-## 3. 주요 라이브러리 및 의존성
-| 라이브러리/에셋 | 버전/출처 | 목적 |
-| :--- | :--- | :--- |
-| **PptxGenJS** | 3.12.0 (CDN) | 브라우저 단에서 순수 JavaScript로 PPTX 확장자 파일을 생성하고 다운로드하기 위해 사용합니다. |
-| **Marked.js** | CDN | 사용자가 입력한 Markdown 텍스트를 웹 프리뷰용 HTML 텍스트로 변환 시 사용합니다. |
-| **폰트** | Urbanist, Pretendard, D2Coding | 기본 텍스트 폰트 및 코드 블록(D2Coding) 가독성 향상. |
-| **FontAwesome** | 6.5.1 | 웹 UI의 각종 아이콘 렌더링. |
+## 2. 디렉토리 구조 및 역할
+
+- **`/` (Root)**: 진입점과 배포 관련 파일이 위치
+  - `SlideEditor.html`: 메인 HTML 엔트리
+  - `Dockerfile`: 배포용 이미지 빌드 정의
+  - `docker-compose.yml`: Docker Hub `latest` 기반 런타임 정의
+  - `docker-compose-up.bat`, `docker-compose-up.sh`: 운영체제별 실행 스크립트
+- **`/src`**: 프론트엔드 애플리케이션 코드
+  - `app.js`: 상태 관리, 렌더링, 내보내기, 테마/브랜딩 로직
+  - `style.css`: 에디터 UI 스타일
+- **`/data`**: 영속 데이터 저장 영역
+  - `slide_data.json`: 기본 저장 데이터
+  - `themes/`: `.slidetheme` 파일 저장소
+  - `image_data/`: 서버 저장 시 분리되는 이미지 바이너리 파일 저장소
+- **`/scripts`**: 서버 및 유틸리티 스크립트
+  - `server.js`: 현재 표준 Node.js/Express 서버
+  - `local_server.ps1`: 초기 PowerShell 서버
+  - `split.ps1`, `split.py`, `patch.py`: 보조 유틸리티
+- **`/exports`**: HTML 가이드 산출물 저장 디렉토리
+- **`/docs`**: 릴리즈 이력, 컨트리뷰팅 가이드, 구조 분석 문서
+- **`/plans`**: 내부 기획 및 작업 문서
 
 ---
 
-## 4. 데이터 구조 (State Management)
-앱의 핵심 데이터는 전역 변수 `slidesData`, `projectSettings`, `activeTheme`으로 관리됩니다.
+## 3. 실행 및 배포 구조
 
-**`slide_data.json` 저장 구조** (`feat/custom-theme-builder` 이후)
+### 3.1 기본 실행 흐름
+
+- 기본 실행 기준은 `docker-compose.yml`
+- 컨테이너 이미지는 `parkingplace/slide-editor:latest`
+- `./data`와 `./exports`는 호스트 볼륨으로 마운트
+- 헬스체크는 `http://127.0.0.1:8000/SlideEditor.html` 기준
+
+### 3.2 실행 스크립트 역할
+
+- `docker-compose-up.bat`
+- `docker-compose-up.sh`
+
+두 스크립트 모두 현재는 `docker compose pull` 후 `docker compose up -d`를 실행하여 원격 최신 이미지를 기준으로 컨테이너를 재생성합니다.
+
+### 3.3 Docker와 코드 저장소의 관계
+
+- Git 릴리즈 태그와 Docker 이미지 태그는 동일 문자열로 맞춥니다.
+- `latest`는 최신 핫픽스 또는 최신 정식 릴리즈를 가리키는 운영 태그 역할을 합니다.
+- 실제 이미지 콘텐츠는 `Dockerfile`을 통해 빌드되며, 런타임에서는 Docker Hub 배포 이미지를 소비합니다.
+
+---
+
+## 4. 데이터 구조
+
+앱의 핵심 상태는 프런트엔드 메모리 상의 `slidesData`, `projectSettings`, `activeTheme`로 관리됩니다.
+
+### 4.1 `slide_data.json` 구조
+
 ```json
 {
   "settings": {
     "activeTheme": "hpe_default",
     "branding": {
-      "projectName":   "HPE Virtual Machine Essentials (VME)",
-      "guideSubtitle": "설치 및 구성 가이드",
-      "footerCopy":    "HPE VME Guide"
+      "projectName": "My Guide",
+      "guideSubtitle": "Installation Guide",
+      "footerCopy": "Slide Editor"
     }
   },
   "slides": [
     {
       "chapter": "1. 대제목",
-      "middleTitle": "1.1 중제목 (선택)",
+      "middleTitle": "1.1 중제목",
       "title": "1.1.1 소제목",
-      "text": "본문 내용 (마크다운 지원)",
-      "image": "data:image/png;base64,...",
-      "imageCaption": "이미지 설명 캡션"
+      "text": "본문 내용",
+      "image": "./data/image_data/example.png",
+      "imageCaption": "이미지 설명",
+      "textRatio": 50
     }
   ]
 }
 ```
-> **구버전 호환**: 파일이 배열(`[]`) 형태인 경우 `parseLoadedData()`가 자동으로 감지하여 슬라이드만 교체하고 `settings`는 기본값을 유지합니다.
 
-**`.slidetheme` 파일 구조**
-```json
-{
-  "name": "hpe_default",
-  "colors": { "accent": "#00E676", "bgDark": "#010409", ... },
-  "pptx":   { "masterBg": "0D1117", "accentColor": "00E676", ... },
-  "webGuide": { "headerBg": "#01a982", "accentColor": "#01a982", ... },
-  "fonts":  { "uiFamily": "Pretendard", "pptxBody": "Malgun Gothic", ... }
-}
-```
+### 4.2 이미지 저장 이원화
 
-그 외 UI 상태 추적용으로 `activeEditorIndex`(추가 중인 폼 위치), `editingSlideIndex`(수정 중인 폼 위치) 변수를 사용합니다.
+- **서버 저장**: 인라인 base64 이미지를 `data/image_data` 아래 파일로 분리 저장
+- **브라우저 백업 다운로드**: 이식성을 위해 다시 data URL을 포함한 포터블 JSON 생성
 
----
+이 구조 덕분에 운영 저장본은 가벼워지고, 백업 파일은 단독 복원이 가능합니다.
 
-## 5. 핵심 모듈 및 기능 (Functions)
+### 4.3 하위 호환성
 
-### 5.1 데이터 로드 및 저장 (Data & File I/O)
-- `loadInitialData()`: 에디터 로드 시 `slide_data.json`을 자동으로 가져온 뒤 `parseLoadedData()`로 파싱, 이후 저장된 테마(`projectSettings.activeTheme`)를 자동 로드합니다.
-- `parseLoadedData(data)`: 구버전(배열)/신버전(래퍼 객체) 데이터를 자동 판별하여 `slidesData`와 `projectSettings`를 갱신하는 호환 파서입니다.
-- `migrateData(slides)`: 구버전 `bashCode` 필드를 마크다운 코드 블록으로 변환하는 역방향 호환 함수.
-- `exportData()` / `downloadData()`: 현재 `{ settings, slides }` 래퍼 객체를 JSON 파일로 서버 저장 또는 브라우저 다운로드합니다.
-- 서버 저장 시(`exportData`) 인라인 base64 이미지는 `/data/image_data/` 아래 파일로 분리 저장되고, `slide_data.json`에는 해당 경로만 기록됩니다.
-- 로컬 백업 다운로드 시(`downloadData`)는 이식성을 위해 이미지 경로를 다시 data URL로 복원한 포터블 JSON을 생성합니다.
-- `importData(event)`:  불러온 JSON이 구버전 배열이면 슬라이드만 교체, 신버전 래퍼 구조면 settings·theme까지 함께 복원합니다.
-
-### 5.2 화면 렌더링 및 UI 처리 (UI Rendering)
-- `renderPreview()`: 데이터를 기반으로 화면 전체를 새로 그리는 메인 렌더링 엔진입니다. React의 렌더링 방식처럼 데이터가 바뀔 때 마다 `preview-area` 내부의 HTML을 싹 지우고 다시 생성합니다.
-  1. 고정된 표지 렌더링
-  2. TOC(목차) 전처리 및 렌더링
-  3. `slidesData` 배열 루프 처리
-     - 현재 `activeEditorIndex`와 일치하는 위치에 '새 슬라이드 폼' 렌더링 (아닐 경우 얇은 '추가' 버튼 렌더링)
-     - `editingSlideIndex`와 일치하는 슬라이드는 '수정 폼'으로 렌더링
-     - 그 외 일반 슬라이드는 Markdown 파싱(`marked.parse()`) 및 HTML 주입을 거쳐 프리뷰 카드로 렌더링.
-- `generateTocData(slides)`: 대제목, 중제목 변경 기준을 추적해 중복 항목이 나오지 않도록 계층적 목차 리스트 배포를 위한 전처리 함수입니다.
-- `updateDynamicTOC()`: `generateTocData()`의 데이터를 소비하여 좌측 `#toc-navigator` 사이드바 DOM을 재생성합니다. `renderPreview()` 마지막에서 자동 호출되어 데이터와 항상 동기화되도록 연결.
-
-### 5.3 동적 TOC 네비게이터 (Dynamic TOC Navigator)
-— `feat/dynamic-toc` 브랜치에서 추가된 신규 모듈
-- **레이아웃 변경**: HTML에 `.layout-wrapper`를 추가하여 좌측 `<aside class="toc-sidebar">`와 기존 `.main-container`를 나란히 배치. 일소구조에서 2단 분할 구조로 확장.
-- **사이드바 렌더링**: 사이드바는 비어있을 때 안내 메시지를, 슬라이드가 있으면 대제목/중제목/소제목 계층을 다른 뷃 클래스로 다루어 표시.
-- **클릭-스크롤 연동**: 항목 클릭 시 `scrollIntoView({behavior: 'smooth'})` 호출로 해당 슬라이드로 애니메이션 스크롤.
-- **`IntersectionObserver`**: 슬라이드가 스크롤 내 특정 영역(상단 20%~하단 60% 사이)에 진입할 때 해당 TOC 아이템에 `.active` 클래스를 스위치하여 코드를 하이라이트. `renderPreview()` 호출 때마다 Observer를 재등록.)
-
-### 5.4 내보내기 로직 (Export Engines)
-가장 비중이 높은 핵심 로직입니다. 현재 데이터를 다른 포맷으로 파싱 및 전환합니다.
-
-- **`exportToPPTX()` (PPTX 생성기)**
-  - 슬라이드 마스터(`VME_MASTER`)를 정의하여 템플릿 레이아웃 생성.
-  - 표지, 목차(페이지 초과 시 여러 페이지로 분할) 동적 생성.
-  - 마크다운 텍스트를 수동으로 파싱(`split` 활용하여 ``` 코드 블록 찾기)한 뒤, 코드 블록은 검은 배경 도형 위에 D2Coding 폰트로, 일반 텍스트는 Malgun Gothic 폰트 도형에 올리도록 높이를 계산(`estimatedHeight`)하여 동적으로 배치. (이미지 유무에 따른 Width 비율 조정 로직 포함).
-- **`exportToHTML()` (정적 웹 문서 생성기)**
-  - 데이터를 읽기 전용 HTML 문서(스크롤 뷰어 형태)로 변환.
-  - 뷰어를 위한 CSS 스타일 정보를 하드코딩된 스트링으로 삽입하고, 데이터들을 `card` 디자인 형태로 연결한 뒤 단일 `.html` 파일로 자동 다운로드.
-
-### 5.5 TOC Navigator (추가 기능)
-- **자동 동기화**: `renderPreview`가 호출될 때마다 `updateDynamicTOC`가 실행되어 슬라이드 데이터와 목차의 일관성을 유지합니다.
-- **상태 관리**: 현재 보고 있는 슬라이드 위치를 `IntersectionObserver`가 감지하여, 좌측 사이드바의 해당 항목에 `.active` 클래스를 부여함으로써 사용자에게 현재 위치를 시각적으로 제공합니다.
-
-### 5.6 모달 및 유틸리티
-- `showModal()`: 기본 브라우저 내장 `alert`/`confirm`을 대체하는 커스텀 UI 팝업.
-- `openImageModal()`: 이미지가 포함된 슬라이드 클릭 시 확대하여 보여주는 라이트박스 로직.
-- `escapeHtml(str)`: 폼 입력 시 XSS 및 렌더링 깨짐을 대비한 이스케이프 함수.
-
-### 5.7 테마 엔진 (Theme Engine)
-— `feat/custom-theme-builder` 브랜치에서 추가된 신규 모듈
-- **`applyThemeToEditor(theme)`**: CSS 변수(`--hpe-green` 등) 실시간 교체. `theme.isDarkMode` 값에 따라 에디터 `body`의 `light-mode` 클래스를 자동 토글. `activeTheme` 갱신.
-- **`loadThemeByName(name)`**: `/api/themes/{name}.slidetheme` API 호출 → 성공 시 `applyThemeToEditor()`, 실패 시 `getDefaultThemeObject()`로 폴백.
-- **`renderThemeModal()`**: 테마 목록 비동기 렌더링 + 8개의 색상 행(codeColor 포함) 및 다크 모드 속성(`isDarkMode`) 제어 체크박스 제공.
-- **`buildThemeFromModal()`**: 모달 UI 입력값으로부터 완전한 테마 오브젝트(isDarkMode, colors, pptx, webGuide, fonts)를 빌드.
-- **`syncBrandingUI()` / `collectBrandingFromUI()`**: 브랜딩 모달의 필드와 `projectSettings.branding` 간 양방향 동기화.
-- **`exportTheme()` / `importTheme(event)`**: `.slidetheme` 파일 브라우저 다운로드 및 파일 불러오기.
-- **`saveThemeToServer(theme)`**: `/api/themes/{name}.slidetheme` POST로 서버 저장.
-
-### 5.8 브랜딩 모달 (Branding Modal)
-— `feat/custom-theme-builder` 브랜치에서 테마 모달과 분리된 독립 UI
-- **역할 분리**: 테마(색상·폰트)와 브랜딩(텍스트 정보)은 성격이 달라 별도 모달로 구분. 테마 파일에는 색상만, 데이터 파일에는 브랜딩만 저장.
-- **`openBrandingModal()`**: `syncBrandingUI()`로 현재 `projectSettings.branding` 값을 필드에 채운 뒤 모달 표시.
-- **`applyBrandingFromModal()`**: `collectBrandingFromUI()`로 입력 값을 `projectSettings.branding`에 반영. 영구 저장은 사용자가 데이터 저장 버튼을 눌러야 완료됨.
-- **헤더 버튼**: `.btn-hdr--indigo` 색상 variant의 소형 버튼으로 표시.
+- 구버전 배열형 JSON도 로드 가능
+- 구버전 인라인 이미지도 그대로 import 가능
+- 새 구조 저장본은 `{ settings, slides }` 래퍼를 사용
 
 ---
 
-## 6. 향후 수정 시 고려사항 (Considerations)
-1. **렌더링 방식 한계**: 현재 바닐라 JS의 `innerHTML` 조작으로 통째로 리렌더링(`renderPreview()`) 하는 방식이라 데이터가 매우 큰 경우 스크롤 위치 유지나 포커스 아웃 현상을 조심해야 합니다.
-2. **에러 핸들링**: PPTX 내보내기 시 텍스트가 매우 길어 높이를 초과할 경우 슬라이드 밖으로 벗어나는 한계가 있을 수 있습니다(현재 라인 수 곱하기로 대략적인 높이 산정 `estimatedHeight`).
-3. **스타일 격리**: `exportToHTML` 문자열 안의 CSS는 `activeTheme.webGuide`를 통해 동적으로 주입되므로, 에디터 CSS와 내보내기 CSS를 함께 수정해야 합니다.
-4. **TOC Observer 재등록 비용**: `renderPreview()` 호출마다 `IntersectionObserver`를 `disconnect` 후 재등록하기 때문에, 슬라이드 수가 매우 많은 경우 (수십 장 이상) Observer 성능 영향을 확인해야 합니다. 필요시 Debounce 도입 검토.
-5. **`slide_data.json` 구조 변경 주의**: `feat/custom-theme-builder` 이후 저장 포맷이 배열에서 `{ settings, slides }` 래퍼 객체로 바뀌었습니다. 불러오기는 하위 호환되지만, 새로 저장한 파일은 구버전 에디터에서 열 수 없습니다.
-6. **테마 서버 의존성**: 테마 기능은 `/api/themes` 엔드포인트(local_server.ps1)에 의존합니다. 서버 없이 동작 시 `getDefaultThemeObject()` 폴백으로 기본 테마가 적용됩니다.
-7. **이미지 저장 이원화**: 서버 저장본은 이미지 경로 참조 방식, 로컬 다운로드 백업은 data URL 포함 방식으로 목적이 다릅니다. 경로 참조 이미지는 서버 또는 Docker 볼륨의 `/data/image_data`가 함께 유지되어야 정상 복원됩니다.
+## 5. 핵심 모듈 및 기능
+
+### 5.1 프론트엔드 렌더링
+
+- `renderPreview()`: 에디터 메인 렌더링 엔진
+- `generateTocData()`, `updateDynamicTOC()`: 동적 목차 생성 및 좌측 네비게이터 갱신
+- `openImageModal()`, `showModal()`: UI 유틸리티 및 모달 처리
+
+현재 구조는 데이터 변경 시 프리뷰를 다시 그리는 방식이라 구현은 단순하지만, 문서가 매우 커질 경우 렌더링 비용 증가 가능성이 있습니다.
+
+### 5.2 데이터 입출력
+
+- `loadInitialData()`: 앱 시작 시 `slide_data.json` 로드
+- `parseLoadedData()`: 구버전/신버전 저장 포맷 호환 파서
+- `exportData()`: 서버 저장 API 호출
+- `downloadData()`: 포터블 JSON 백업 다운로드
+- `importData()`: JSON 파일 불러오기
+
+### 5.3 내보내기 엔진
+
+- `exportToPPTX()`: PptxGenJS 기반 PPTX 생성
+- `exportToHTML()`: 정적 HTML 웹 가이드 생성
+
+두 엔진 모두 테마와 브랜딩 정보를 반영하며, 이미지와 텍스트 비율(`textRatio`)도 함께 고려합니다.
+
+### 5.4 테마 및 브랜딩
+
+- `.slidetheme` 기반 테마 시스템
+- `applyThemeToEditor()`, `loadThemeByName()`, `renderThemeModal()`
+- `openBrandingModal()`, `applyBrandingFromModal()`
+
+테마는 색상/폰트 중심, 브랜딩은 프로젝트별 텍스트 중심으로 분리되어 있습니다.
+
+### 5.5 Node 서버
+
+`scripts/server.js`는 현재 표준 서버 구현입니다.
+
+- 정적 파일 서빙
+- `/api/save`: `slide_data.json` 저장
+- `/api/saveHtml`: HTML 가이드 저장
+- `/api/themes` GET/POST: 테마 파일 관리
+
+여기서 이미지 분리 저장 로직도 함께 처리합니다.
+
+---
+
+## 6. 주요 의존성
+
+| 항목 | 역할 |
+|---|---|
+| PptxGenJS | 브라우저 PPTX 생성 |
+| Marked.js | Markdown 파싱 |
+| Highlight.js | 코드 블록 하이라이팅 |
+| Font Awesome | 아이콘 렌더링 |
+| Express | 로컬 HTTP 서버 |
+| Docker / Compose | 컨테이너 실행 및 배포 표준화 |
+
+---
+
+## 7. 유지보수 시 고려사항
+
+1. **README와 실제 배포 기준 동기화**
+   Docker 실행 방식, 이미지 태그, 실행 스크립트 동작이 바뀌면 README도 함께 갱신해야 합니다.
+2. **`slide_data.json`와 `image_data`의 결합 관계**
+   서버 저장본은 `data/image_data` 파일이 함께 있어야 정상 복원됩니다.
+3. **하위 호환성 유지**
+   새 저장 구조를 바꿀 때는 반드시 구버전 배열형 데이터와 인라인 이미지 로드 경로를 확인해야 합니다.
+4. **렌더링 비용**
+   `renderPreview()` 중심 전체 리렌더 구조라 슬라이드 수가 많을수록 성능 점검이 필요합니다.
+5. **웹 가이드 스타일 동기화**
+   에디터 CSS와 HTML 내보내기 문자열 CSS가 서로 어긋나지 않도록 함께 관리해야 합니다.
+6. **Docker 릴리즈 규칙 준수**
+   릴리즈 태그, Docker 이미지 태그, `VERSION_HISTORY.md`, `CONTRIBUTING.md`는 항상 같은 기준으로 맞춰야 합니다.
