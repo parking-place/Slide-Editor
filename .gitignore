@@ -1,4 +1,6 @@
 data/slide_data.json
+data/image_data/*
+!data/image_data/.gitkeep
 exports/
 .agentmem
 plans/*.*

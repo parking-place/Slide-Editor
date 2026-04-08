@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  slide-editor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: slide-editor:latest
+    container_name: slide-editor
+    ports:
+      - "${PORT:-8000}:8000"       # 호스트 포트는 .env의 PORT 변수로 오버라이드 가능
+    volumes:
+      - ./data:/app/data           # slide_data.json + themes/ 영속
+      - ./exports:/app/exports     # 생성된 웹 가이드 HTML 영속
+    environment:
+      - PORT=8000
+    restart: unless-stopped        # 서버 재기동 시 자동 재시작 (수동 stop 제외)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/SlideEditor.html"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

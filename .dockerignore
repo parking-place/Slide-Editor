@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# 에이전트 메모리
+.agentmem
+
+# Node 모듈 (이미지 내에서 npm install로 재설치)
+node_modules
+
+# 내부 문서 (이미지에 불필요)
+plans/
+docs/
+
+# 사용자 데이터 (볼륨으로 공급)
+data/slide_data.json
+data/image_data/
+
+# 웹 가이드 내보내기 산출물 (볼륨으로 공급)
+exports/
+
+# Windows 전용 스크립트 (Docker에서 불필요)
+scripts/local_server.ps1
+scripts/split.ps1
+scripts/split.py
+scripts/patch.py
+에디터_웹서버_실행.bat
+
+# README (이미지에 불필요)
+README.md

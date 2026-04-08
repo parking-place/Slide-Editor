@@ -1,0 +1,12 @@
+{
+  "name": "slide-editor-server",
+  "version": "1.0.0",
+  "description": "Slide Editor cross-platform HTTP server (Docker support)",
+  "main": "scripts/server.js",
+  "scripts": {
+    "start": "node scripts/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
