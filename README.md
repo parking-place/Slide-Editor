@@ -2,7 +2,7 @@
 
 [![Powered by Antigravity](https://img.shields.io/badge/Powered%20by-Antigravity-blueviolet?style=for-the-badge)](https://antigravity.google)
 [![Powered by Codex](https://img.shields.io/badge/Powered%20by-Codex-111111?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/version-v0.9.0b-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.9.0c-blue?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 
 > **이 프로젝트의 설계, 구현, 리브랜딩, 문서화에는 Antigravity와 Codex를 포함한 AI 코딩 어시스턴트가 적극적으로 활용되었습니다.**
@@ -66,7 +66,7 @@ http://localhost:8000/SlideEditor.html
 parkingplace/slide-editor:latest
 ```
 
-버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.9.0b` 등)를 사용할 수 있습니다.
+버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.9.0c` 등)를 사용할 수 있습니다.
 
 ---
 
@@ -75,7 +75,6 @@ parkingplace/slide-editor:latest
 현재 기본 실행 경로는 Docker 기반입니다. 다만 참고용 또는 레거시 호환 용도로 아래 스크립트들이 남아 있습니다.
 
 - `scripts/server.js`: Node.js/Express 기반 크로스플랫폼 서버
-- `scripts/local_server.ps1`: 초기 Windows PowerShell 서버
 
 직접 Node 서버를 실행하려면 의존성을 설치한 뒤 실행합니다.
 
@@ -101,8 +100,8 @@ Slide-Editor/
 ├─ SlideEditor.html        # 메인 HTML 엔트리
 ├─ Dockerfile              # 배포용 이미지 빌드 정의
 ├─ docker-compose.yml      # 컨테이너 실행 정의
-├─ docker-compose-up.bat   # Windows용 실행 스크립트
-└─ docker-compose-up.sh    # Linux/macOS용 실행 스크립트
+├─ docker-compose-up.bat   # Windows용 Docker 실행 스크립트
+└─ docker-compose-up.sh    # Linux/macOS용 Docker 실행 스크립트
 ```
 
 ---
