@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: slide-editor:latest
+    image: parkingplace/slide-editor:latest
     container_name: slide-editor
     ports:
       - "${PORT:-8000}:8000"       # 호스트 포트는 .env의 PORT 변수로 오버라이드 가능
