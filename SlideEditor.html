@@ -46,43 +46,52 @@
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
-    <nav class="header-nav">
-        <div class="logo">Slide <span>Editor</span></div>
-        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <nav class="header-nav">
+        <div class="logo-lockup">
+            <div class="logo">Slide <span>Editor</span></div>
+            <span id="app-version" class="app-version" hidden></span>
+        </div>
+        <div class="header-actions">
+            <span id="project-indicator" class="project-indicator">Project loading...</span>
 
-            <!-- 테마 관리 -->
-            <button type="button" class="btn-hdr btn-hdr--amber" title="테마 관리" onclick="window.openThemeModal()">
-                <i class="fa-solid fa-palette"></i> 테마
+            <button type="button" class="btn-hdr btn-hdr--amber" title="Theme" onclick="window.openThemeModal()">
+                <i class="fa-solid fa-palette"></i> Theme
             </button>
-            <!-- 브랜딩 -->
-            <button type="button" class="btn-hdr btn-hdr--indigo" title="브랜딩 설정" onclick="window.openBrandingModal()">
-                <i class="fa-solid fa-tag"></i> 브랜딩
+            <button type="button" class="btn-hdr btn-hdr--indigo" title="Branding" onclick="window.openBrandingModal()">
+                <i class="fa-solid fa-tag"></i> Branding
             </button>
             <div class="hdr-divider"></div>
-            <!-- 데이터 불러오기 -->
+
+            <button type="button" class="btn-hdr btn-hdr--purple" title="New project" onclick="window.createProject()">
+                <i class="fa-solid fa-folder-plus"></i> New
+            </button>
+            <button type="button" class="btn-hdr btn-hdr--purple" title="Open project" onclick="window.openProjectPicker()">
+                <i class="fa-solid fa-folder-open"></i> Open
+            </button>
+            <button type="button" class="btn-hdr btn-hdr--blue" title="Save as new project" onclick="window.saveAsProject()">
+                <i class="fa-solid fa-copy"></i> Save As
+            </button>
+            <div class="hdr-divider"></div>
+
             <input type="file" id="import-data-input" accept=".json" style="display: none;" onchange="window.importData(event)">
-            <button type="button" class="btn-hdr btn-hdr--purple" title="데이터 불러오기" onclick="document.getElementById('import-data-input').click()">
-                <i class="fa-solid fa-folder-open"></i> 불러오기
+            <button type="button" class="btn-hdr btn-hdr--purple" title="Import JSON" onclick="document.getElementById('import-data-input').click()">
+                <i class="fa-solid fa-file-import"></i> Import
             </button>
-            <!-- 다운로드 (백업) -->
-            <button type="button" class="btn-hdr btn-hdr--blue" title="JSON 다운로드" onclick="window.downloadData()">
-                <i class="fa-solid fa-download"></i> 백업
+            <button type="button" class="btn-hdr btn-hdr--blue" title="Download JSON backup" onclick="window.downloadData()">
+                <i class="fa-solid fa-download"></i> Backup
             </button>
-            <!-- 서버 저장 -->
-            <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="서버에 저장" onclick="window.exportData()">
-                <i class="fa-solid fa-floppy-disk"></i> 저장
+            <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="Save current project" onclick="window.exportData()">
+                <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
             <div class="hdr-divider"></div>
-            <!-- 가이드 보기 -->
-            <button type="button" class="btn-hdr" id="dl-html-view-btn" title="웹 가이드 미리보기" onclick="window.viewWebGuide()">
-                <i class="fa-solid fa-book-open"></i> 가이드
+
+            <button type="button" class="btn-hdr" id="dl-html-view-btn" title="Preview web guide" onclick="window.viewWebGuide()">
+                <i class="fa-solid fa-book-open"></i> Guide
             </button>
-            <!-- 가이드 다운 -->
-            <button type="button" class="btn-hdr" id="dl-html-btn" title="가이드 HTML 다운로드" onclick="window.exportToHTML()">
+            <button type="button" class="btn-hdr" id="dl-html-btn" title="Download guide HTML" onclick="window.exportToHTML()">
                 <i class="fa-solid fa-file-code"></i> HTML
             </button>
-            <!-- PPTX -->
-            <button type="button" class="btn-hdr btn-hdr--green" id="dl-btn" onclick="window.exportToPPTX()">
+            <button type="button" class="btn-hdr btn-hdr--green" id="dl-btn" title="Download PPTX" onclick="window.exportToPPTX()">
                 <i class="fa-solid fa-file-export"></i> PPTX
             </button>
         </div>

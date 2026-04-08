@@ -1,6 +1,6 @@
-# HPE VME Editor — 개발 규칙 및 워크플로우 가이드
+# Slide Editor — 개발 규칙 및 워크플로우 가이드
 
-이 문서는 HPE VME Editor 프로젝트의 **Git 브랜치 전략, 버전 관리, Docker 릴리즈, 문서 업데이트 규칙**을 정의합니다.
+이 문서는 Slide Editor 프로젝트의 **Git 브랜치 전략, 버전 관리, Docker 릴리즈, 문서 업데이트 규칙**을 정의합니다.
 AI 어시스턴트(Antigravity)와 협업 시에도 이 규칙을 동일하게 적용합니다.
 
 ---
@@ -89,17 +89,34 @@ vX1.X2.X3(a)
 - 핫픽스, 운영 설정 수정, 문서 정리처럼 작은 후속 릴리즈는 같은 `X1.X2.X3`를 유지한 채 suffix만 증가시킨다.
 - 패치 릴리즈(`X3 + 1`)가 발생하면 이전 hotfix suffix 흐름은 종료되고 suffix 없이 새 패치 버전을 사용한다.
 
-### 2.2 릴리즈 절차
+### 2.2 버전 파일 관리
+
+- 루트의 `version.json`은 **에디터 UI에 표시되는 현재 버전의 단일 기준 파일**이다.
+- 릴리즈, 핫픽스, 문서 전용 hotfix suffix 릴리즈(`vX1.X2.X3a`)를 만들 때는 `VERSION_HISTORY.md`와 함께 `version.json`도 같은 버전으로 갱신한다.
+- 피처 브랜치에서 개발 중인 기능만 추가하는 동안에는 `version.json`을 미리 올리지 않고, **실제 릴리즈 또는 hotfix 확정 시점**에만 변경한다.
+- 에디터 좌상단 버전 표시는 `version.json`을 정적으로 읽어오므로, 버전 변경 후에는 브라우저에서 표시값까지 확인한다.
+
+예시:
+
+```json
+{
+  "version": "v0.7.1"
+}
+```
+
+### 2.3 릴리즈 절차
 
 릴리즈는 반드시 다음 순서를 따른다:
 
 ```
 1. VERSION_HISTORY.md 업데이트   ← 언릴리즈 → 릴리즈 섹션으로 이동
-2. 피처 브랜치에 docs 커밋        ← git commit -m "docs: finalize VERSION_HISTORY for vX.X.X"
-3. main에 --no-ff 머지            ← git merge feat/xxx --no-ff -m "release: vX.X.X - ..."
-4. Git 태그 생성                  ← git tag vX1.X2.X3 또는 vX1.X2.X3a
-5. Docker 이미지 빌드            ← 릴리즈 버전과 동일한 태그 사용
-6. Docker Hub push               ← Docker 이미지 태그는 Git 릴리즈 버전과 반드시 동일
+2. version.json 업데이트         ← VERSION_HISTORY와 동일한 버전으로 맞춤
+3. 피처 브랜치에 docs 커밋        ← git commit -m "docs: finalize VERSION_HISTORY for vX.X.X"
+4. main에 --no-ff 머지            ← git merge feat/xxx --no-ff -m "release: vX.X.X - ..."
+5. Git 태그 생성                  ← git tag vX1.X2.X3 또는 vX1.X2.X3a
+6. Docker 이미지 빌드            ← 릴리즈 버전과 동일한 태그 사용
+7. Docker Hub push               ← Docker 이미지 태그는 Git 릴리즈 버전과 반드시 동일
+8. 불필요 Docker 자산 정리       ← 로컬/원격 테스트 컨테이너, 이전 버전 이미지, dangling 이미지 삭제
 ```
 
 **Docker 릴리즈 규칙**
@@ -108,8 +125,13 @@ vX1.X2.X3(a)
 - 예: Git 릴리즈가 `v0.6.1`이면 Docker 이미지 태그도 `v0.6.1`이어야 한다.
 - 예: Git 릴리즈가 `v0.7.0a`이면 Docker 이미지 태그도 `v0.7.0a`이어야 한다.
 - 공식 릴리즈에는 코드/문서 릴리즈와 Docker Hub 배포를 **같은 배포 단위**로 취급한다.
+- 로컬과 원격 서버 모두에서 **더 이상 필요 없는 테스트용 컨테이너와 이전 버전 Docker 이미지**를 남겨두지 않는다.
+- 릴리즈 후 새 버전이 정상 동작함을 확인하면, 이전 버전 이미지와 이름이 남아 있는 테스트 컨테이너를 즉시 정리한다.
+- dangling 이미지(`<none>`)와 재사용 계획이 없는 임시 로컬 빌드 이미지도 함께 삭제한다.
+- 원격 운영 서버에서도 새 버전 반영 후 사용하지 않는 테스트 컨테이너, 이전 버전 이미지, dangling 이미지를 정리한다.
+- 단, 현재 운영 중인 컨테이너와 롤백에 명시적으로 필요하다고 합의된 이미지까지 자동 삭제하지는 않는다. 삭제 전에는 항상 “불필요 자산”인지 확인한다.
 
-### 2.3 비릴리즈 머지 절차
+### 2.4 비릴리즈 머지 절차
 
 기능이 완성됐지만 아직 공식 릴리즈 버전을 올리지 않고 머지만 할 때:
 
@@ -177,10 +199,12 @@ git commit -m "docs: update analysis for feat/syntax-highlight"
 기능 개발을 마치고 커밋하기 전 다음 항목을 확인한다:
 
 - [ ] `VERSION_HISTORY.md` 언릴리즈 섹션에 변경 내역이 기재되어 있는가?
+- [ ] 릴리즈 또는 hotfix 작업이라면 `version.json`이 최종 버전과 일치하는가?
 - [ ] 신규 함수/모듈을 추가했다면 `vme_editor_analysis.md`가 갱신되었는가?
 - [ ] 커밋 메시지가 Conventional Commits 규칙을 따르는가?
 - [ ] 브랜치가 `main`이 아닌 피처 브랜치인가?
 - [ ] 릴리즈 작업이라면 Git 태그와 Docker 이미지 태그가 동일한 버전명으로 준비되었는가?
+- [ ] 로컬과 원격지에서 더 이상 필요 없는 테스트 컨테이너, 이전 버전 이미지, dangling 이미지 정리 계획이 반영되었는가?
 
 ---
 
@@ -188,7 +212,9 @@ git commit -m "docs: update analysis for feat/syntax-highlight"
 
 - AI는 **항상 커밋 전 `VERSION_HISTORY.md` 언릴리즈 업데이트를 먼저** 수행한다.
 - 릴리즈 요청 시 반드시 **레이블링된 버전 번호**를 확인 후 진행한다.
+- 릴리즈 또는 hotfix 요청 시 `version.json`을 같은 버전으로 갱신하고, 에디터 좌상단 표시값까지 확인한다.
 - 릴리즈 요청 시 Docker 이미지를 빌드한 뒤 Docker Hub에 push하며, **Docker 태그는 릴리즈 버전과 동일하게** 맞춘다.
+- AI는 로컬/원격 테스트가 끝난 뒤 더 이상 필요 없는 테스트 컨테이너, 이전 버전 이미지, dangling 이미지를 남기지 않도록 정리한다.
 - 계획(implementation_plan.md) → 실행(task.md) → 완료(walkthrough.md) 순서를 유지한다.
 - 새 기능 브랜치는 항상 최신 `main`에서 분기(`git checkout main → checkout -b`)한다.
 - `main`에 직접 커밋하는 것은 긴급 hotfix를 제외하고 금지한다.

@@ -41,8 +41,52 @@
         }
         body.light-mode .header-nav { background: rgba(255, 255, 255, 0.9); }
 
+        .logo-lockup {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            min-width: 0;
+        }
         .logo { color: var(--text-main); font-weight: 700; font-size: 20px; }
         .logo span { color: var(--hpe-green); }
+        .app-version {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-dim);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .app-version[hidden] { display: none; }
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .project-indicator {
+            display: inline-flex;
+            align-items: center;
+            height: 30px;
+            padding: 0 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.04);
+            color: var(--text-main);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* ==== 헤더 소형 버튼 시스템 ==== */
         .btn-hdr {
@@ -1058,4 +1102,4 @@
             font-weight: 400;
             color: var(--text-dim);
             font-size: 11px;
-        }
+        }

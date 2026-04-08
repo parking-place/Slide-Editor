@@ -2,27 +2,27 @@
         let slidesData = [];
         // === SAVE DATA END ===
 
-        // === SETTINGS: 브랜딩은 데이터파일에, 테마명은 activeTheme.name으로 관리 ===
-        let projectSettings = {
-            activeTheme: 'hpe_default',
-            branding: {
-                projectName:   'My Guide',
-                guideSubtitle: '가이드 부제',
-                footerCopy:    'My Guide'
-            }
-        };
+        function getDefaultProjectSettings(projectName = 'My Guide') {
+            return {
+                activeTheme: 'hpe_default',
+                branding: {
+                    projectName,
+                    guideSubtitle: '가이드 부제',
+                    footerCopy: projectName
+                }
+            };
+        }
 
-        // 현재 로드된 테마 객체
+        let projectSettings = getDefaultProjectSettings();
+        let currentProject = null;
+        let availableProjects = [];
+
         let activeTheme = null;
-        const IMAGE_DATA_PREFIX = '/data/image_data/';
+        const LEGACY_IMAGE_DATA_PREFIX = '/data/image_data/';
 
-        // 초기 로드 시 기존 데이터가 있으면 에디터 폼을 숨기고, 데이터가 없으면 첫 번째 에디터를 엽니다.
         let activeEditorIndex = null;
         let editingSlideIndex = null;
 
-        // ===========================
-        // highlight.js + marked.js 연동 렌더러 설정
-        // ===========================
         (function setupMarkedRenderer() {
             const renderer = new marked.Renderer();
             renderer.code = function({ text, lang }) {
@@ -41,25 +41,23 @@
             marked.use({ renderer });
         })();
 
-        // 코드 블록 원클릭 복사 함수
         window.copyCode = function(btn) {
             const code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
             navigator.clipboard.writeText(code).then(() => {
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨!';
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨';
                 btn.classList.add('copied');
                 setTimeout(() => {
                     btn.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
                     btn.classList.remove('copied');
                 }, 2000);
             }).catch(() => {
-                // clipboard API 미지원 시 fallback
                 const ta = document.createElement('textarea');
                 ta.value = code;
                 document.body.appendChild(ta);
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨!';
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨';
                 btn.classList.add('copied');
                 setTimeout(() => {
                     btn.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
@@ -68,27 +66,26 @@
             });
         };
 
-        // 구버전(bashCode 필드 포함) 데이터를 새 마크다운 구조로 마이그레이션하는 함수 (안정성 강화)
         function migrateData(slides) {
             return slides.map(slide => {
                 if (!slide) return slide;
-                
+
                 if (slide.bashCode) {
                     let code = slide.bashCode;
                     let text = slide.text || '';
-                    
+
                     if (typeof text === 'string' && text.trim() !== '') {
                         text += '\n\n';
                     } else if (typeof text !== 'string') {
                         text = String(text || '');
                         if (text.trim() !== '') text += '\n\n';
                     }
-                    
+
                     text += '```bash\n' + code + '\n```';
                     slide.text = text;
                     delete slide.bashCode;
                 }
-                
+
                 if (slide.textRatio === undefined) {
                     slide.textRatio = 50;
                 }
@@ -96,55 +93,142 @@
             });
         }
 
-        // ===========================
-        // 데이터 로드 호환 파서
-        // - 구버전: 슬라이드 배열([])          → 자동 마이그레이션
-        // - 신버전: { settings, slides } 래퍼  → 정상 파싱
-        // ===========================
         function parseLoadedData(data) {
+            const nextSettings = getDefaultProjectSettings();
+
             if (Array.isArray(data)) {
-                // ── 구버전 호환: 순수 배열이면 기본 settings 유지, 슬라이드만 교체
-                console.log('[호환] 구버전 데이터(배열) 감지 → 기본 settings 유지');
                 slidesData = migrateData(data);
-            } else if (data && typeof data === 'object') {
-                if (Array.isArray(data.slides)) {
-                    // ── 신버전 래퍼 구조
-                    slidesData = migrateData(data.slides);
-                    if (data.settings) {
-                        // Deep merge: 빠진 키는 기본값 유지
-                        projectSettings = {
-                            activeTheme: data.settings.activeTheme || projectSettings.activeTheme,
-                            branding: Object.assign({}, projectSettings.branding, data.settings.branding || {})
-                        };
-                    }
-                } else {
-                    console.warn('[호환] 알 수 없는 데이터 구조 → 무시');
+                projectSettings = nextSettings;
+                return;
+            }
+
+            if (data && typeof data === 'object' && Array.isArray(data.slides)) {
+                slidesData = migrateData(data.slides);
+                projectSettings = {
+                    activeTheme: data.settings?.activeTheme || nextSettings.activeTheme,
+                    branding: Object.assign({}, nextSettings.branding, data.settings?.branding || {})
+                };
+                return;
+            }
+
+            slidesData = [];
+            projectSettings = nextSettings;
+        }
+
+        function setCurrentProject(project) {
+            currentProject = project
+                ? {
+                    id: project.id,
+                    name: project.name || project.meta?.name || project.settings?.branding?.projectName || project.id
                 }
+                : null;
+            updateProjectIndicator();
+        }
+
+        function updateProjectIndicator() {
+            const indicator = document.getElementById('project-indicator');
+            if (!indicator) return;
+            indicator.textContent = currentProject
+                ? `${currentProject.name} (${currentProject.id})`
+                : '프로젝트 없음';
+        }
+
+        async function requestJson(url, options = {}) {
+            const response = await fetch(url, options);
+            let payload = null;
+
+            try {
+                payload = await response.json();
+            } catch (err) {
+                payload = null;
+            }
+
+            if (!response.ok) {
+                throw new Error(payload?.error || `요청 실패: ${response.status}`);
+            }
+
+            return payload;
+        }
+
+        async function loadAppVersion() {
+            const versionEl = document.getElementById('app-version');
+            if (!versionEl) return;
+
+            try {
+                const response = await fetch('/version.json', { cache: 'no-store' });
+                if (!response.ok) return;
+
+                const payload = await response.json();
+                const version = typeof payload?.version === 'string' ? payload.version.trim() : '';
+                if (!version) return;
+
+                versionEl.textContent = version;
+                versionEl.hidden = false;
+            } catch (err) {
+                console.warn('[version] 버전 정보를 불러오지 못했습니다:', err);
             }
         }
 
-        // 같은 폴더에 있는 slide_data.json 파일을 자동으로 불러오는 함수
+        async function refreshProjectList() {
+            availableProjects = await requestJson('/api/projects');
+            return availableProjects;
+        }
+
+        async function saveCurrentProjectSelection(projectId) {
+            await requestJson('/api/app-state', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentProjectId: projectId })
+            });
+        }
+
+        async function loadProjectById(projectId, options = {}) {
+            const project = await requestJson(`/api/projects/${encodeURIComponent(projectId)}`);
+            parseLoadedData(project);
+            setCurrentProject(project);
+            await saveCurrentProjectSelection(project.id);
+            await refreshProjectList();
+            await loadThemeByName(projectSettings.activeTheme);
+            syncBrandingUI();
+            activeEditorIndex = slidesData.length === 0 ? 0 : null;
+            editingSlideIndex = null;
+            window.renderPreview();
+
+            if (options.showMessage) {
+                showModal(`프로젝트를 불러왔습니다: ${currentProject.name}`);
+            }
+        }
+
         async function loadInitialData() {
             try {
-                const response = await fetch('./data/slide_data.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    parseLoadedData(data);
+                const appState = await requestJson('/api/app-state');
+                await refreshProjectList();
+                const targetProjectId = appState.currentProjectId || availableProjects[0]?.id;
+
+                if (!targetProjectId) {
+                    throw new Error('불러올 프로젝트가 없습니다.');
                 }
-            } catch (e) {
-                console.log('초기 데이터 파일(slide_data.json)이 없거나 로컬 파일 시스템 제약(CORS)으로 불러올 수 없습니다. 수동으로 불러오기를 사용해주세요.', e);
-            } finally {
-                // 저장된 테마 자동 로드
+
+                await loadProjectById(targetProjectId);
+            } catch (err) {
+                console.error('초기 프로젝트를 불러오지 못했습니다.', err);
+                slidesData = [];
+                projectSettings = getDefaultProjectSettings();
+                setCurrentProject(null);
                 await loadThemeByName(projectSettings.activeTheme);
-                activeEditorIndex = slidesData.length === 0 ? 0 : null;
+                activeEditorIndex = 0;
                 window.renderPreview();
+                showModal('초기 프로젝트를 불러오지 못했습니다.\n' + err.message);
             }
         }
 
-        // 초기 화면 렌더링 실행 (자동 불러오기 포함)
-        window.onload = loadInitialData;
+        window.onload = async function() {
+            await Promise.allSettled([
+                loadAppVersion(),
+                loadInitialData()
+            ]);
+        };
 
-        // 이미지 확대 모달 제어 함수
         window.openImageModal = function(src) {
             const modal = document.getElementById('image-modal');
             const img = document.getElementById('image-modal-content');
@@ -157,27 +241,52 @@
             modal.style.display = 'none';
         };
 
-        // 이스케이프 함수 (HTML 태그 깨짐 방지 - 마크다운 렌더링 전에는 사용하지 않고 xss 필터링 용도로 필요 시 사용)
         function escapeHtml(str) {
-            if (!str) return "";
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
         function isInlineImageData(imageValue) {
             return typeof imageValue === 'string' && imageValue.startsWith('data:image/');
         }
 
+        function isProjectImagePath(imageValue) {
+            return typeof imageValue === 'string' && /^\/api\/projects\/[^/]+\/images\/[^/?#]+$/.test(imageValue.replace(/\\/g, '/'));
+        }
+
+        function isLegacyImagePath(imageValue) {
+            return typeof imageValue === 'string' && /^\.?\/?data\/image_data\/[^/?#]+$/.test(imageValue.replace(/\\/g, '/'));
+        }
+
+        function isRelativeProjectImagePath(imageValue) {
+            return typeof imageValue === 'string' && /^\.?\/?image_data\/[^/?#]+$/.test(imageValue.replace(/\\/g, '/'));
+        }
+
         function isStoredImagePath(imageValue) {
             return typeof imageValue === 'string' &&
                 !isInlineImageData(imageValue) &&
-                imageValue.replace(/\\/g, '/').includes('/data/image_data/');
+                (isProjectImagePath(imageValue) || isLegacyImagePath(imageValue) || isRelativeProjectImagePath(imageValue));
         }
 
         function getSlideImageSrc(imageValue) {
             if (typeof imageValue !== 'string' || imageValue.trim() === '') {
                 return null;
             }
-            return imageValue.replace(/\\/g, '/').replace(/^\.?\/?data\/image_data\//, IMAGE_DATA_PREFIX);
+
+            const normalized = imageValue.replace(/\\/g, '/');
+            if (isProjectImagePath(normalized)) {
+                return normalized;
+            }
+
+            if (isRelativeProjectImagePath(normalized)) {
+                const fileName = normalized.split('/').pop();
+                if (currentProject?.id && fileName) {
+                    return `/api/projects/${encodeURIComponent(currentProject.id)}/images/${encodeURIComponent(fileName)}`;
+                }
+                return normalized;
+            }
+
+            return normalized.replace(/^\.?\/?data\/image_data\//, LEGACY_IMAGE_DATA_PREFIX);
         }
 
         function cloneSlides(slides) {
@@ -225,7 +334,6 @@
             return pptxSlides;
         }
 
-        // 커스텀 모달 제어 함수
         function showModal(message, isConfirm = false, onConfirm = null) {
             const modal = document.getElementById('custom-modal');
             const msgEl = document.getElementById('modal-message');
@@ -233,12 +341,12 @@
             const btnCancel = document.getElementById('modal-btn-cancel');
 
             msgEl.innerText = message;
-            
+
             if (isConfirm) {
                 btnCancel.style.display = 'inline-block';
                 btnConfirm.innerText = '삭제';
                 btnConfirm.onclick = function() {
-                    if(onConfirm) onConfirm();
+                    if (onConfirm) onConfirm();
                     modal.style.display = 'none';
                 };
             } else {
@@ -248,7 +356,7 @@
                     modal.style.display = 'none';
                 };
             }
-            
+
             btnCancel.onclick = function() {
                 modal.style.display = 'none';
             };
@@ -256,6 +364,82 @@
             modal.style.display = 'flex';
         }
 
+        window.createProject = async function() {
+            const name = window.prompt('새 프로젝트 이름을 입력하세요.', 'My Guide');
+            if (!name) return;
+
+            try {
+                const created = await requestJson('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, template: 'empty' })
+                });
+                await loadProjectById(created.id);
+                showModal(`새 프로젝트를 만들었습니다: ${created.name}`);
+            } catch (err) {
+                showModal('새 프로젝트 생성에 실패했습니다.\n' + err.message);
+            }
+        };
+
+        window.saveAsProject = async function() {
+            const suggestedName = currentProject?.name ? `${currentProject.name} Copy` : 'My Guide Copy';
+            const name = window.prompt('새 프로젝트 이름을 입력하세요.', suggestedName);
+            if (!name) return;
+
+            try {
+                const created = await requestJson('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        settings: projectSettings,
+                        slides: slidesData
+                    })
+                });
+                await loadProjectById(created.id);
+                showModal(`다른 이름으로 저장했습니다: ${created.name}`);
+            } catch (err) {
+                showModal('다른 이름으로 저장에 실패했습니다.\n' + err.message);
+            }
+        };
+
+        window.openProjectPicker = async function() {
+            try {
+                const projects = await refreshProjectList();
+                if (!projects.length) {
+                    showModal('불러올 프로젝트가 없습니다.');
+                    return;
+                }
+
+                const defaultIndex = Math.max(1, projects.findIndex(project => project.id === currentProject?.id) + 1);
+                const promptText = projects.map((project, index) => {
+                    const currentMark = project.id === currentProject?.id ? ' [현재]' : '';
+                    return `${index + 1}. ${project.name} (${project.slideCount}장)${currentMark}`;
+                }).join('\n');
+
+                const selected = window.prompt(`열 프로젝트 번호를 입력하세요.\n\n${promptText}`, String(defaultIndex));
+                if (selected === null) return;
+
+                const selectedIndex = Number.parseInt(selected, 10);
+                if (!Number.isInteger(selectedIndex) || selectedIndex < 1 || selectedIndex > projects.length) {
+                    showModal('올바른 프로젝트 번호를 입력해주세요.');
+                    return;
+                }
+
+                const targetProject = projects[selectedIndex - 1];
+                if (targetProject.id === currentProject?.id) {
+                    showModal('이미 열려 있는 프로젝트입니다.');
+                    return;
+                }
+
+                const shouldOpen = window.confirm(`프로젝트 "${targetProject.name}"을(를) 불러올까요?\n저장되지 않은 변경은 사라질 수 있습니다.`);
+                if (!shouldOpen) return;
+
+                await loadProjectById(targetProject.id, { showMessage: true });
+            } catch (err) {
+                showModal('프로젝트 목록을 불러오지 못했습니다.\n' + err.message);
+            }
+        };
         // TOC(목차) 데이터를 추출하는 함수
         function generateTocData(slides) {
             let lines = [];
@@ -678,10 +862,14 @@
                 }
             }
 
+            const projectLabel = currentProject?.name
+                ? `<strong>${escapeHtml(currentProject.name)}</strong> 프로젝트`
+                : '현재 프로젝트';
+
             if(slidesData.length > 0) {
-                status.innerHTML = `현재 <strong>표지 1장 + 목차 ${tocPages}장 + 본문 ${slidesData.length}장</strong>의 슬라이드가 작성되었습니다.`;
+                status.innerHTML = `${projectLabel}에서 <strong>표지 1장 + 목차 ${tocPages}장 + 본문 ${slidesData.length}장</strong>이 준비되었습니다.`;
             } else {
-                status.innerHTML = `시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.`;
+                status.innerHTML = `${projectLabel}는 비어 있습니다. 아래 폼에서 첫 슬라이드를 작성해보세요.`;
             }
 
             // 동적 TOC 사이드바 갱신
@@ -1011,7 +1199,7 @@
         };
 
         // HTML 웹 가이드 문자열 템플릿 생성 헬퍼
-        function generateHTMLContent() {
+        function generateHTMLContent(sourceSlides = slidesData) {
             // 테마 및 브랜딩 변수 추출 (없으면 기본값)
             const th = (activeTheme && activeTheme.webGuide) ? activeTheme.webGuide : { headerBg: '#01a982', accentColor: '#01a982', darkAccent: '#00e676', codeColor: '#00e676' };
             const br = projectSettings.branding;
@@ -1027,8 +1215,8 @@
             const bodyClass     = isLightMode ? '' : 'dark-mode';
 
             // TOC 페이지수 계산을 위해 필요
-            const tocLines = generateTocData(slidesData);
-            const tocPagesData = slidesData.length > 0 ? paginateTocData(tocLines) : [];
+            const tocLines = generateTocData(sourceSlides);
+            const tocPagesData = sourceSlides.length > 0 ? paginateTocData(tocLines) : [];
             const tocPages = tocPagesData.length;
 
             let htmlContent = `<!DOCTYPE html>
@@ -1219,7 +1407,7 @@
             let prevChHTML = null;
             let prevMidHTML = null;
             let rIndex = 0;
-            slidesData.forEach((slide, index) => {
+            sourceSlides.forEach((slide, index) => {
                 let ch = slide.chapter || '대제목 미지정';
                 let mid = slide.middleTitle || '';
                 
@@ -1406,46 +1594,64 @@
         };
 
         // 수동 웹 가이드 다운로드
-        window.exportToHTML = function() {
+        window.exportToHTML = async function() {
             if (slidesData.length === 0) {
                 showModal('다운로드할 슬라이드가 없습니다!');
                 return;
             }
-            
-            const htmlContent = generateHTMLContent();
-            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'SlideEditor_Web_Guide.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+
+            const btn = document.getElementById('dl-html-btn');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중...';
+                btn.disabled = true;
+            }
+
+            try {
+                const portableSlides = await buildPortableSlides(slidesData);
+                const htmlContent = generateHTMLContent(portableSlides);
+                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'SlideEditor_Web_Guide.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('HTML 다운로드용 이미지 변환 중 오류:', err);
+                showModal('HTML 다운로드용 이미지를 준비하는 중 오류가 발생했습니다.\n' + err.message);
+            } finally {
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-file-code"></i> HTML';
+                    btn.disabled = false;
+                }
+            }
         };
 
         // 데이터(JSON) 파일 저장
         window.exportData = async function() {
-            if (slidesData.length === 0) {
-                showModal('저장할 슬라이드 데이터가 없습니다.');
+            if (!currentProject?.id) {
+                showModal('저장할 프로젝트가 없습니다.');
                 return;
             }
-            
+
             const dataStr = JSON.stringify({ settings: projectSettings, slides: slidesData }, null, 2);
 
             try {
-                const response = await fetch('/api/save', {
-                    method: 'POST',
+                const response = await fetch(`/api/projects/${encodeURIComponent(currentProject.id)}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: dataStr
                 });
-                
+
                 if (response.ok) {
-                    showModal('웹 서버(slide_data.json)에 직접 로컬 저장을 성공적으로 완료했습니다!');
+                    showModal(`현재 프로젝트를 저장했습니다: ${currentProject.name}`);
+                    await refreshProjectList();
                     return;
                 }
             } catch (err) {
-                console.warn('서버 저장 실패, 기존 다운로드 방식으로 돌아갑니다.', err);
+                console.warn('프로젝트 저장 실패, JSON 백업 다운로드로 전환합니다.', err);
             }
             
             // 날짜 데이터 포맷 생성 (_YYMMDDhhmmss)
