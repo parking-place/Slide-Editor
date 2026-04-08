@@ -1,0 +1,201 @@
+# 버전 관리 기록 (Version History)
+
+이 문서는 HPE VME Editor 프로젝트의 버전 업데이트 내역을 기록하는 문서입니다. 이 프로젝트는 **Github Flow** 전략(main 브랜치를 기준으로 기능 개발 브랜치를 파생하고 병합하는 형태)을 따릅니다.
+
+---
+
+# 🚀 릴리즈 (Released - main 브랜치)
+*메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
+
+## [v0.8.0] - 2026-04-08
+### Added
+- **프로젝트 전용 저장소 API 추가**: `data/projects/<projectId>/` 구조와 `index.json`, `app_state.json`을 도입하고, 프로젝트 목록 조회/생성/저장/이미지 제공 API를 추가.
+- **프로젝트 관리 UI 추가**: 헤더에 `New`, `Open`, `Save As` 액션과 현재 프로젝트 표시를 추가해 서버 프로젝트를 직접 생성하고 전환할 수 있도록 구성.
+- **버전 매니페스트 파일 추가**: 루트 `version.json` 파일을 도입해 에디터 UI가 현재 버전을 하드코딩 없이 정적으로 읽어오도록 구성.
+
+### Changed
+- **초기 로드/저장 흐름 전환**: 에디터가 더 이상 `data/slide_data.json`를 직접 읽지 않고, 서버의 현재 프로젝트와 `app_state`를 기준으로 로드/저장하도록 변경.
+- **프로젝트별 이미지 분리 저장**: 이미지 저장 경로를 공용 `data/image_data/` 중심에서 프로젝트별 `/api/projects/:projectId/images/:fileName` 경로 기반으로 전환.
+- **레거시 데이터 자동 마이그레이션 준비**: 기존 `slide_data.json`와 `data/image_data`가 있는 환경에서는 서버 시작 시 이를 `default` 프로젝트로 이관하는 초기화 로직을 추가.
+- **에디터 헤더 버전 표시 추가**: 좌상단 로고 옆에 현재 버전을 작게 표시하고, 값은 `version.json`을 읽어 반영하도록 변경.
+- **컨트리뷰팅 릴리즈 절차 보강**: 패치 릴리즈와 hotfix 릴리즈 시 `VERSION_HISTORY.md`뿐 아니라 `version.json`도 함께 관리하도록 `CONTRIBUTING.md` 규칙을 갱신.
+- **Docker 정리 원칙 명시**: 로컬과 원격 서버에서 테스트용 컨테이너, 이전 버전 이미지, dangling 이미지를 필요 없어진 시점에 정리하도록 `CONTRIBUTING.md` 운영 규칙을 보강.
+
+## [v0.7.0f] - 2026-04-08
+### Fixed
+- **가이드 보기 HTML 본문 파싱 수정**: `POST /api/saveHtml` 경로가 `text/html` 요청 본문을 문자열로 처리하지 못해 저장된 가이드 파일이 `"{}"`로 기록되던 문제를 수정. 이제 서버 저장 후 새 창 가이드 보기가 실제 HTML 내용을 정상 표시한다.
+- **빈 HTML 저장 방어 추가**: 잘못된 본문이 들어오면 `"{}"`를 저장하지 않고 `400` 응답으로 명확히 실패 처리해, 브라우저가 로컬 다운로드 fallback으로 안전하게 전환되도록 보완.
+
+## [v0.7.0e] - 2026-04-08
+### Fixed
+- **Docker 런타임 사용자 명시 수정**: `node:22-alpine` 베이스 이미지의 기본 사용자 `node`가 유지되던 문제를 해결하기 위해 `Dockerfile`에 `USER root`를 명시. 이로써 root 소유 bind mount 환경에서도 `서버 저장`과 `가이드 보기`의 서버 저장 경로가 실제로 정상 동작하도록 보완.
+
+## [v0.7.0d] - 2026-04-08
+### Fixed
+- **원격 서버 저장 권한 문제 수정**: Docker 이미지가 비루트 `node` 사용자로 실행되면서 root 소유 bind mount 볼륨(`/app/data`, `/app/exports`)에 쓰지 못해 `서버 저장`과 `가이드 보기`가 브라우저 다운로드 폴백으로 떨어지던 문제를 수정. 런타임 사용자를 root로 유지해 원격 Linux 서버에서도 `slide_data.json`, `image_data`, HTML 가이드 저장이 정상 동작하도록 개선.
+
+## [v0.7.0c] - 2026-04-08
+### Changed
+- **README 최신화**: 실행 가이드를 Docker Compose 중심으로 재작성하고, 현재 버전 및 Docker Hub 이미지 기준, 데이터 영속성, `Powered by Codex` 표기를 반영.
+- **분석 문서 최신화**: `vme_editor_analysis.md`를 현재 `Slide Editor` 구조에 맞춰 리브랜딩, Node/Express 서버, Docker 배포 흐름, 이미지 분리 저장 구조 기준으로 전면 갱신.
+
+## [v0.7.0b] - 2026-04-08
+### Changed
+- **Docker Compose 실행 기준 정리**: `docker-compose.yml`에서 obsolete `version` 필드를 제거하고, Docker Hub의 `parkingplace/slide-editor:latest`를 직접 사용하는 배포 기준에 맞춰 로컬 `build` 정의를 제거.
+- **실행 스크립트 동작 정합화**: `docker-compose-up.bat`, `docker-compose-up.sh`가 로컬 이미지를 재빌드하지 않고 `docker compose pull` 후 `docker compose up -d`를 수행하도록 변경해 원격 최신 이미지 추적 방식과 일치시킴.
+
+## [v0.7.0a] - 2026-04-08
+### Changed
+- **Docker Compose 기본 이미지 기준 변경**: 로컬 빌드 이미지(`slide-editor:latest`) 대신 Docker Hub의 `parkingplace/slide-editor:latest`를 기본 참조하도록 `docker-compose.yml`의 `image` 값을 조정.
+- **버전명 규칙 확장**: 릴리즈 버전 형식을 `vX1.X2.X3(a)`로 재정의하고, 메이저/마이너/패치/핫픽스 suffix의 증가 조건과 해석 예시를 `CONTRIBUTING.md`에 명시.
+
+## [v0.7.0] - 2026-04-08
+### Added
+- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 디렉토리 구조, Docker/로컬 실행 가이드 등을 포함한 루트 레벨 `README.md` 문서를 추가.
+- **Docker 지원 (크로스플랫폼 서버)**: Windows 전용 PowerShell 서버(`local_server.ps1`)를 대체하는 Node.js/Express 기반 크로스플랫폼 서버(`scripts/server.js`)를 추가하고 기존 저장/테마 API 명세를 동일하게 구현.
+- **Docker 실행 자산 추가**: `Dockerfile`, `docker-compose.yml`, `package.json`, 윈도우용 `docker-compose-up.bat`, 리눅스용 `docker-compose-up.sh`를 추가해 컨테이너 기반 실행과 재기동 절차를 표준화.
+
+### Changed
+- **이미지 데이터 저장 분리**: 슬라이드 JSON 저장 시 base64 이미지를 `slide_data.json`에 직접 인라인하지 않고 `/data/image_data/` 아래 별도 파일로 저장하도록 구조를 개편해 초기 로드 부담을 줄임.
+- **구버전 데이터 호환 유지**: 기존 `data:image/...` 인라인 이미지가 포함된 JSON 파일도 그대로 불러올 수 있도록 로드/임포트 호환성을 유지하고, 브라우저 로컬 다운로드 JSON은 이식성을 위해 기존처럼 인라인 이미지를 포함하도록 유지.
+- **ignore 규칙 보강**: `data/image_data` 내부의 실제 이미지 데이터가 Git 및 Docker 빌드 컨텍스트에 포함되지 않도록 `.gitignore`, `.dockerignore` 규칙을 추가하고 `.gitkeep`만 예외 허용.
+- **릴리즈 규칙 확장**: 공식 릴리즈 시 Git 태그 생성 후 동일한 버전명으로 Docker 이미지를 빌드하고 Docker Hub에 push하는 절차를 `CONTRIBUTING.md`에 반영.
+
+### Fixed
+- **Docker Compose 헬스체크 호환성 수정**: 컨테이너 내부 `localhost`가 IPv6로 우선 해석되어 헬스체크가 실패하던 문제를 방지하기 위해 `127.0.0.1` 기준으로 헬스체크 URL을 고정.
+
+## [v0.6.0c] - 2026-04-07
+### Changed
+- **웹 가이드 내 하드코딩된 테마색상 완전 제거 및 동적 변수화**: 다크모드 카드 헤더 좌측 테두리, 위로 가기 버튼(`.btn-top`), 인라인 마크다운 코드 블록(`.markdown-body code`) 등에 남아있던 특정 하드코딩 컬러값 `#00e676`, `#01a982`, `#ef4444` 등을 모두 사용자가 지정한 테마 변수 `${accentColor}`, `${darkAccent}`, `${codeColor}`로 교체하여 웹 가이드가 100% 동적 브랜딩을 지원하도록 개선. 호버 이벤트 또한 하드코딩된 색상 대신 CSS `filter: brightness()`를 통해 구현.
+
+## [v0.6.0b] - 2026-04-07
+### Changed
+- **웹 가이드 다크 모드 전환 기능 제거**: 웹 가이드(`app.js` HTML 생성기) 내에 하드코딩 되어있던 테마 전환 토글 버튼(`.btn-theme`, `toggleTheme()`)을 모두 제거하여, 가이드가 항상 프로젝트 설정에 저장된 테마 스킨(다크/라이트)으로 고정되어 보여지도록 제약 변경.
+
+## [v0.6.0a] - 2026-04-07
+### Fixed
+- **웹 가이드 네비게이터 호버 색상 동적 테마 연동**: 하드코딩되었던 `guide-toc-item`과 `toc-link`의 hover 배경색/글자색을 테마 지정 색상의 투명도 옵션(`${accentColor}0D`, `${darkAccent}0D`)으로 동적 적용되도록 수정.
+- **웹 가이드 코드 블록 래퍼 UI 테마 동기화**: 웹 가이드(`app.js`)의 HTML 생성기에 하드코딩되어 있던 코드 블록 래퍼(`.code-block-wrapper`, 복사 버튼 등)의 CSS가 에디터(`style.css`)와 완전히 동일한 다크/라이트 모드 규칙(테두리, 헤더 배경, 복사 버튼 레이아웃, `codeColor` 테마 속성 연동 등)을 따르도록 재작성하여 디자인 불일치 및 폰트 컬러/배경 들뜸 문제 해결.
+
+## [v0.6.0] - 2026-04-07
+### Changed
+- **프로젝트 리브랜딩 1차**: 도구 이름을 `HPE VME Guide Creator` → `Slide Editor`로 변경. HPE VME 특화 도구에서 범용 슬라이드 편집 도구로 전환.
+  - `HPE_VME_Editor.html` → `SlideEditor.html` 파일명 변경
+  - 브라우저 탭·헤더 로고: `HPE VME Guide Creator` → `Slide Editor`
+  - `app.js` 기본 브랜딩 값 중립화: `projectName`, `guideSubtitle`, `footerCopy` 기본값을 HPE VME 전용 문구에서 범용 값(`My Guide` 등)으로 변경
+  - 에디터 프리뷰 표지 슬라이드: 하드코딩된 HPE VME 텍스트 → `projectSettings.branding` 변수 동적 반영으로 교체
+  - PPTX 출력 파일명: `HPE_VME_Custom_Guide.pptx` → `SlideEditor_Guide.pptx`
+  - 웹 가이드 출력 파일명: `HPE_VME_Web_Guide.html` → `SlideEditor_Web_Guide.html`
+  - `local_server.ps1`: 서버 배너 문구 및 기본 오픈 URL/저장 경로 반영
+  - `scripts/split.ps1`: 대상 파일명 반영
+  - `에디터_웹서버_실행.bat`: 콘솔 창 타이틀 `Slide Editor Server`로 변경
+- **데이터 저장 파일명 변경 (리브랜딩 2차)**: `vme_data.json` → `slide_data.json`으로 리브랜딩 적용.
+  - 관련 소스코드(`app.js`, `local_server.ps1`) 및 가이드 문서(`VERSION_HISTORY.md`, `vme_editor_analysis.md`) 내 하드코딩된 참조 모두 교체.
+
+### Fixed
+- **HPE 기본 테마 displayName 복구**: 그래프 정리 과정의 머지 충돌로 인해 3개 HPE 기본 테마의 `displayName`이 내부 ID로 덮어씌워진 문제 수정.
+  - `hpe_default.slidetheme`: `"hpe_default"` → `"HPE Default (Dark)"`
+  - `hpe_light.slidetheme`: `"hpe_light"` → `"HPE Light"`
+  - `hpe_blue.slidetheme`: `"hpe_blue"` → `"HPE Blue (Dark)"`
+
+## [v0.5.6] - 2026-04-07
+### Added
+- **브랜드 테마 28종 추가**: 브랜드 아이덴티티가 강한 IT 기업 14개의 공식 브랜드 컬러를 기반으로 다크/라이트 모드 각각 1종씩, 총 28개의 `.slidetheme` 파일 신규 제공.
+  - **Google** (`google_dark` / `google_light`): 구글 브랜드 블루 `#4285F4` 기반
+  - **Microsoft** (`microsoft_dark` / `microsoft_light`): MS 브랜드 블루 `#00A4EF` / `#0078D4` 기반
+  - **Apple** (`apple_dark` / `apple_light`): Apple 시스템 블루 `#0A84FF` / `#007AFF`, 순수 블랙 배경
+  - **AWS** (`aws_dark` / `aws_light`): AWS Squid Ink 다크 배경 + 오렌지 `#FF9900` 강조색
+  - **GitHub** (`github_dark` / `github_light`): GitHub 공식 다크/라이트 팔레트 (`#58a6ff` / `#0969da`)
+  - **Netflix** (`netflix_dark` / `netflix_light`): Netflix 시그니처 레드 `#E50914` + 순수 블랙 배경
+  - **Spotify** (`spotify_dark` / `spotify_light`): Spotify 그린 `#1DB954` + 딥 블랙 배경
+  - **IBM** (`ibm_dark` / `ibm_light`): IBM Carbon Design System 공식 팔레트 (`#0f62fe` / `#0043ce`)
+  - **NVIDIA** (`nvidia_dark` / `nvidia_light`): NVIDIA 시그니처 그린 `#76B900` + 딥 블랙 배경
+  - **Meta** (`meta_dark` / `meta_light`): Meta/Facebook 브랜드 블루 `#1877F2` 기반
+  - **AMD** (`amd_dark` / `amd_light`): AMD 시그니처 레드 `#ED1C24` 기반
+  - **Intel** (`intel_dark` / `intel_light`): Intel 브랜드 블루 `#0071C5` 기반
+  - **GitLab** (`gitlab_dark` / `gitlab_light`): GitLab Tanuki 오렌지 `#FC6D26` / `#e24329` 기반
+  - **Claude** (`claude_dark` / `claude_light`): Anthropic 시그니처 코퍼(Copper) `#D4784F` + 웜 다크/크림 배경
+
+## [v0.5.5b] - 2026-04-07
+### Fixed
+- **웹 가이드 및 에디터 네비게이터 테마 연동 오류 수정**: TOC(목차) 네비게이터의 활성화 색상 및 호버 배경색이 테마 색상이 아닌 하드코딩된 특정 색상(`rgba(0, 230, 118)` 등)으로 고정되어 있던 문제 수정.
+- 에디터 CSS(`style.css`)에 `--hpe-green-alpha` 변수를 추가하여 반투명 배경색 동적 지원 연동 완비.
+- 웹 가이드(`app.js`)의 정적 HTML 생성기에도 하드코딩된 RGB 코드 대신 `${accentColor}` 및 `${darkAccent}` 반영.
+- 웹 가이드 본문 내의 Table of Contents(목차) HTML 생성 시 하드코딩된 테마색상 교체 및 연동 완료.
+
+## [v0.5.5a] - 2026-04-07
+### Added
+- **테마 마크다운 코드 색상 분리**: 테마의 기본 강조색(`accent`)과 별도로 인라인 코드 블록, 마크다운 코드 래퍼 라벨/테두리 색상을 별도 지정할 수 있는 `codeColor` 변수 도입.
+- **다크/라이트 모드 테마 종속화**: 에디터 상단의 모드 전환 토글 버튼을 제거하고, 테마 관리의 `isDarkMode` 속성으로 통합. 테마에 따라 다크/라이트 모드가 자동으로 전환되도록 구조 변경.
+- **테마 UI 항목 추가**: 색상 편집 모달 라인업에 `코드 텍스트색 (Code Color)` 항목과 `다크 모드 기본 렌더링` 체크박스를 추가 및 실시간 프리뷰 기능 적용.
+- **기본 테마 업데이트**: `hpe_default`, `hpe_light`, `hpe_blue` `.slidetheme` 설정 파일에 `codeColor` 및 `isDarkMode` 항목 기본값 업데이트 적용 완료.
+
+## [v0.5.5] - 2026-04-07
+### Added
+- **커스텀 테마 빌더**: 색상 팔레트(에디터/PPTX/웹가이드)와 폰트를 독립된 `.slidetheme` 파일로 정의하고 불러올 수 있는 테마 관리 시스템 구현.
+- **`.slidetheme` 파일 포맷**: `colors`, `pptx`, `webGuide`, `fonts` 4개 섹션으로 구성된 JSON 기반 테마 파일 규격 정의.
+- **기본 테마 3종 제공**: `hpe_default` (다크 그린), `hpe_light` (라이트), `hpe_blue` (다크 블루) `.slidetheme` 파일 생성 (`data/themes/`).
+- **테마 관리 모달 UI**: 상단 헤더의 `🎨 테마 관리` 버튼으로 열리는 2열 모달 (좌: 목록, 우: 편집기). 색상 픽커(`input[type=color]`) + HEX 텍스트 입력 양방향 실시간 동기화.
+- **테마 서버 API 3종**: `local_server.ps1`에 `/api/themes` GET(목록), `/api/themes/{name}` GET(파일), POST(저장) 엔드포인트 추가.
+- **테마 내보내기/불러오기**: `.slidetheme` 파일 브라우저 다운로드 및 파일 선택 불러오기 지원.
+
+### Changed
+- **`slide_data.json` 구조 변경**: 슬라이드 배열(`[]`)에서 `{ settings, slides }` 래퍼 객체로 확장. `settings.activeTheme`(선택된 테마명)과 `settings.branding`(프로젝트명·부제·footer) 영역 추가.
+- **구버전 데이터 자동 호환**: `parseLoadedData()` 함수 도입. 구버전 배열 형식 → 슬라이드만 교체(기존 settings 유지), 신버전 래퍼 구조 → 완전 복원(Deep merge).
+- **`generateHTMLContent()` 파라미터화**: 웹 가이드 출력물의 헤더 배경, 강조색, footer 문구, 제목/부제를 `activeTheme.webGuide`와 `projectSettings.branding`으로 동적 주입.
+- **`exportToPPTX()` 파라미터화**: 슬라이드 마스터 배경, 강조색, 폰트, footer 문구, 표지 텍스트를 `activeTheme.pptx`와 `projectSettings.branding`으로 동적 주입.
+- **브랜딩 정보 데이터 분리**: 프로젝트명·부제·footer 문구는 `.slidetheme` 파일이 아닌 `slide_data.json`(settings.branding)에 저장하여 프로젝트별 독립 관리.
+- **헤더 버튼 UI 소형화**: 소형 버튼 시스템(`.btn-hdr`) 도입. 패딩 축소(5px 11px), 높이 30px, 12px 폰트. 색상 variant(`--amber`, `--indigo`, `--purple`, `--blue`, `--green`) 클래스 체계화. 구분선(`.hdr-divider`) 추가.
+- **브랜딩 모달 분리**: 테마 모달에서 브랜딩 섹션 완전 제거, 독립된 `브랜딩` 버튼 및 전용 모달 UI로 분리. 프로젝트명·부제·Footer 세 필드와 적용 대상 힌트 제공.
+- **웹 가이드 다크/라이트 모드 동기화**: `가이드 보기` / `HTML 다운로드` 실행 시점의 에디터 모드(`light-mode` 클래스 유무)를 감지하여 웹 가이드 `<body>` 클래스에 동일하게 적용.
+
+## [v0.5.4] - 2026-04-07
+### Added
+- **코드 블록 구문 강조 (Syntax Highlighting)**: `highlight.js 11.10.0` + `atom-one-dark` 테마를 도입하여 `bash`, `powershell`, `sql`, `python` 등 언어별 문법 색상 강조 적용.
+- **원클릭 복사 버튼**: 코드 블록 상단에 언어 레이블과 함께 '복사' 버튼 배치. 클릭 시 "복사됨!" 2초 피드백 후 원복. `navigator.clipboard` API + `execCommand` fallback 지원.
+- **코드 블록 래퍼 UI**: 언어명·복사 버튼을 포함한 헤더 바와 코드 영역으로 구성된 `.code-block-wrapper` 컴포넌트 적용. 다크/라이트 모드 모두 대응.
+- **웹 가이드 – 테마 전환 플로팅 버튼**: 헤더 인라인 버튼 → 우측 하단 원형 플로팅 버튼(bottom: 90px)으로 변경. 스크롤 위치와 무관하게 항상 접근 가능.
+- **웹 가이드 – 동적 TOC 네비게이터**: 좌측 고정 사이드바(`guide-toc`) 추가. 대제목/중제목/소제목 계층 트리 렌더링, IntersectionObserver 스크롤 하이라이팅.
+- **웹 가이드 – 다크모드 기본 적용**: `<body class="dark-mode">` 로 변경하여 최초 로드 시 다크 테마로 표시.
+
+### Changed
+- **HTML 내보내기 동기화**: 내보낸 웹 가이드에도 hljs CDN, 코드 블록 UI, 복사 버튼, TOC 네비게이터 전부 포함.
+
+## [v0.5.3] - 2026-04-07
+### Added
+- **동적 목차(TOC) 사이드바 네비게이터**: 에디터 좌측에 `Navigator` 사이드바가 고정 노출되도록 레이아웃 도입. 항목 클릭 시 해당 슬라이드로 부드럽게 자동 스크롤(`scrollIntoView`) 연동.
+- **IntersectionObserver 연동**: 사용자가 본문을 스크롤할 때 현재 화면에 보이는 슬라이드에 맞는 TOC 항목이 자동으로 하이라이트(`.active`).
+- **2단 배치 레이아웃**: 기존 1단(`max-width: 1000px`) 구성에서 `layout-wrapper`(최대 너비 1400px) 기준 2단 분할 구조로 확장.
+- **다크모드/라이트모드 대응**: TOC 사이드바도 테마 전환에 완전히 반응하도록 색상 대응 설계.
+
+### Changed
+- **프로젝트 디렉토리 구조 리팩토링**: 확장성과 유지 관리를 위해 `data`, `docs`, `scripts`, `exports` 폴더를 신설하고 모든 리소스 목적별 분리 조치.
+- **경로 무결성 패치**: 구조화로 인해 깨지는 API fetch, 서버 스크립트 실행 참조 경로(`local_server.ps1`, `patch.py`, `에디터_웹서버_실행.bat` 등)를 올바르게 동기화.
+- CSS와 JS를 `src/style.css`, `src/app.js`로 모듈화하여 `HPE_VME_Editor.html` 코드를 단순화.
+
+### Fixed
+- **같은 소제목 중복 표시 문제**: 같은 대제목+중제목+소제목 조합의 복합키를 사용하여 Navigator에서 중복 항목을 하나로 합치도록 수정.
+- **Navigator 사이드바 자동 스크롤 제거**: 본문 스크롤 시 Navigator의 활성 항목 표시는 유지하되, 사이드바 자체가 강제로 스크롤되는 동작 제거.
+
+## [v0.5.1] - 2026-04-07
+### Added
+- **UI 및 엔진 업데이트**: 슬라이드 내 텍스트와 이미지 요소가 모두 존재할 때 가로 분할 비율을 세밀하게 조절할 수 있는 범위형 슬라이더(Range Slider) UI를 에디터 입력 폼에 추가 (기본 50:50, 최소 20:80 ~ 최대 80:20 지원).
+- 수동 설정된 레이아웃 비율(`textRatio`)이 라이브 프리뷰 화면뿐 아니라 웹 기반 가이드(HTML)와 파일 다운로드(PPTX) 결과물 렌더링 엔진에도 동적으로 수치 배분 연동되도록 알고리즘 고도화.
+- 하위 호환성 강화: 기존 데이터 로드 시 비율 정보가 없으면 기본값인 50%로 자동 마이그레이션.
+
+## [v0.5.0] - 2026-04-07
+### Added
+- HPE VME Editor 템플릿의 초기 핵심 기능(PPTX생성, HTML생성 기능 포함) 구현 완료본
+- `vme_editor_analysis.md` 기능 분석 문서
+- 로컬 웹 서버 실행용 배치, 파워쉘 스크립트 및 Python 코드
+- `.gitignore` (데이터 및 자동생성 웹가이드 제외 처리)
+
+### Changed
+- Git 버전 관리 시스템 도입 및 첫 커밋 (Github Flow 전략 시작)
+
+---
+
+# 🚧 언릴리즈 (Unreleased - feature 브랜치)
+*현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
+
+*(none)*

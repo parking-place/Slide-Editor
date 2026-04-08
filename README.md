@@ -2,7 +2,7 @@
 
 [![Powered by Antigravity](https://img.shields.io/badge/Powered%20by-Antigravity-blueviolet?style=for-the-badge)](https://antigravity.google)
 [![Powered by Codex](https://img.shields.io/badge/Powered%20by-Codex-111111?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/version-v0.8.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.8.0a-blue?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 
 > **이 프로젝트의 설계, 구현, 리브랜딩, 문서화에는 Antigravity와 Codex를 포함한 AI 코딩 어시스턴트가 적극적으로 활용되었습니다.**
@@ -66,7 +66,7 @@ http://localhost:8000/SlideEditor.html
 parkingplace/slide-editor:latest
 ```
 
-버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.7.0b` 등)를 사용할 수 있습니다.
+버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.8.0a` 등)를 사용할 수 있습니다.
 
 ---
 
@@ -97,7 +97,7 @@ Slide-Editor/
 │  ├─ themes/              # .slidetheme 파일 저장소
 │  └─ image_data/          # 서버 저장 시 분리되는 이미지 파일
 ├─ exports/                # 생성된 HTML 가이드 저장 위치
-├─ docs/                   # 기여 규칙, 버전 이력, 분석 문서
+├─ docs/                   # 기여 규칙, changelog, 분석 문서
 ├─ SlideEditor.html        # 메인 HTML 엔트리
 ├─ Dockerfile              # 배포용 이미지 빌드 정의
 ├─ docker-compose.yml      # 컨테이너 실행 정의
@@ -121,7 +121,7 @@ Slide-Editor/
 이 프로젝트는 `Github Flow`와 문서화 중심 워크플로우를 따릅니다.
 
 - 모든 작업은 `main`에서 분기한 전용 브랜치에서 진행합니다.
-- 커밋 전 `docs/VERSION_HISTORY.md`의 언릴리즈 섹션을 먼저 갱신합니다.
+- 커밋 전 `docs/changelog/unreleased.md`를 먼저 갱신합니다.
 - 릴리즈 및 hotfix 버전은 `docs/CONTRIBUTING.md`의 `vX1.X2.X3(a)` 규칙을 따릅니다.
 - 공식 릴리즈 시 Git 태그와 Docker 이미지 태그를 동일하게 맞춥니다.
 

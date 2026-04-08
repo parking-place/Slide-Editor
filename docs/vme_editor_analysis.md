@@ -176,4 +176,4 @@
 5. **웹 가이드 스타일 동기화**
    에디터 CSS와 HTML 내보내기 문자열 CSS가 서로 어긋나지 않도록 함께 관리해야 합니다.
 6. **Docker 릴리즈 규칙 준수**
-   릴리즈 태그, Docker 이미지 태그, `VERSION_HISTORY.md`, `CONTRIBUTING.md`는 항상 같은 기준으로 맞춰야 합니다.
+   릴리즈 태그, Docker 이미지 태그, `version.json`, `CHANGELOG.md`, `docs/changelog/unreleased.md`, `CONTRIBUTING.md`는 항상 같은 기준으로 맞춰야 합니다.
