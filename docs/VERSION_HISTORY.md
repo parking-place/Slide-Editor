@@ -7,6 +7,10 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0d] - 2026-04-08
+### Fixed
+- **원격 서버 저장 권한 문제 수정**: Docker 이미지가 비루트 `node` 사용자로 실행되면서 root 소유 bind mount 볼륨(`/app/data`, `/app/exports`)에 쓰지 못해 `서버 저장`과 `가이드 보기`가 브라우저 다운로드 폴백으로 떨어지던 문제를 수정. 런타임 사용자를 root로 유지해 원격 Linux 서버에서도 `slide_data.json`, `image_data`, HTML 가이드 저장이 정상 동작하도록 개선.
+
 ## [v0.7.0c] - 2026-04-08
 ### Changed
 - **README 최신화**: 실행 가이드를 Docker Compose 중심으로 재작성하고, 현재 버전 및 Docker Hub 이미지 기준, 데이터 영속성, `Powered by Codex` 표기를 반영.
