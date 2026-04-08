@@ -1,10 +1,5 @@
-version: "3.9"
-
 services:
   slide-editor:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: parkingplace/slide-editor:latest
     container_name: slide-editor
     ports:

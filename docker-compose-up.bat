@@ -10,8 +10,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [Slide Editor] docker compose up -d --build
-docker compose up -d --build
+echo [Slide Editor] docker compose pull
+docker compose pull
+
+if errorlevel 1 (
+    echo.
+    echo Docker Compose pull에 실패했습니다.
+    exit /b 1
+)
+
+echo [Slide Editor] docker compose up -d
+docker compose up -d
 
 if errorlevel 1 (
     echo.

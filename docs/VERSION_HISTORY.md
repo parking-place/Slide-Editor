@@ -7,6 +7,11 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0b] - 2026-04-08
+### Changed
+- **Docker Compose 실행 기준 정리**: `docker-compose.yml`에서 obsolete `version` 필드를 제거하고, Docker Hub의 `parkingplace/slide-editor:latest`를 직접 사용하는 배포 기준에 맞춰 로컬 `build` 정의를 제거.
+- **실행 스크립트 동작 정합화**: `docker-compose-up.bat`, `docker-compose-up.sh`가 로컬 이미지를 재빌드하지 않고 `docker compose pull` 후 `docker compose up -d`를 수행하도록 변경해 원격 최신 이미지 추적 방식과 일치시킴.
+
 ## [v0.7.0a] - 2026-04-08
 ### Changed
 - **Docker Compose 기본 이미지 기준 변경**: 로컬 빌드 이미지(`slide-editor:latest`) 대신 Docker Hub의 `parkingplace/slide-editor:latest`를 기본 참조하도록 `docker-compose.yml`의 `image` 값을 조정.
