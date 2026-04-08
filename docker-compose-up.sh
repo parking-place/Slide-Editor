@@ -10,8 +10,11 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[Slide Editor] docker compose up -d --build"
-docker compose up -d --build
+echo "[Slide Editor] docker compose pull"
+docker compose pull
+
+echo "[Slide Editor] docker compose up -d"
+docker compose up -d
 
 echo
 echo "Slide Editor 컨테이너가 실행되었습니다."
