@@ -12,11 +12,14 @@ RUN npm install --omit=dev
 
 # 2) 앱 소스 복사
 COPY SlideEditor.html ./
+COPY version.json ./
 COPY src/ ./src/
 COPY scripts/server.js ./scripts/
 
-# 3) 기본 테마 파일 복사 (data/themes/ 만 복사, slide_data.json 제외)
-COPY data/themes/ ./data/themes/
+# 3) 기본 테마 파일 복사
+#    런타임 data 볼륨이 /app/data 를 덮어써도 기본 테마를 복구할 수 있도록
+#    별도 번들 디렉터리에 함께 보관합니다.
+COPY data/themes/ ./builtin_themes/
 
 # 4) 볼륨 마운트 대상 디렉토리 미리 생성
 #    (호스트 볼륨이 마운트되면 이 내용은 덮어씌워지지만,
