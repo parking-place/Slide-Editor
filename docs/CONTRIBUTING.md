@@ -244,12 +244,12 @@ git merge feat/xxx --no-ff -m "merge: feat/xxx into main (unreleased)"
 - `docs/changelog/unreleased.md`
 - `docs/changelog/releases/*.md`
 - `docs/CONTRIBUTING.md`
-- `docs/vme_editor_analysis.md`
+- `docs/slide_editor_architecture.md`
 - `README.md`
 
 기준:
 
-- 구조가 바뀌면 `README.md`와 `docs/vme_editor_analysis.md`의 설명도 갱신합니다.
+- 구조가 바뀌면 `README.md`와 `docs/slide_editor_architecture.md`의 설명도 갱신합니다.
 - 릴리즈 절차가 바뀌면 `docs/CONTRIBUTING.md`를 먼저 갱신합니다.
 - 버전 기준이 바뀌면 `version.json`, changelog release note, Docker tag가 모두 일치해야 합니다.
 
@@ -265,7 +265,7 @@ git merge feat/xxx --no-ff -m "merge: feat/xxx into main (unreleased)"
 - [ ] `version.json`이 최종 릴리즈 버전과 일치하는가?
 - [ ] Git 태그와 Docker 이미지 태그가 동일한가?
 - [ ] 로컬/원격 Docker 정리 계획이 반영되었는가?
-- [ ] 필요 시 `README.md`와 `docs/vme_editor_analysis.md`도 갱신되었는가?
+- [ ] 필요 시 `README.md`와 `docs/slide_editor_architecture.md`도 갱신되었는가?
 
 ---
 
