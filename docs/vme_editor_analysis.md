@@ -27,7 +27,6 @@
   - `image_data/`: 서버 저장 시 분리되는 이미지 바이너리 파일 저장소
 - **`/scripts`**: 서버 및 유틸리티 스크립트
   - `server.js`: 현재 표준 Node.js/Express 서버
-  - `local_server.ps1`: 초기 PowerShell 서버
   - `split.ps1`, `split.py`, `patch.py`: 보조 유틸리티
 - **`/exports`**: HTML 가이드 산출물 저장 디렉토리
 - **`/docs`**: 릴리즈 이력, 컨트리뷰팅 가이드, 구조 분석 문서
