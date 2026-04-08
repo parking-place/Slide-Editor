@@ -302,6 +302,16 @@
             border: 1px dashed var(--border-color);
         }
 
+        .file-drop-zone {
+            transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+        }
+
+        .file-drop-zone.dragover {
+            border-color: var(--hpe-green);
+            background: rgba(0, 230, 118, 0.08);
+            box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.18);
+        }
+
         .file-upload-wrapper input[type="file"] {
             background: transparent;
             border: none;
@@ -309,6 +319,17 @@
             color: var(--text-dim);
             cursor: pointer;
             flex: 1;
+        }
+
+        .file-upload-status {
+            font-size: 12px;
+            color: #484f58;
+            flex: 1;
+        }
+
+        .file-upload-status[data-state="selected"] {
+            color: var(--hpe-green);
+            font-weight: 600;
         }
 
         .btn-add {

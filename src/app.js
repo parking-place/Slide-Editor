@@ -873,6 +873,97 @@
             return pages;
         }
 
+        function getImageUploadContext(element) {
+            const wrapper = element?.closest ? element.closest('.file-drop-zone') : null;
+            if (!wrapper) {
+                return null;
+            }
+
+            return {
+                wrapper,
+                input: document.getElementById(wrapper.dataset.inputId),
+                layoutContainer: document.getElementById(wrapper.dataset.layoutId),
+                status: document.getElementById(wrapper.dataset.statusId),
+                defaultText: wrapper.dataset.defaultText || ''
+            };
+        }
+
+        function updateImageUploadUi(context) {
+            if (!context || !context.status) {
+                return;
+            }
+
+            const selectedFile = context.input?.files?.[0] || null;
+            if (selectedFile) {
+                context.status.textContent = `선택된 파일: ${selectedFile.name}`;
+                context.status.dataset.state = 'selected';
+                if (context.layoutContainer) {
+                    context.layoutContainer.style.display = 'flex';
+                }
+                return;
+            }
+
+            context.status.textContent = context.defaultText;
+            context.status.dataset.state = 'idle';
+        }
+
+        window.handleImageInputChange = function(input) {
+            updateImageUploadUi(getImageUploadContext(input));
+        };
+
+        window.handleImageDragEnter = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (context) {
+                context.wrapper.classList.add('dragover');
+            }
+        };
+
+        window.handleImageDragOver = function(event) {
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+            const context = getImageUploadContext(event.currentTarget);
+            if (context) {
+                context.wrapper.classList.add('dragover');
+            }
+        };
+
+        window.handleImageDragLeave = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (!context) {
+                return;
+            }
+
+            if (!event.relatedTarget || !context.wrapper.contains(event.relatedTarget)) {
+                context.wrapper.classList.remove('dragover');
+            }
+        };
+
+        window.handleImageDrop = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (!context || !context.input) {
+                return;
+            }
+
+            context.wrapper.classList.remove('dragover');
+
+            const droppedFiles = Array.from(event.dataTransfer?.files || []);
+            const imageFile = droppedFiles.find(file => file.type.startsWith('image/'));
+            if (!imageFile) {
+                showModal('이미지 파일만 드래그해서 업로드할 수 있습니다.');
+                return;
+            }
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(imageFile);
+            context.input.files = dataTransfer.files;
+            updateImageUploadUi(context);
+        };
+
         // -------------------------
         // 슬라이드 '추가' 관련 로직
         // -------------------------
@@ -1052,6 +1143,7 @@
                     
                     const editorDiv = document.createElement('div');
                     editorDiv.className = 'editor-section';
+                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그앤드롭';
                     editorDiv.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 번째 슬라이드 작성하기' : '새 슬라이드 추가'}</h3>
@@ -1063,10 +1155,18 @@
                             <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 (예: 1.1.1 관리 IP 설정)">
                         </div>
                         <textarea id="input-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)\n## 소제목\n* 설명\n\n\`\`\`bash\n코드 블록 작성 시 여기에 코드를 넣으세요.\n\`\`\`"></textarea>
-                        <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                        <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
+                            data-input-id="input-image"
+                            data-layout-id="input-layout-ratio-container"
+                            data-status-id="input-image-status"
+                            data-default-text="${escapeHtml(newImageUploadDefaultText)}"
+                            ondragenter="window.handleImageDragEnter(event)"
+                            ondragover="window.handleImageDragOver(event)"
+                            ondragleave="window.handleImageDragLeave(event)"
+                            ondrop="window.handleImageDrop(event)">
                             <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="document.getElementById('input-layout-ratio-container').style.display='flex'">
-                            <span style="font-size: 12px; color: #484f58; flex: 1;">(선택) 스크린샷 이미지 업로드</span>
+                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
+                            <span id="input-image-status" class="file-upload-status">${escapeHtml(newImageUploadDefaultText)}</span>
                             <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
                         </div>
                         <div class="file-upload-wrapper" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
@@ -1121,6 +1221,9 @@
                         // ==== 수정 모드 폼 ====
                         const editDiv = document.createElement('div');
                         editDiv.className = 'editor-section edit-mode';
+                        const editImageUploadDefaultText = slide.image
+                            ? '새 이미지 업로드 또는 드래그앤드롭 시 기존 이미지 교체'
+                            : '스크린샷 이미지 업로드 또는 드래그앤드롭';
                         
                         const existingImageDeleteCheck = slide.image ? `
                             <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
@@ -1140,12 +1243,18 @@
                                 <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="소제목">
                             </div>
                             <textarea id="edit-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)">${escapeHtml(slide.text)}</textarea>
-                            <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                            <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
+                                data-input-id="edit-image"
+                                data-layout-id="edit-layout-ratio-container"
+                                data-status-id="edit-image-status"
+                                data-default-text="${escapeHtml(editImageUploadDefaultText)}"
+                                ondragenter="window.handleImageDragEnter(event)"
+                                ondragover="window.handleImageDragOver(event)"
+                                ondragleave="window.handleImageDragLeave(event)"
+                                ondrop="window.handleImageDrop(event)">
                                 <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="if(this.files.length) document.getElementById('edit-layout-ratio-container').style.display='flex'">
-                                <span style="font-size: 12px; color: #484f58; flex: 1;">
-                                    ${slide.image ? '(선택) 새 이미지 업로드 시 기존 이미지 교체' : '(선택) 스크린샷 이미지 업로드'}
-                                </span>
+                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
+                                <span id="edit-image-status" class="file-upload-status">${escapeHtml(editImageUploadDefaultText)}</span>
                                 <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
                             </div>
                             <div class="file-upload-wrapper" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
