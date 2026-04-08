@@ -23,9 +23,10 @@ COPY data/themes/ ./data/themes/
 #     볼륨 없이 단독 실행 시에도 폴더가 존재해야 함)
 RUN mkdir -p /app/exports /app/data
 
-# 5) bind mount 된 data/exports 디렉토리가 root 소유로 생성되는 환경을 고려해
-#    런타임은 root로 유지합니다. 그렇지 않으면 원격 Linux 서버에서 저장 API가
-#    EACCES로 실패하고 브라우저 폴백 다운로드로 떨어질 수 있습니다.
+# 5) node:alpine 기본 사용자가 node이므로 root를 명시적으로 지정합니다.
+#    bind mount 된 data/exports 디렉토리가 root 소유로 생성되는 환경에서는
+#    그렇지 않으면 저장 API가 EACCES로 실패하고 브라우저 폴백 다운로드로 떨어집니다.
+USER root
 
 EXPOSE 8000
 

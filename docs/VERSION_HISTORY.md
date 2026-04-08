@@ -7,6 +7,10 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0e] - 2026-04-08
+### Fixed
+- **Docker 런타임 사용자 명시 수정**: `node:22-alpine` 베이스 이미지의 기본 사용자 `node`가 유지되던 문제를 해결하기 위해 `Dockerfile`에 `USER root`를 명시. 이로써 root 소유 bind mount 환경에서도 `서버 저장`과 `가이드 보기`의 서버 저장 경로가 실제로 정상 동작하도록 보완.
+
 ## [v0.7.0d] - 2026-04-08
 ### Fixed
 - **원격 서버 저장 권한 문제 수정**: Docker 이미지가 비루트 `node` 사용자로 실행되면서 root 소유 bind mount 볼륨(`/app/data`, `/app/exports`)에 쓰지 못해 `서버 저장`과 `가이드 보기`가 브라우저 다운로드 폴백으로 떨어지던 문제를 수정. 런타임 사용자를 root로 유지해 원격 Linux 서버에서도 `slide_data.json`, `image_data`, HTML 가이드 저장이 정상 동작하도록 개선.
@@ -175,5 +179,6 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased]
-*(현재 없음)*
+## [Unreleased] (fix/runtime-user-root)
+### Fixed
+- **Docker 런타임 사용자 명시 수정**: `node:22-alpine` 베이스 이미지의 기본 사용자 `node`가 유지되던 문제를 해결하기 위해 `Dockerfile`에 `USER root`를 명시. 이로써 root 소유 bind mount 환경에서도 `서버 저장`과 `가이드 보기`의 서버 저장 경로가 실제로 정상 동작하도록 보완.
