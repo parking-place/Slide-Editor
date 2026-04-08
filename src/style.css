@@ -47,6 +47,14 @@
             gap: 10px;
             min-width: 0;
         }
+        .logo-link {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: baseline;
+        }
+        .logo-link:hover .logo {
+            opacity: 0.9;
+        }
         .logo { color: var(--text-main); font-weight: 700; font-size: 20px; }
         .logo span { color: var(--hpe-green); }
         .app-version {

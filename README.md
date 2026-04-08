@@ -1,64 +1,66 @@
-# 🎨 Slide Editor
+# Slide Editor
 
-[![Powered by Antigravity](https://img.shields.io/badge/Powered%20by-Antigravity-blueviolet?style=for-the-badge)](https://antigravity.google)
-[![Powered by Codex](https://img.shields.io/badge/Powered%20by-Codex-111111?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/version-v0.9.0c-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.9.1-blue?style=for-the-badge)](#)
+[![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 
-> **이 프로젝트의 설계, 구현, 리브랜딩, 문서화에는 Antigravity와 Codex를 포함한 AI 코딩 어시스턴트가 적극적으로 활용되었습니다.**
+브라우저에서 슬라이드를 편집하고, 같은 원본 데이터를 기준으로 PPTX와 HTML 가이드를 함께 만드는 편집 도구입니다.  
+프로젝트 단위 저장, 테마/브랜딩 관리, 이미지 포함 슬라이드 편집, 웹 가이드 미리보기와 내보내기를 지원합니다.
 
-**Slide Editor**는 브라우저에서 동작하는 슬라이드 및 웹 가이드 제작 도구입니다. 하나의 원본 문서를 기반으로 **PPTX 파일**과 **인터랙티브 HTML 웹 가이드**를 함께 생성할 수 있으며, 테마 시스템과 브랜딩 설정, 이미지 포함 슬라이드 편집, 서버 저장 기능까지 포함합니다.
+## 주요 기능
 
----
+- 프로젝트 생성, 열기, 다른 이름으로 저장, 이름 변경, 삭제
+- 슬라이드 작성/수정, 이미지 업로드, 드래그앤드롭 이미지 업로드
+- 테마 파일(`.slidetheme`) 불러오기/저장
+- 브랜딩 정보 관리
+- PPTX 내보내기
+- HTML 가이드 미리보기 및 내보내기
+- Docker 기반 실행 및 Node 서버 직접 실행 지원
 
-## ✨ 주요 기능
-
-- **멀티 포맷 내보내기**: 슬라이드 데이터를 PPTX와 단일 HTML 웹 가이드로 내보냅니다.
-- **테마 및 브랜딩 관리**: `.slidetheme` 파일 기반 테마와 프로젝트별 브랜딩 텍스트를 분리 관리합니다.
-- **동적 TOC 가이드**: 웹 가이드에 스크롤 반응형 TOC 네비게이터를 포함합니다.
-- **개발 문서 친화 편집**: Markdown 유사 문법, 코드 블록 하이라이팅, 복사 버튼 등을 제공합니다.
-- **이미지 데이터 분리 저장**: 서버 저장 시 이미지는 `/data/image_data`에 별도 파일로 저장해 `slide_data.json`의 부하를 줄입니다.
-- **구버전 데이터 호환**: 예전 배열형 JSON 및 인라인 base64 이미지 데이터도 계속 불러올 수 있습니다.
-
----
-
-## 🚀 시작하기
+## 빠른 시작
 
 ### 권장 방식: Docker Compose
-
-1. 저장소를 클론합니다.
 
 ```bash
 git clone https://github.com/parking-place/Slide-Editor.git
 cd Slide-Editor
-```
-
-2. 운영체제에 맞는 실행 스크립트를 사용합니다.
-
-- Windows: `docker-compose-up.bat`
-- Linux/macOS: `chmod +x docker-compose-up.sh && ./docker-compose-up.sh`
-
-3. 또는 직접 실행할 수도 있습니다.
-
-```bash
 docker compose pull
 docker compose up -d
 ```
 
-4. 브라우저에서 아래 주소로 접속합니다.
+브라우저에서 아래 주소로 접속합니다.
 
 ```text
 http://localhost:8000/SlideEditor.html
 ```
 
-### 데이터 영속성
+운영체제별 보조 실행 스크립트도 사용할 수 있습니다.
+
+- Windows: `docker-compose-up.bat`
+- Linux/macOS: `chmod +x docker-compose-up.sh && ./docker-compose-up.sh`
+
+### 대체 방식: Node 서버 직접 실행
+
+```bash
+npm install
+node scripts/server.js
+```
+
+Node 직접 실행도 가능하지만, 기본 운영 기준은 Docker Compose입니다.
+
+## 데이터와 저장 경로
 
 - `./data -> /app/data`
 - `./exports -> /app/exports`
 
-`slide_data.json`, 테마 파일, 분리된 이미지 파일(`data/image_data`)은 호스트 볼륨에 유지됩니다.
+주요 저장 데이터:
 
-### Docker Hub 이미지
+- 프로젝트 데이터
+- 테마 파일
+- 분리 저장된 이미지 파일
+- HTML 내보내기 결과물
+
+## Docker 이미지
 
 기본 배포 이미지는 아래 태그를 사용합니다.
 
@@ -66,62 +68,41 @@ http://localhost:8000/SlideEditor.html
 parkingplace/slide-editor:latest
 ```
 
-버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.9.0c` 등)를 사용할 수 있습니다.
+버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.9.1` 등)를 사용할 수 있습니다.
 
----
-
-## 🧰 대체 실행 방식
-
-현재 기본 실행 경로는 Docker 기반입니다. 다만 참고용 또는 레거시 호환 용도로 아래 스크립트들이 남아 있습니다.
-
-- `scripts/server.js`: Node.js/Express 기반 크로스플랫폼 서버
-
-직접 Node 서버를 실행하려면 의존성을 설치한 뒤 실행합니다.
-
-```bash
-npm install
-node scripts/server.js
-```
-
----
-
-## 📂 프로젝트 구조
+## 프로젝트 구조
 
 ```text
 Slide-Editor/
-├─ src/                    # 프론트엔드 핵심 코드 (app.js, style.css)
-├─ scripts/                # 서버/유틸리티 스크립트
-├─ data/
-│  ├─ slide_data.json      # 기본 슬라이드 데이터
-│  ├─ themes/              # .slidetheme 파일 저장소
-│  └─ image_data/          # 서버 저장 시 분리되는 이미지 파일
-├─ exports/                # 생성된 HTML 가이드 저장 위치
-├─ docs/                   # 기여 규칙, changelog, 분석 문서
-├─ SlideEditor.html        # 메인 HTML 엔트리
-├─ Dockerfile              # 배포용 이미지 빌드 정의
-├─ docker-compose.yml      # 컨테이너 실행 정의
-├─ docker-compose-up.bat   # Windows용 Docker 실행 스크립트
-└─ docker-compose-up.sh    # Linux/macOS용 Docker 실행 스크립트
+├─ src/                     # 프런트엔드 코드
+├─ scripts/                 # Node 서버 및 보조 스크립트
+├─ data/                    # 프로젝트/테마/이미지 데이터
+├─ exports/                 # HTML 내보내기 결과물
+├─ docs/                    # changelog, 운영 규칙, 아키텍처 문서
+├─ plans/                   # 작업 계획 문서
+├─ SlideEditor.html         # 메인 HTML 엔트리
+├─ Dockerfile               # Docker 이미지 빌드 정의
+├─ docker-compose.yml       # Docker Compose 실행 정의
+├─ docker-compose-up.bat    # Windows용 Docker 실행 스크립트
+└─ docker-compose-up.sh     # Linux/macOS용 Docker 실행 스크립트
 ```
 
----
+## 기술 스택
 
-## 🛠 기술 스택
+- Frontend: HTML, CSS, Vanilla JavaScript
+- Server: Node.js, Express
+- Export: PptxGenJS, Marked.js, Highlight.js
+- Runtime: Docker, Docker Compose
 
-- **Frontend**: HTML5, Vanilla JavaScript (ES6+), CSS3
-- **Runtime Server**: Node.js + Express
-- **Container**: Docker, Docker Compose
-- **Libraries**: PptxGenJS, Marked.js, Highlight.js, Font Awesome
+## 문서
 
----
+- changelog 진입점: [CHANGELOG.md](./CHANGELOG.md)
+- 개발/릴리즈 규칙: [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)
+- 아키텍처/운영 개요: [docs/slide_editor_architecture.md](./docs/slide_editor_architecture.md)
 
-## 🤝 기여하기
+## 릴리즈 원칙
 
-이 프로젝트는 `Github Flow`와 문서화 중심 워크플로우를 따릅니다.
+- `version.json`, Git 태그, Docker 태그는 같은 버전을 사용합니다.
+- changelog는 hybrid 구조로 관리합니다.
+- changelog 설명은 항상 한국어로 작성합니다.
 
-- 모든 작업은 `main`에서 분기한 전용 브랜치에서 진행합니다.
-- 커밋 전 `docs/changelog/unreleased.md`를 먼저 갱신합니다.
-- 릴리즈 및 hotfix 버전은 `docs/CONTRIBUTING.md`의 `vX1.X2.X3(a)` 규칙을 따릅니다.
-- 공식 릴리즈 시 Git 태그와 Docker 이미지 태그를 동일하게 맞춥니다.
-
-자세한 규칙은 [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)를 참고해 주세요.
