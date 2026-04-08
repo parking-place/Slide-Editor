@@ -1151,7 +1151,7 @@
 
 .project-mode-switch {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -1182,6 +1182,18 @@
     border-color: var(--hpe-green);
     color: var(--hpe-green);
     background: rgba(0, 230, 118, 0.12);
+}
+
+.project-mode-btn--danger:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.project-mode-btn--danger.active {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
 }
 
 .project-editor-section {

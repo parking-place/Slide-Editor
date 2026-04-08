@@ -62,14 +62,8 @@
             </button>
             <div class="hdr-divider"></div>
 
-            <button type="button" class="btn-hdr btn-hdr--purple" title="New project" onclick="window.createProject()">
-                <i class="fa-solid fa-folder-plus"></i> New
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--purple" title="Open project" onclick="window.openProjectPicker()">
-                <i class="fa-solid fa-folder-open"></i> Open
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--blue" title="Save as new project" onclick="window.saveAsProject()">
-                <i class="fa-solid fa-copy"></i> Save As
+            <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
+                <i class="fa-solid fa-folder-tree"></i> Project
             </button>
             <div class="hdr-divider"></div>
 
@@ -239,6 +233,12 @@
                         </button>
                         <button type="button" id="project-mode-saveas" class="project-mode-btn" onclick="window.setProjectModalMode('saveAs')">
                             <i class="fa-solid fa-copy"></i> Save As
+                        </button>
+                        <button type="button" id="project-mode-rename" class="project-mode-btn" onclick="window.setProjectModalMode('rename')">
+                            <i class="fa-solid fa-pen"></i> Rename
+                        </button>
+                        <button type="button" id="project-mode-delete" class="project-mode-btn project-mode-btn--danger" onclick="window.setProjectModalMode('delete')">
+                            <i class="fa-solid fa-trash"></i> Delete
                         </button>
                     </div>
 
