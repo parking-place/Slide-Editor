@@ -11,6 +11,10 @@
 ### Changed
 - **웹 가이드 내 하드코딩된 테마색상 완전 제거 및 동적 변수화**: 다크모드 카드 헤더 좌측 테두리, 위로 가기 버튼(`.btn-top`), 인라인 마크다운 코드 블록(`.markdown-body code`) 등에 남아있던 특정 하드코딩 컬러값 `#00e676`, `#01a982`, `#ef4444` 등을 모두 사용자가 지정한 테마 변수 `${accentColor}`, `${darkAccent}`, `${codeColor}`로 교체하여 웹 가이드가 100% 동적 브랜딩을 지원하도록 개선. 호버 이벤트 또한 하드코딩된 색상 대신 CSS `filter: brightness()`를 통해 구현.
 
+## [Unreleased] (docs/add-readme)
+### Added
+- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 구조, 실행 가이드 등이 종합적으로 포함된 루트 레벨 `README.md` 파일 신규 추가.
+
 ## [v0.6.0b] - 2026-04-07
 ### Changed
 - **웹 가이드 다크 모드 전환 기능 제거**: 웹 가이드(`app.js` HTML 생성기) 내에 하드코딩 되어있던 테마 전환 토글 버튼(`.btn-theme`, `toggleTheme()`)을 모두 제거하여, 가이드가 항상 프로젝트 설정에 저장된 테마 스킨(다크/라이트)으로 고정되어 보여지도록 제약 변경.
@@ -141,6 +145,10 @@
 # 🚧 언릴리즈 (Unreleased - feature 브랜치)
 *현재 작업 중이거나 아직 메인 브랜치에 병합되지 않은 새로운 기능들의 내역입니다.*
 
-## [Unreleased] (docs/add-readme)
+## [Unreleased] (feat/dockerize)
 ### Added
-- **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 구조, 실행 가이드 등이 종합적으로 포함된 루트 레벨 `README.md` 파일 신규 추가.
+- **Docker 지원 (크로스플랫폼 서버)**: Windows 전용 PowerShell 서버(`local_server.ps1`)를 대체하는 Node.js/Express 기반 크로스플랫폼 서버(`scripts/server.js`) 추가. 기존 PowerShell 서버의 모든 API 명세(`/api/save`, `/api/saveHtml`, `/api/themes` GET/POST) 동일 구현.
+- **`Dockerfile`**: `node:22-alpine` 기반 경량 이미지. `linux/amd64` + `linux/arm64` 멀티플랫폼 지원. 비루트 사용자(`USER node`) 실행. 레이어 캐시 최적화 적용.
+- **`docker-compose.yml`**: `./data`, `./exports` 호스트 볼륨 마운트로 사용자 데이터 영속 보장. `restart: unless-stopped` 정책 적용. 헬스체크 설정 포함. 포트 `.env` 변수 오버라이드 지원.
+- **`.dockerignore`**: 이미지에서 `.git`, `node_modules`, `data/slide_data.json`, 사용자 문서, Windows 전용 스크립트 제외하여 이미지 크기 최소화.
+- **`package.json`**: Node.js 서버 의존성 정의 (`express` 단일 의존성).
