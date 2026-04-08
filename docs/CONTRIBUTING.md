@@ -135,6 +135,7 @@ docs/
 기능 작업 중에는 다음 파일만 업데이트합니다.
 
 - `docs/changelog/unreleased.md`
+- changelog 문서의 설명과 bullet은 항상 한국어로 작성합니다.
 
 형식:
 
@@ -271,6 +272,7 @@ git merge feat/xxx --no-ff -m "merge: feat/xxx into main (unreleased)"
 ## 13. AI Assistant Rules
 
 - AI는 changelog 작업 시 `docs/changelog/unreleased.md`를 기본 편집 대상으로 사용합니다.
+- AI는 changelog의 `unreleased`와 release note 설명을 항상 한국어로 작성합니다.
 - 릴리즈 요청 시 새 릴리즈 파일과 `CHANGELOG.md`, `version.json`을 함께 갱신합니다.
 - 릴리즈 요청 시 Git 태그와 Docker 이미지 태그를 같은 버전으로 맞춥니다.
 - 배포 후 로컬과 원격에서 더 이상 필요 없는 테스트 컨테이너, 이전 버전 이미지, dangling 이미지를 정리합니다.
