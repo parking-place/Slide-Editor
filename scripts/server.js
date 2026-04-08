@@ -102,7 +102,10 @@ app.use((req, res, next) => {
 
 // JSON 바디 파서 (POST API용)
 app.use(express.json({ limit: '50mb' }));
-app.use(express.text({ limit: '50mb' }));
+app.use(express.text({
+    limit: '50mb',
+    type: ['text/plain', 'text/html', 'application/xhtml+xml']
+}));
 
 // ── API 라우트 ────────────────────────────────────────────────
 
@@ -194,7 +197,16 @@ app.post('/api/saveHtml', (req, res) => {
     fs.mkdirSync(exportsDir, { recursive: true });
     const savePath = path.join(exportsDir, 'SlideEditor_Web_Guide.html');
     try {
-        const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        const body = typeof req.body === 'string'
+            ? req.body
+            : Buffer.isBuffer(req.body)
+                ? req.body.toString('utf8')
+                : '';
+
+        if (!body.trim()) {
+            return res.status(400).json({ error: 'Empty HTML body' });
+        }
+
         fs.writeFileSync(savePath, body, 'utf8');
         res.json({ status: 'success' });
     } catch (err) {
