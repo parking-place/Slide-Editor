@@ -7,6 +7,11 @@
 # 🚀 릴리즈 (Released - main 브랜치)
 *메인 리포지토리에 병합(Merge)되어 공식적으로 배포된 확실하고 안정적인 버전 내역입니다.*
 
+## [v0.7.0a] - 2026-04-08
+### Changed
+- **Docker Compose 기본 이미지 기준 변경**: 로컬 빌드 이미지(`slide-editor:latest`) 대신 Docker Hub의 `parkingplace/slide-editor:latest`를 기본 참조하도록 `docker-compose.yml`의 `image` 값을 조정.
+- **버전명 규칙 확장**: 릴리즈 버전 형식을 `vX1.X2.X3(a)`로 재정의하고, 메이저/마이너/패치/핫픽스 suffix의 증가 조건과 해석 예시를 `CONTRIBUTING.md`에 명시.
+
 ## [v0.7.0] - 2026-04-08
 ### Added
 - **프로젝트 공식 README 추가**: 프로젝트 소개, 안티그래비티 생성 명시, 디렉토리 구조, Docker/로컬 실행 가이드 등을 포함한 루트 레벨 `README.md` 문서를 추가.
