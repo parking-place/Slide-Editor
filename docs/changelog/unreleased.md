@@ -4,12 +4,12 @@
 
 ## Added
 
-*(none)*
+*(없음)*
 
 ## Changed
 
-*(none)*
+*(없음)*
 
 ## Fixed
 
-*(none)*
+*(없음)*
