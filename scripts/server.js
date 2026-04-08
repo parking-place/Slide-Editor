@@ -218,6 +218,65 @@ function syncProjectIndexEntry(meta) {
     saveProjectsIndex({ projects });
 }
 
+function removeProjectIndexEntry(projectId) {
+    const index = getProjectsIndex();
+    saveProjectsIndex({
+        projects: index.projects.filter(project => project.id !== projectId)
+    });
+}
+
+function updateProjectMeta(projectId, updates = {}) {
+    const meta = readProjectMeta(projectId);
+    const payload = readJsonIfExists(getProjectDataPath(projectId));
+    if (!meta || !payload) return null;
+
+    const nextMeta = {
+        ...meta,
+        name: String(updates.name || meta.name || projectId).trim() || projectId,
+        updatedAt: getTimestamp(),
+        slideCount: getSlideCount(payload)
+    };
+
+    writeJson(getProjectMetaPath(projectId), nextMeta);
+    syncProjectIndexEntry(nextMeta);
+
+    return {
+        id: nextMeta.id,
+        name: nextMeta.name,
+        createdAt: nextMeta.createdAt,
+        updatedAt: nextMeta.updatedAt,
+        slideCount: nextMeta.slideCount
+    };
+}
+
+function deleteProject(projectId) {
+    if (!fs.existsSync(getProjectDir(projectId))) {
+        return null;
+    }
+
+    fs.rmSync(getProjectDir(projectId), { recursive: true, force: true });
+    removeProjectIndexEntry(projectId);
+
+    let index = getProjectsIndex();
+    let currentProjectId = getAppState().currentProjectId;
+
+    if (index.projects.length === 0) {
+        saveProject(DEFAULT_PROJECT_ID, 'My Guide', createEmptyProjectPayload('My Guide'));
+        index = getProjectsIndex();
+        currentProjectId = DEFAULT_PROJECT_ID;
+    } else if (currentProjectId === projectId || !fs.existsSync(getProjectDir(currentProjectId))) {
+        currentProjectId = index.projects[0].id;
+    }
+
+    setCurrentProject(currentProjectId);
+
+    return {
+        deletedProjectId: projectId,
+        currentProjectId,
+        projects: index.projects
+    };
+}
+
 function parseProjectImageReference(imageValue) {
     if (typeof imageValue !== 'string') return null;
     const normalized = imageValue.replace(/\\/g, '/');
@@ -580,6 +639,48 @@ app.put('/api/projects/:projectId', (req, res) => {
     } catch (err) {
         console.error('[PUT /api/projects/:projectId]', err);
         res.status(500).json({ error: 'Failed to save project' });
+    }
+});
+
+app.put('/api/projects/:projectId/meta', (req, res) => {
+    const projectId = req.params.projectId;
+    const name = String(req.body && req.body.name || '').trim();
+
+    if (!isValidProjectId(projectId) || !fs.existsSync(getProjectDir(projectId))) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    if (!name) {
+        return res.status(400).json({ error: 'Project name is required' });
+    }
+
+    try {
+        const project = updateProjectMeta(projectId, { name });
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+        if (getAppState().currentProjectId === projectId) {
+            setCurrentProject(projectId);
+        }
+        res.json({ status: 'success', project });
+    } catch (err) {
+        console.error('[PUT /api/projects/:projectId/meta]', err);
+        res.status(500).json({ error: 'Failed to rename project' });
+    }
+});
+
+app.delete('/api/projects/:projectId', (req, res) => {
+    const projectId = req.params.projectId;
+    if (!isValidProjectId(projectId) || !fs.existsSync(getProjectDir(projectId))) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    try {
+        const result = deleteProject(projectId);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        console.error('[DELETE /api/projects/:projectId]', err);
+        res.status(500).json({ error: 'Failed to delete project' });
     }
 });
 

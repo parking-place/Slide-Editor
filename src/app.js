@@ -16,6 +16,12 @@
         let projectSettings = getDefaultProjectSettings();
         let currentProject = null;
         let availableProjects = [];
+        let projectModalState = {
+            mode: 'open',
+            selectedProjectId: null,
+            isSubmitting: false,
+            nameDraft: ''
+        };
 
         let activeTheme = null;
         const LEGACY_IMAGE_DATA_PREFIX = '/data/image_data/';
@@ -441,6 +447,372 @@
             }
         };
         // TOC(목차) 데이터를 추출하는 함수
+        function getProjectModalDefaultName(mode) {
+            if (mode === 'saveAs') {
+                return currentProject?.name ? `${currentProject.name} Copy` : 'My Guide Copy';
+            }
+            if (mode === 'new') {
+                return projectSettings?.branding?.projectName || 'My Guide';
+            }
+            return '';
+        }
+
+        function ensureProjectModalSelection() {
+            if (!availableProjects.length) {
+                projectModalState.selectedProjectId = null;
+                return;
+            }
+
+            const stillExists = availableProjects.some(project => project.id === projectModalState.selectedProjectId);
+            if (stillExists) return;
+
+            projectModalState.selectedProjectId = currentProject?.id || availableProjects[0].id;
+        }
+
+        function getSelectedProjectFromModal() {
+            ensureProjectModalSelection();
+            return availableProjects.find(project => project.id === projectModalState.selectedProjectId) || null;
+        }
+
+        function buildProjectListMarkup() {
+            if (!availableProjects.length) {
+                return '<div class="project-empty-state">No saved projects yet. Create your first project from the New tab.</div>';
+            }
+
+            return availableProjects.map(project => {
+                const isActive = project.id === projectModalState.selectedProjectId;
+                const isCurrent = project.id === currentProject?.id;
+                const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
+                return `
+                    <div class="project-list-item ${isActive ? 'active' : ''}" onclick="window.selectProjectModalProject('${project.id}')">
+                        <div class="project-list-item-name">${escapeHtml(project.name || project.id)}</div>
+                        <div class="project-list-item-meta">${slideCount} slides / ${escapeHtml(project.id)}</div>
+                        ${isCurrent ? '<span class="project-badge"><i class="fa-solid fa-circle-check"></i> Current</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderProjectModal() {
+            const modal = document.getElementById('project-modal');
+            if (!modal) return;
+
+            ensureProjectModalSelection();
+
+            const selectedProject = getSelectedProjectFromModal();
+            const mode = projectModalState.mode;
+            const currentNameEl = document.getElementById('project-modal-current-name');
+            const currentMetaEl = document.getElementById('project-modal-current-meta');
+            const listEl = document.getElementById('project-list-items');
+            const inputEl = document.getElementById('project-modal-name-input');
+            const inputLabelEl = document.getElementById('project-modal-name-label');
+            const helpEl = document.getElementById('project-modal-help');
+            const selectionEl = document.getElementById('project-modal-selection');
+            const primaryBtn = document.getElementById('project-modal-primary-btn');
+
+            if (currentNameEl) {
+                currentNameEl.textContent = currentProject?.name || 'No project opened';
+            }
+
+            if (currentMetaEl) {
+                currentMetaEl.textContent = currentProject
+                    ? `${currentProject.id} / ${slidesData.length} slides currently loaded`
+                    : 'Start from a new project or open an existing one.';
+            }
+
+            if (listEl) {
+                listEl.innerHTML = buildProjectListMarkup();
+            }
+
+            ['open', 'new', 'saveAs', 'rename', 'delete'].forEach(modeName => {
+                const buttonId = modeName === 'saveAs' ? 'project-mode-saveas' : `project-mode-${modeName}`;
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                button.classList.toggle('active', modeName === mode);
+                button.disabled = projectModalState.isSubmitting;
+            });
+
+            if (inputEl) {
+                inputEl.disabled = mode === 'open' || mode === 'delete' || projectModalState.isSubmitting;
+                inputEl.value = mode === 'open' || mode === 'delete'
+                    ? (selectedProject?.name || '')
+                    : (projectModalState.nameDraft || '');
+                inputEl.placeholder = mode === 'saveAs' ? 'My Guide Copy' : (mode === 'rename' ? 'Rename project' : 'My Guide');
+            }
+
+            if (inputLabelEl) {
+                inputLabelEl.textContent = mode === 'new'
+                    ? 'New Project Name'
+                    : mode === 'saveAs'
+                        ? 'Save As Project Name'
+                        : mode === 'rename'
+                            ? 'Rename Selected Project'
+                            : mode === 'delete'
+                                ? 'Project to Delete'
+                                : 'Project to Open';
+            }
+
+            if (helpEl) {
+                helpEl.textContent = mode === 'new'
+                    ? 'Create a clean project without touching the currently opened project.'
+                    : mode === 'saveAs'
+                        ? 'Duplicate the current editor state into a brand new saved project.'
+                        : mode === 'rename'
+                            ? 'Update the display name of the selected project while keeping its project id the same.'
+                            : mode === 'delete'
+                                ? 'Delete the selected project and its saved slide data. If the current project is deleted, the next available project will open automatically.'
+                                : 'Choose a saved project from the list to load it into the editor.';
+            }
+
+            if (selectionEl) {
+                if (!selectedProject) {
+                    selectionEl.classList.add('is-empty');
+                    selectionEl.innerHTML = 'Select a project from the list.';
+                } else if (mode === 'open') {
+                    selectionEl.classList.remove('is-empty');
+                    selectionEl.innerHTML = `
+                        <span class="project-badge"><i class="fa-solid ${selectedProject.id === currentProject?.id ? 'fa-circle-check' : 'fa-folder-open'}"></i> ${selectedProject.id === currentProject?.id ? 'Already open' : 'Ready to open'}</span>
+                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                    `;
+                } else if (mode === 'rename') {
+                    selectionEl.classList.remove('is-empty');
+                    selectionEl.innerHTML = `
+                        <span class="project-badge"><i class="fa-solid fa-pen"></i> Rename target</span>
+                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                    `;
+                } else if (mode === 'delete') {
+                    selectionEl.classList.remove('is-empty');
+                    selectionEl.innerHTML = `
+                        <span class="project-badge"><i class="fa-solid fa-trash"></i> Delete target</span>
+                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                    `;
+                } else {
+                    selectionEl.classList.remove('is-empty');
+                    selectionEl.innerHTML = `
+                        <span class="project-badge"><i class="fa-solid fa-layer-group"></i> Source</span>
+                        <strong>${escapeHtml(currentProject?.name || 'Current editor state')}</strong>
+                        <span>${slidesData.length} slides and the current branding/theme settings will be copied.</span>
+                    `;
+                }
+            }
+
+            if (primaryBtn) {
+                const label = mode === 'new'
+                    ? 'Create Project'
+                    : mode === 'saveAs'
+                        ? 'Save As New Project'
+                        : mode === 'rename'
+                            ? 'Rename Project'
+                            : mode === 'delete'
+                                ? 'Delete Project'
+                                : 'Open Selected Project';
+                const iconClass = mode === 'new'
+                    ? 'fa-folder-plus'
+                    : mode === 'saveAs'
+                        ? 'fa-copy'
+                        : mode === 'rename'
+                            ? 'fa-pen'
+                            : mode === 'delete'
+                                ? 'fa-trash'
+                                : 'fa-folder-open';
+                primaryBtn.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${label}`;
+                primaryBtn.disabled = projectModalState.isSubmitting
+                    || (mode === 'open' && (!selectedProject || selectedProject.id === currentProject?.id))
+                    || ((mode === 'rename' || mode === 'delete') && !selectedProject);
+            }
+        }
+
+        window.setProjectModalNameDraft = function(value) {
+            projectModalState.nameDraft = value;
+        };
+
+        window.selectProjectModalProject = function(projectId) {
+            projectModalState.selectedProjectId = projectId;
+            if (projectModalState.mode === 'rename') {
+                const selectedProject = getSelectedProjectFromModal();
+                projectModalState.nameDraft = selectedProject?.name || '';
+            }
+            renderProjectModal();
+        };
+
+        window.setProjectModalMode = function(mode) {
+            projectModalState.mode = mode;
+            if (mode === 'rename') {
+                const selectedProject = getSelectedProjectFromModal();
+                projectModalState.nameDraft = selectedProject?.name || '';
+            } else {
+                projectModalState.nameDraft = getProjectModalDefaultName(mode);
+            }
+            renderProjectModal();
+        };
+
+        window.openProjectModal = async function(mode = 'open') {
+            const modal = document.getElementById('project-modal');
+            if (!modal) return;
+
+            projectModalState.mode = mode;
+            projectModalState.isSubmitting = false;
+
+            try {
+                await refreshProjectList();
+                projectModalState.selectedProjectId = currentProject?.id || availableProjects[0]?.id || null;
+                projectModalState.nameDraft = mode === 'rename'
+                    ? (getSelectedProjectFromModal()?.name || '')
+                    : getProjectModalDefaultName(mode);
+                modal.style.display = 'flex';
+                renderProjectModal();
+            } catch (err) {
+                showModal('Failed to load project list.\n' + err.message);
+            }
+        };
+
+        window.closeProjectModal = function() {
+            const modal = document.getElementById('project-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        window.refreshProjectModalList = async function() {
+            try {
+                await refreshProjectList();
+                ensureProjectModalSelection();
+                renderProjectModal();
+            } catch (err) {
+                showModal('Failed to refresh project list.\n' + err.message);
+            }
+        };
+
+        window.submitProjectModalAction = async function() {
+            if (projectModalState.isSubmitting) return;
+
+            const mode = projectModalState.mode;
+            const selectedProject = getSelectedProjectFromModal();
+            const name = (projectModalState.nameDraft || '').trim();
+
+            if ((mode === 'new' || mode === 'saveAs' || mode === 'rename') && !name) {
+                showModal('Enter a project name first.');
+                return;
+            }
+
+            if ((mode === 'open' || mode === 'rename' || mode === 'delete') && !selectedProject) {
+                showModal('Choose a project from the list first.');
+                return;
+            }
+
+            if (mode === 'delete') {
+                showModal(`Delete project "${selectedProject.name}"?\nThis will remove its saved data.`, true, async () => {
+                    try {
+                        projectModalState.isSubmitting = true;
+                        renderProjectModal();
+                        const deleted = await requestJson(`/api/projects/${encodeURIComponent(selectedProject.id)}`, {
+                            method: 'DELETE'
+                        });
+                        await refreshProjectList();
+                        if (deleted.currentProjectId) {
+                            await loadProjectById(deleted.currentProjectId);
+                        }
+                        window.closeProjectModal();
+                        showModal(`Deleted project: ${selectedProject.name}`);
+                    } catch (err) {
+                        showModal('Failed to delete the selected project.\n' + err.message);
+                    } finally {
+                        projectModalState.isSubmitting = false;
+                        renderProjectModal();
+                    }
+                });
+                return;
+            }
+
+            projectModalState.isSubmitting = true;
+            renderProjectModal();
+
+            try {
+                if (mode === 'new') {
+                    const created = await requestJson('/api/projects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, template: 'empty' })
+                    });
+                    await loadProjectById(created.id);
+                    window.closeProjectModal();
+                    showModal(`Created a new project: ${created.name}`);
+                    return;
+                }
+
+                if (mode === 'saveAs') {
+                    const created = await requestJson('/api/projects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            settings: projectSettings,
+                            slides: slidesData
+                        })
+                    });
+                    await loadProjectById(created.id);
+                    window.closeProjectModal();
+                    showModal(`Saved as a new project: ${created.name}`);
+                    return;
+                }
+
+                if (mode === 'rename') {
+                    const renamed = await requestJson(`/api/projects/${encodeURIComponent(selectedProject.id)}/meta`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    });
+                    await refreshProjectList();
+                    if (selectedProject.id === currentProject?.id) {
+                        currentProject = {
+                            id: selectedProject.id,
+                            name: renamed.project.name
+                        };
+                        updateProjectIndicator();
+                    }
+                    projectModalState.nameDraft = renamed.project.name;
+                    renderProjectModal();
+                    showModal(`Renamed project: ${renamed.project.name}`);
+                    return;
+                }
+
+                if (selectedProject.id === currentProject?.id) {
+                    showModal('That project is already open.');
+                    return;
+                }
+
+                await loadProjectById(selectedProject.id, { showMessage: true });
+                window.closeProjectModal();
+            } catch (err) {
+                const prefix = mode === 'new'
+                    ? 'Failed to create a new project.\n'
+                    : mode === 'saveAs'
+                        ? 'Failed to save as a new project.\n'
+                        : mode === 'rename'
+                            ? 'Failed to rename the selected project.\n'
+                            : mode === 'delete'
+                                ? 'Failed to delete the selected project.\n'
+                                : 'Failed to open the selected project.\n';
+                showModal(prefix + err.message);
+            } finally {
+                projectModalState.isSubmitting = false;
+                renderProjectModal();
+            }
+        };
+
+        window.createProject = function() {
+            window.openProjectModal('new');
+        };
+
+        window.saveAsProject = function() {
+            window.openProjectModal('saveAs');
+        };
+
+        window.openProjectPicker = function() {
+            window.openProjectModal('open');
+        };
+
         function generateTocData(slides) {
             let lines = [];
             let prevCh = null;
@@ -500,6 +872,97 @@
             }
             return pages;
         }
+
+        function getImageUploadContext(element) {
+            const wrapper = element?.closest ? element.closest('.file-drop-zone') : null;
+            if (!wrapper) {
+                return null;
+            }
+
+            return {
+                wrapper,
+                input: document.getElementById(wrapper.dataset.inputId),
+                layoutContainer: document.getElementById(wrapper.dataset.layoutId),
+                status: document.getElementById(wrapper.dataset.statusId),
+                defaultText: wrapper.dataset.defaultText || ''
+            };
+        }
+
+        function updateImageUploadUi(context) {
+            if (!context || !context.status) {
+                return;
+            }
+
+            const selectedFile = context.input?.files?.[0] || null;
+            if (selectedFile) {
+                context.status.textContent = `선택된 파일: ${selectedFile.name}`;
+                context.status.dataset.state = 'selected';
+                if (context.layoutContainer) {
+                    context.layoutContainer.style.display = 'flex';
+                }
+                return;
+            }
+
+            context.status.textContent = context.defaultText;
+            context.status.dataset.state = 'idle';
+        }
+
+        window.handleImageInputChange = function(input) {
+            updateImageUploadUi(getImageUploadContext(input));
+        };
+
+        window.handleImageDragEnter = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (context) {
+                context.wrapper.classList.add('dragover');
+            }
+        };
+
+        window.handleImageDragOver = function(event) {
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+            const context = getImageUploadContext(event.currentTarget);
+            if (context) {
+                context.wrapper.classList.add('dragover');
+            }
+        };
+
+        window.handleImageDragLeave = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (!context) {
+                return;
+            }
+
+            if (!event.relatedTarget || !context.wrapper.contains(event.relatedTarget)) {
+                context.wrapper.classList.remove('dragover');
+            }
+        };
+
+        window.handleImageDrop = function(event) {
+            event.preventDefault();
+            const context = getImageUploadContext(event.currentTarget);
+            if (!context || !context.input) {
+                return;
+            }
+
+            context.wrapper.classList.remove('dragover');
+
+            const droppedFiles = Array.from(event.dataTransfer?.files || []);
+            const imageFile = droppedFiles.find(file => file.type.startsWith('image/'));
+            if (!imageFile) {
+                showModal('이미지 파일만 드래그해서 업로드할 수 있습니다.');
+                return;
+            }
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(imageFile);
+            context.input.files = dataTransfer.files;
+            updateImageUploadUi(context);
+        };
 
         // -------------------------
         // 슬라이드 '추가' 관련 로직
@@ -680,6 +1143,7 @@
                     
                     const editorDiv = document.createElement('div');
                     editorDiv.className = 'editor-section';
+                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그앤드롭';
                     editorDiv.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 번째 슬라이드 작성하기' : '새 슬라이드 추가'}</h3>
@@ -691,10 +1155,18 @@
                             <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 (예: 1.1.1 관리 IP 설정)">
                         </div>
                         <textarea id="input-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)\n## 소제목\n* 설명\n\n\`\`\`bash\n코드 블록 작성 시 여기에 코드를 넣으세요.\n\`\`\`"></textarea>
-                        <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                        <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
+                            data-input-id="input-image"
+                            data-layout-id="input-layout-ratio-container"
+                            data-status-id="input-image-status"
+                            data-default-text="${escapeHtml(newImageUploadDefaultText)}"
+                            ondragenter="window.handleImageDragEnter(event)"
+                            ondragover="window.handleImageDragOver(event)"
+                            ondragleave="window.handleImageDragLeave(event)"
+                            ondrop="window.handleImageDrop(event)">
                             <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="document.getElementById('input-layout-ratio-container').style.display='flex'">
-                            <span style="font-size: 12px; color: #484f58; flex: 1;">(선택) 스크린샷 이미지 업로드</span>
+                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
+                            <span id="input-image-status" class="file-upload-status">${escapeHtml(newImageUploadDefaultText)}</span>
                             <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
                         </div>
                         <div class="file-upload-wrapper" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
@@ -749,6 +1221,9 @@
                         // ==== 수정 모드 폼 ====
                         const editDiv = document.createElement('div');
                         editDiv.className = 'editor-section edit-mode';
+                        const editImageUploadDefaultText = slide.image
+                            ? '새 이미지 업로드 또는 드래그앤드롭 시 기존 이미지 교체'
+                            : '스크린샷 이미지 업로드 또는 드래그앤드롭';
                         
                         const existingImageDeleteCheck = slide.image ? `
                             <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
@@ -768,12 +1243,18 @@
                                 <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="소제목">
                             </div>
                             <textarea id="edit-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)">${escapeHtml(slide.text)}</textarea>
-                            <div class="file-upload-wrapper" style="flex-wrap: wrap;">
+                            <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
+                                data-input-id="edit-image"
+                                data-layout-id="edit-layout-ratio-container"
+                                data-status-id="edit-image-status"
+                                data-default-text="${escapeHtml(editImageUploadDefaultText)}"
+                                ondragenter="window.handleImageDragEnter(event)"
+                                ondragover="window.handleImageDragOver(event)"
+                                ondragleave="window.handleImageDragLeave(event)"
+                                ondrop="window.handleImageDrop(event)">
                                 <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="if(this.files.length) document.getElementById('edit-layout-ratio-container').style.display='flex'">
-                                <span style="font-size: 12px; color: #484f58; flex: 1;">
-                                    ${slide.image ? '(선택) 새 이미지 업로드 시 기존 이미지 교체' : '(선택) 스크린샷 이미지 업로드'}
-                                </span>
+                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
+                                <span id="edit-image-status" class="file-upload-status">${escapeHtml(editImageUploadDefaultText)}</span>
                                 <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
                             </div>
                             <div class="file-upload-wrapper" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">

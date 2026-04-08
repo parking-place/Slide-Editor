@@ -62,14 +62,8 @@
             </button>
             <div class="hdr-divider"></div>
 
-            <button type="button" class="btn-hdr btn-hdr--purple" title="New project" onclick="window.createProject()">
-                <i class="fa-solid fa-folder-plus"></i> New
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--purple" title="Open project" onclick="window.openProjectPicker()">
-                <i class="fa-solid fa-folder-open"></i> Open
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--blue" title="Save as new project" onclick="window.saveAsProject()">
-                <i class="fa-solid fa-copy"></i> Save As
+            <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
+                <i class="fa-solid fa-folder-tree"></i> Project
             </button>
             <div class="hdr-divider"></div>
 
@@ -202,6 +196,73 @@
                     <button type="button" class="theme-action-btn" onclick="window.closeBrandingModal()" style="min-width:0;">
                         취소
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="project-modal" class="theme-modal-overlay" style="display:none;">
+        <div class="theme-modal-content project-modal-content">
+            <div class="theme-modal-header">
+                <span><i class="fa-solid fa-folder-tree"></i> Project Manager</span>
+                <button type="button" class="btn-cancel" onclick="window.closeProjectModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="theme-modal-body">
+                <div class="theme-list project-list-panel">
+                    <div class="theme-list-title">Saved Projects</div>
+                    <div id="project-list-items"></div>
+                    <div class="theme-list-actions">
+                        <button type="button" class="theme-action-btn" onclick="window.refreshProjectModalList()">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="theme-editor project-editor-panel">
+                    <div class="project-current-card">
+                        <div class="project-current-label">Current Project</div>
+                        <div id="project-modal-current-name" class="project-current-name">-</div>
+                        <div id="project-modal-current-meta" class="project-current-meta">No project selected</div>
+                    </div>
+
+                    <div class="project-mode-switch" role="tablist" aria-label="Project actions">
+                        <button type="button" id="project-mode-open" class="project-mode-btn" onclick="window.setProjectModalMode('open')">
+                            <i class="fa-solid fa-folder-open"></i> Open
+                        </button>
+                        <button type="button" id="project-mode-new" class="project-mode-btn" onclick="window.setProjectModalMode('new')">
+                            <i class="fa-solid fa-folder-plus"></i> New
+                        </button>
+                        <button type="button" id="project-mode-saveas" class="project-mode-btn" onclick="window.setProjectModalMode('saveAs')">
+                            <i class="fa-solid fa-copy"></i> Save As
+                        </button>
+                        <button type="button" id="project-mode-rename" class="project-mode-btn" onclick="window.setProjectModalMode('rename')">
+                            <i class="fa-solid fa-pen"></i> Rename
+                        </button>
+                        <button type="button" id="project-mode-delete" class="project-mode-btn project-mode-btn--danger" onclick="window.setProjectModalMode('delete')">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <label id="project-modal-name-label" class="theme-section-label" for="project-modal-name-input">Project Name</label>
+                        <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" oninput="window.setProjectModalNameDraft(this.value)">
+                        <p id="project-modal-help" class="project-help-text"></p>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <div class="theme-section-label">Selected Project</div>
+                        <div id="project-modal-selection" class="project-selection-card">
+                            Select a project from the list.
+                        </div>
+                    </div>
+
+                    <div class="theme-modal-footer">
+                        <button type="button" id="project-modal-primary-btn" class="theme-btn-apply" onclick="window.submitProjectModalAction()">
+                            <i class="fa-solid fa-check"></i> Continue
+                        </button>
+                        <button type="button" class="theme-action-btn" onclick="window.closeProjectModal()">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
