@@ -28,27 +28,7 @@
         }
 
         body.light-mode {
-            --bg-dark: #f3f4f6;
-            --slide-bg: #ffffff;
-            --border-color: #e5e7eb;
-            --text-main: #111827;
-            --text-dim: #4b5563;
-            --box-bg: #f9fafb;
-            --glass-rgb: 255, 255, 255;
-            --glass-alpha: 0.34;
-            --glass-blur: 11px;
-            --glass-saturation: 118%;
-            --glass-refraction: 0.08;
-            --glass-depth: 0.12;
-            --glass-border-alpha: 0.30;
-            --glass-shadow-alpha: 0.08;
-            --glass-highlight-alpha: 0.30;
-            --scrollbar-track: transparent;
-            --scrollbar-thumb: color-mix(in srgb, var(--hpe-green) 86%, rgba(15, 23, 42, 0.12) 14%);
-            --scrollbar-thumb-hover: color-mix(in srgb, var(--hpe-green) 78%, #0f172a 22%);
-            --scrollbar-thumb-border: transparent;
             --surface-grid-dot: rgba(0, 0, 0, 0.05);
-            --surface-noise-opacity: 0.03;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }

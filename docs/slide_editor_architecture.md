@@ -219,6 +219,8 @@
 또한 `colors.secondaryAccent`를 함께 정규화해, hover/soft highlight/보조 glass tint가
 테마마다 다른 보조강조색을 사용할 수 있도록 확장했습니다.
 또한 `glass.noiseOpacity`를 함께 정규화해, 메인 배경의 필름 그레인 강도를 테마별로 저장하고 조절할 수 있습니다.
+라이트 모드도 다크 모드와 동일하게 `theme.js`가 주입한 현재 테마 CSS 변수를 직접 사용하며,
+`body.light-mode`는 더 이상 `bgDark`/`slideBg`/`boxBg`/`border`나 `glass` 값을 고정 override하지 않습니다.
 
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.

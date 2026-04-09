@@ -10,6 +10,7 @@
 
 ## Changed
 
+- 라이트 모드에서 `Glass Surface` 7개 옵션과 `bgDark`/`slideBg`/`boxBg`/`border` 색상 설정이 샘플뿐 아니라 실제 editor surfaces에도 즉시 반영되도록 복구했습니다.
 - 에디터 슬라이드 이미지의 곡률은 유지하고, 에디터 전용 이미지 드롭섀도우는 제거했습니다.
 - 에디터, Navigator, 모달, 코드 블록, HTML 가이드의 스크롤바를 `accent` thumb + transparent track 규칙으로 통일했습니다.
 - 가이드 export 스크롤바도 editor와 같은 원칙을 따르도록 정리해, guide aside/main/code block이 동일한 thumb/track 구조를 사용합니다.
