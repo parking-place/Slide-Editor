@@ -1,21 +1,25 @@
 # Slide Editor
 
-[![Version](https://img.shields.io/badge/version-v0.9.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.10.0-blue?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
+[![Powered by Codex](https://img.shields.io/badge/powered%20by-Codex-111827?style=for-the-badge)](#)
 
-브라우저에서 슬라이드를 편집하고, 같은 원본 데이터를 기준으로 PPTX와 HTML 가이드를 함께 만드는 편집 도구입니다.  
-프로젝트 단위 저장, 테마/브랜딩 관리, 이미지 포함 슬라이드 편집, 웹 가이드 미리보기와 내보내기를 지원합니다.
+브라우저에서 슬라이드를 편집하고, 프로젝트 단위로 저장하며, 같은 데이터로 HTML 가이드를 미리보기와 다운로드까지 처리하는 경량 문서 제작 도구입니다.
+
+현재 버전은 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, HTML5 기반 편집 UI, 가이드 전용 네비게이터, 서버 저장/백업/임포트 흐름을 중심으로 동작합니다.
 
 ## 주요 기능
 
 - 프로젝트 생성, 열기, 다른 이름으로 저장, 이름 변경, 삭제
-- 슬라이드 작성/수정, 이미지 업로드, 드래그앤드롭 이미지 업로드
+- 프로젝트 매니저 안에서 브랜딩, JSON 임포트, JSON 백업 관리
+- 슬라이드 추가, 수정, 삭제
+- 이미지 업로드 후 비동기 WebP 변환
+- 구버전 데이터 로드 시 순차 WebP 백필 변환
+- 좌측 Navigator 기반 슬라이드 탐색
+- HTML 가이드 새 창 보기 및 다운로드
 - 테마 파일(`.slidetheme`) 불러오기/저장
-- 브랜딩 정보 관리
-- PPTX 내보내기
-- HTML 가이드 미리보기 및 내보내기
-- Docker 기반 실행 및 Node 서버 직접 실행 지원
+- Docker 기반 배포 및 Node 로컬 서버 실행
 
 ## 빠른 시작
 
@@ -34,7 +38,7 @@ docker compose up -d
 http://localhost:8000/SlideEditor.html
 ```
 
-운영체제별 보조 실행 스크립트도 사용할 수 있습니다.
+보조 실행 스크립트도 사용할 수 있습니다.
 
 - Windows: `docker-compose-up.bat`
 - Linux/macOS: `chmod +x docker-compose-up.sh && ./docker-compose-up.sh`
@@ -46,19 +50,62 @@ npm install
 node scripts/server.js
 ```
 
-Node 직접 실행도 가능하지만, 기본 운영 기준은 Docker Compose입니다.
+Windows에서는 `local-server-up.bat`로 바로 실행할 수 있습니다.
 
-## 데이터와 저장 경로
+## 데이터와 볼륨
+
+Docker 기본 마운트 경로는 아래와 같습니다.
 
 - `./data -> /app/data`
 - `./exports -> /app/exports`
 
-주요 저장 데이터:
+주요 데이터는 아래처럼 저장됩니다.
 
-- 프로젝트 데이터
-- 테마 파일
-- 분리 저장된 이미지 파일
-- HTML 내보내기 결과물
+- `data/projects/<projectId>/slide_data.json`
+- `data/projects/<projectId>/meta.json`
+- `data/projects/<projectId>/image_data/`
+- `data/themes/`
+- `exports/`
+
+## 프로젝트 저장 구조
+
+각 프로젝트는 독립 디렉터리로 저장됩니다.
+
+```text
+data/projects/<projectId>/
+  meta.json
+  slide_data.json
+  image_data/
+    index.json
+    originals/
+    converted/
+```
+
+`slide_data.json`에는 편집 데이터와 `savedVersion`이 함께 저장되며, 프로젝트 매니저에서 해당 저장 버전을 표시합니다. 저장 버전 정보가 없는 구버전 데이터는 `old`로 표시됩니다.
+
+## 이미지 처리 방식
+
+- 새 이미지 업로드 시 서버로 전송한 뒤 WebP로 비동기 변환합니다.
+- 변환 중에는 슬라이드 이미지 영역에 상태 UI가 표시됩니다.
+- 변환이 끝나면 자동으로 WebP 이미지가 반영됩니다.
+- 구버전 JSON이나 예전 프로젝트를 불러오면 먼저 프로젝트를 표시한 뒤, 이미지를 하나씩 WebP로 백필 변환합니다.
+- 모든 백필 변환이 끝나면 완료 알림을 표시합니다.
+
+## 가이드 출력
+
+현재 출력 경로는 HTML 가이드 중심입니다.
+
+- `Guide`: 서버에 저장한 HTML 가이드를 새 창에서 미리보기
+- `HTML`: 현재 프로젝트명 기준 파일명으로 가이드 다운로드
+- `Backup JSON`: 현재 프로젝트 데이터를 portable JSON으로 다운로드
+
+가이드 HTML은 다음 특성을 가집니다.
+
+- HTML5 시맨틱 구조 사용
+- 가이드 전용 Navigator 제공
+- 현재 위치 하이라이트
+- 이미지 클릭 확대
+- WebP 우선 사용, 필요 시 fallback 적용
 
 ## Docker 이미지
 
@@ -68,41 +115,50 @@ Node 직접 실행도 가능하지만, 기본 운영 기준은 Docker Compose입
 parkingplace/slide-editor:latest
 ```
 
-버전 고정이 필요하면 릴리즈 태그(`parkingplace/slide-editor:v0.9.1` 등)를 사용할 수 있습니다.
+버전 고정이 필요하면 릴리즈 태그를 사용합니다.
+
+```text
+parkingplace/slide-editor:v0.10.0
+```
 
 ## 프로젝트 구조
 
 ```text
 Slide-Editor/
 ├─ src/                     # 프런트엔드 코드
-├─ scripts/                 # Node 서버 및 보조 스크립트
-├─ data/                    # 프로젝트/테마/이미지 데이터
-├─ exports/                 # HTML 내보내기 결과물
-├─ docs/                    # changelog, 운영 규칙, 아키텍처 문서
+├─ src/core/                # 전역 상태와 공통 유틸
+├─ src/features/            # 기능별 모듈
+├─ src/styles/              # 스타일 모듈
+├─ scripts/                 # Node 서버
+├─ data/                    # 프로젝트/테마 데이터
+├─ exports/                 # HTML 가이드 출력물
+├─ docs/                    # changelog, 규칙, 구조 문서
 ├─ plans/                   # 작업 계획 문서
 ├─ SlideEditor.html         # 메인 HTML 엔트리
-├─ Dockerfile               # Docker 이미지 빌드 정의
-├─ docker-compose.yml       # Docker Compose 실행 정의
-├─ docker-compose-up.bat    # Windows용 Docker 실행 스크립트
-└─ docker-compose-up.sh     # Linux/macOS용 Docker 실행 스크립트
+├─ Dockerfile
+├─ docker-compose.yml
+├─ docker-compose-up.bat
+├─ docker-compose-up.sh
+├─ local-server-up.bat
+└─ version.json
 ```
 
 ## 기술 스택
 
 - Frontend: HTML, CSS, Vanilla JavaScript
 - Server: Node.js, Express
-- Export: PptxGenJS, Marked.js, Highlight.js
+- Image pipeline: Sharp
+- Parsing/UI: Marked.js, Highlight.js
 - Runtime: Docker, Docker Compose
 
 ## 문서
 
 - changelog 진입점: [CHANGELOG.md](./CHANGELOG.md)
 - 개발/릴리즈 규칙: [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)
-- 아키텍처/운영 개요: [docs/slide_editor_architecture.md](./docs/slide_editor_architecture.md)
+- 구조 분석 문서: [docs/slide_editor_architecture.md](./docs/slide_editor_architecture.md)
 
 ## 릴리즈 원칙
 
 - `version.json`, Git 태그, Docker 태그는 같은 버전을 사용합니다.
-- changelog는 hybrid 구조로 관리합니다.
-- changelog 설명은 항상 한국어로 작성합니다.
-
+- 릴리즈 전에는 `docs/changelog/unreleased.md`를 정리하고 릴리즈 노트를 생성합니다.
+- 릴리즈 후에는 Docker Hub 이미지와 원격 서버 배포를 같은 버전 기준으로 맞춥니다.
