@@ -72,7 +72,10 @@
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = 'SlideEditor_Web_Guide.html';
+        const fileName = typeof window.__buildGuideDownloadName === 'function'
+            ? window.__buildGuideDownloadName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide')
+            : `${(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide').trim() || 'My Guide'}.html`;
+        anchor.download = fileName;
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);

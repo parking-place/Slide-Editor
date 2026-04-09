@@ -5,6 +5,15 @@
 (function () {
     'use strict';
 
+    function buildGuideDownloadName(projectName) {
+        const safeName = String(projectName || 'My Guide')
+            .trim()
+            .replace(/[\\/:*?"<>|]/g, '_')
+            .replace(/\s+/g, ' ')
+            || 'My Guide';
+        return `${safeName}.html`;
+    }
+
     function cloneSlidesForExport(slides) {
         return Array.isArray(slides)
             ? slides.map((slide) => Object.assign({}, slide, slide?.imageAsset ? { imageAsset: Object.assign({}, slide.imageAsset) } : {}))
@@ -393,7 +402,7 @@
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = 'SlideEditor_Web_Guide.html';
+        anchor.download = buildGuideDownloadName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);
@@ -463,4 +472,5 @@
 
     window.__phase5ResolveImageSource = resolveSlideImageSource;
     window.__phase5GenerateGuideHtml = generateGuideHtml;
+    window.__buildGuideDownloadName = buildGuideDownloadName;
 })();
