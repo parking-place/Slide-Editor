@@ -188,7 +188,23 @@
             });
         }
 
+        function scheduleLegacyImageBackfill(options = {}) {
+            if (typeof window.startLegacyImageBackfill !== 'function') {
+                return;
+            }
+
+            Promise.resolve()
+                .then(() => window.startLegacyImageBackfill(options))
+                .catch((error) => {
+                    console.warn('[legacy-backfill] WebP 변환 예약에 실패했습니다.', error);
+                });
+        }
+
         async function loadProjectById(projectId, options = {}) {
+            if (typeof window.cancelLegacyImageBackfill === 'function') {
+                window.cancelLegacyImageBackfill();
+            }
+
             const project = await requestJson(`/api/projects/${encodeURIComponent(projectId)}`);
             parseLoadedData(project);
             setCurrentProject(project);
@@ -199,6 +215,9 @@
             activeEditorIndex = slidesData.length === 0 ? 0 : null;
             editingSlideIndex = null;
             window.renderPreview();
+            scheduleLegacyImageBackfill({
+                persistAfterConversion: true
+            });
 
             if (options.showMessage) {
                 showModal(`프로젝트를 불러왔습니다: ${currentProject.name}`);
@@ -2235,6 +2254,10 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 try {
+                    if (typeof window.cancelLegacyImageBackfill === 'function') {
+                        window.cancelLegacyImageBackfill();
+                    }
+
                     const importedData = JSON.parse(e.target.result);
 
                     // 구버전(배열) 및 신버전(래퍼 객체) 자동 판별
@@ -2258,6 +2281,9 @@
                     activeEditorIndex = null;
                     editingSlideIndex = null;
                     window.renderPreview();
+                    scheduleLegacyImageBackfill({
+                        persistAfterConversion: false
+                    });
                 } catch (err) {
                     console.error('데이터 파일 불러오기 오류:', err);
                     showModal('데이터 파일을 읽는 중 오류가 발생했습니다.\n' + err.message);
