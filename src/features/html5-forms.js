@@ -11,12 +11,12 @@
             ['#input-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#input-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#input-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
-            ['#input-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#input-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done', placeholder: '이미지 설명(선택사항)' }],
             ['#edit-chapter', { maxlength: '120', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
-            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done', placeholder: '이미지 설명(선택사항)' }],
             ['#theme-name-input', { maxlength: '80', autocomplete: 'off', enterkeyhint: 'done' }],
             ['#project-branding-guide-subtitle', { maxlength: '160' }],
             ['#project-branding-footer-copy', { maxlength: '80' }],
@@ -48,8 +48,13 @@
         const inputGroup = section.querySelector('.input-group');
         const textArea = section.querySelector('textarea');
         const mediaWrapper = section.querySelector('.file-upload-wrapper.file-drop-zone');
+        const captionWrapper = section.querySelector('.media-caption-wrap');
         const ratioWrapper = section.querySelector('.file-upload-wrapper[id$="layout-ratio-container"]');
-        const deleteBlock = section.querySelector('#edit-delete-image')?.parentElement;
+        const captionLabel = captionWrapper ? captionWrapper.querySelector('label') : null;
+
+        if (captionLabel) {
+            captionLabel.remove();
+        }
 
         const form = document.createElement('form');
         form.className = 'phase6-editor-form';
@@ -65,15 +70,32 @@
             form.appendChild(createFieldset('기본 정보', [inputGroup]));
         }
 
-        if (textArea) {
-            form.appendChild(createFieldset('본문', [textArea]));
-        }
+        if (textArea || mediaWrapper || ratioWrapper) {
+            const composeGrid = document.createElement('div');
+            composeGrid.className = 'editor-compose-grid phase6-compose-grid';
 
-        if (mediaWrapper || ratioWrapper || deleteBlock) {
-            if (deleteBlock) {
-                deleteBlock.classList.add('phase6-media-delete');
+            if (textArea) {
+                const bodyPane = document.createElement('div');
+                bodyPane.className = 'editor-compose-body';
+                bodyPane.appendChild(textArea);
+                composeGrid.appendChild(bodyPane);
             }
-            form.appendChild(createFieldset('미디어', [mediaWrapper, ratioWrapper, deleteBlock]));
+
+            if (mediaWrapper) {
+                const mediaPane = document.createElement('div');
+                mediaPane.className = 'editor-compose-media';
+                mediaPane.appendChild(mediaWrapper);
+                if (captionWrapper) {
+                    mediaPane.appendChild(captionWrapper);
+                }
+                composeGrid.appendChild(mediaPane);
+            }
+
+            const composeFieldset = createFieldset('본문 및 미디어', [composeGrid]);
+            if (ratioWrapper) {
+                composeFieldset.appendChild(ratioWrapper);
+            }
+            form.appendChild(composeFieldset);
         }
 
         if (button) {
@@ -432,7 +454,7 @@
         if (!slidesData.length) {
             const empty = document.createElement('div');
             empty.className = 'toc-sidebar-empty';
-            empty.innerHTML = '<i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom:8px; display:block;"></i>슬라이드를 추가하면<br>목차가 여기에 표시됩니다.';
+            empty.innerHTML = '<i class="fa-solid fa-file-circle-plus toc-sidebar-empty-icon"></i>슬라이드를 추가하면<br>목차가 여기에 표시됩니다.';
             nav.appendChild(empty);
             return;
         }
@@ -473,6 +495,7 @@
             const key = `${chapter}||${middleTitle}||${title}`;
             if (!firstTitleByKey[key]) {
                 const titleEl = cloneTemplate('phase9-toc-title-template');
+                titleEl.id = `toc-item-${index}`;
                 titleEl.textContent = title;
                 titleEl.dataset.slide = String(index);
                 titleEl.dataset.key = key;
@@ -497,28 +520,62 @@
             phase9Observer.disconnect();
         }
 
-        phase9Observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
+        const slideEls = Array.from(document.querySelectorAll('.slide-preview[id^="preview-slide-"]'));
+        const syncActiveToc = () => {
+            const focusBandTop = window.innerHeight * 0.24;
+            let bestSlide = null;
+            let bestVisibleHeight = -1;
+            let bestScore = Number.POSITIVE_INFINITY;
 
-                const slideIndex = entry.target.id.replace('preview-slide-', '');
-                const slide = slidesData[Number(slideIndex)];
-                if (!slide) return;
+            slideEls.forEach((slideEl) => {
+                const rect = slideEl.getBoundingClientRect();
+                if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+                    return;
+                }
 
-                const key = `${slide.chapter || 'Untitled Chapter'}||${slide.middleTitle || ''}||${slide.title || `Slide ${Number(slideIndex) + 1}`}`;
-                const activeEl = firstTitleByKey[key];
-                if (!activeEl) return;
-
-                document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
-                    item.classList.remove('active');
-                    item.dataset.active = 'false';
-                });
-                activeEl.classList.add('active');
-                activeEl.dataset.active = 'true';
+                const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                const slideMidpoint = rect.top + rect.height / 2;
+                const score = Math.abs(slideMidpoint - focusBandTop);
+                if (visibleHeight > bestVisibleHeight || (visibleHeight === bestVisibleHeight && score < bestScore)) {
+                    bestVisibleHeight = visibleHeight;
+                    bestScore = score;
+                    bestSlide = slideEl;
+                }
             });
+
+            document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
+                item.classList.remove('active');
+                item.dataset.active = 'false';
+            });
+
+            if (!bestSlide) {
+                return;
+            }
+
+            const slideIndex = bestSlide.id.replace('preview-slide-', '');
+            const slide = slidesData[Number(slideIndex)];
+            if (!slide) {
+                return;
+            }
+
+            const key = `${slide.chapter || 'Untitled Chapter'}||${slide.middleTitle || ''}||${slide.title || `Slide ${Number(slideIndex) + 1}`}`;
+            const activeEl = firstTitleByKey[key];
+            if (!activeEl) {
+                return;
+            }
+
+            activeEl.classList.add('active');
+            activeEl.dataset.active = 'true';
+        };
+
+        phase9Observer = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                syncActiveToc();
+            }
         }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
 
-        document.querySelectorAll('.slide-preview[id^="preview-slide-"]').forEach((slideEl) => phase9Observer.observe(slideEl));
+        slideEls.forEach((slideEl) => phase9Observer.observe(slideEl));
+        syncActiveToc();
     }
 
     const originalRenderPreview = window.renderPreview;

@@ -100,10 +100,26 @@
         };
     }
 
+    function isWebpImageSource(imageValue) {
+        if (typeof imageValue !== 'string') return false;
+        const trimmed = imageValue.trim();
+        if (!trimmed) return false;
+
+        if (/^data:image\/webp(?:;base64)?,/i.test(trimmed)) {
+            return true;
+        }
+
+        const normalized = getSlideImageSrc(trimmed) || trimmed;
+        const withoutHash = normalized.split('#')[0];
+        const withoutQuery = withoutHash.split('?')[0];
+        return /\.webp$/i.test(withoutQuery);
+    }
+
     function isLegacyConvertibleSlide(slide) {
         if (!slide || typeof slide !== 'object') return false;
         if (slide.imageAsset && slide.imageAsset.assetId) return false;
         if (typeof slide.image !== 'string' || slide.image.trim() === '') return false;
+        if (isWebpImageSource(slide.image)) return false;
         return isInlineImageData(slide.image) || originalIsStoredImagePath(slide.image);
     }
 
@@ -438,10 +454,12 @@
         const imageInput = document.getElementById('edit-image');
         const imageStatus = document.getElementById('edit-image-status');
         const imageCaption = document.getElementById('edit-image-caption').value.trim();
-        const deleteImageChecked = document.getElementById('edit-delete-image') && document.getElementById('edit-delete-image').checked;
         const textRatioInput = document.getElementById('edit-text-ratio');
         const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
         const previousSlide = slidesData[index];
+        const hasNewImage = !!(imageInput.files && imageInput.files[0]);
+        const imageZone = imageInput?.closest ? imageInput.closest('.file-drop-zone') : null;
+        const pendingRemoval = imageZone?.dataset?.pendingRemoval === 'true';
 
         try {
             if (previousSlide && previousSlide.imageAsset && previousSlide.imageAsset.assetId) {
@@ -454,14 +472,18 @@
                 title,
                 text,
                 imageCaption,
-                image: deleteImageChecked ? null : previousSlide.image,
-                imageAsset: deleteImageChecked ? null : (previousSlide.imageAsset || null),
+                image: previousSlide.image,
+                imageAsset: previousSlide.imageAsset || null,
                 textRatio
             };
 
-            if (imageInput.files && imageInput.files[0]) {
+            if (hasNewImage) {
                 const asset = await uploadImageFile(imageInput.files[0], imageStatus);
                 mergeSlideImageAsset(nextSlide, asset);
+            } else if (pendingRemoval) {
+                nextSlide.image = null;
+                nextSlide.imageAsset = null;
+                nextSlide.imageCaption = '';
             }
 
             slidesData[index] = nextSlide;

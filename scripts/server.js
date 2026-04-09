@@ -119,6 +119,12 @@ function normalizeSavedVersion(versionValue) {
         : null;
 }
 
+function normalizeTimestamp(value) {
+    if (typeof value !== 'string' || !value.trim()) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
 function extractSavedVersion(payload) {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
         return null;
@@ -135,6 +141,7 @@ function extractSavedVersion(payload) {
 function createEmptyProjectPayload(projectName = 'My Guide', savedVersion = null) {
     return {
         savedVersion: normalizeSavedVersion(savedVersion),
+        lastSavedAt: null,
         settings: createDefaultSettings(projectName),
         slides: []
     };
@@ -355,6 +362,7 @@ function syncProjectIndexEntry(meta) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
+        lastSavedAt: normalizeTimestamp(meta.lastSavedAt),
         slideCount: meta.slideCount,
         savedVersion: normalizeSavedVersion(meta.savedVersion)
     });
@@ -378,6 +386,7 @@ function updateProjectMeta(projectId, updates = {}) {
         ...meta,
         name: String(updates.name || meta.name || projectId).trim() || projectId,
         updatedAt: getTimestamp(),
+        lastSavedAt: getTimestamp(),
         slideCount: getSlideCount(payload),
         savedVersion: normalizeSavedVersion(meta.savedVersion || extractSavedVersion(payload))
     };
@@ -385,6 +394,7 @@ function updateProjectMeta(projectId, updates = {}) {
     if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
         payload.settings = mergeSettings(payload.settings, nextMeta.name);
         payload.settings.branding.projectName = nextMeta.name;
+        payload.lastSavedAt = nextMeta.lastSavedAt;
         writeJson(getProjectDataPath(projectId), payload);
     }
 
@@ -396,6 +406,7 @@ function updateProjectMeta(projectId, updates = {}) {
         name: nextMeta.name,
         createdAt: nextMeta.createdAt,
         updatedAt: nextMeta.updatedAt,
+        lastSavedAt: normalizeTimestamp(nextMeta.lastSavedAt),
         slideCount: nextMeta.slideCount,
         savedVersion: normalizeSavedVersion(nextMeta.savedVersion)
     };
@@ -645,6 +656,7 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
 
     return {
         savedVersion: extractSavedVersion(safePayload),
+        lastSavedAt: normalizeTimestamp(safePayload.lastSavedAt),
         settings,
         slides: slides.map(slide => {
             if (!slide || typeof slide !== 'object') return slide;
@@ -655,6 +667,65 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
     };
 }
 
+function extractReferencedImageAssetIds(projectId, payload) {
+    const referencedAssetIds = new Set();
+    const slides = Array.isArray(payload?.slides) ? payload.slides : [];
+
+    slides.forEach((slide) => {
+        if (!slide || typeof slide !== 'object') return;
+
+        const assetId = typeof slide.imageAsset?.assetId === 'string' ? slide.imageAsset.assetId.trim() : '';
+        if (assetId) {
+            referencedAssetIds.add(assetId);
+        }
+
+        const imageValue = typeof slide.image === 'string' ? slide.image.trim() : '';
+        if (!imageValue) {
+            return;
+        }
+
+        const matched = imageValue.match(/^\/api\/projects\/([^/]+)\/images\/([^/]+)\/(?:file|original)$/);
+        if (matched && decodeURIComponent(matched[1]) === projectId) {
+            referencedAssetIds.add(decodeURIComponent(matched[2]));
+        }
+    });
+
+    return referencedAssetIds;
+}
+
+function removeImageAssetFiles(projectId, asset) {
+    if (!asset || typeof asset !== 'object') return;
+
+    [asset.originalPath, asset.convertedPath]
+        .filter((relativePath) => typeof relativePath === 'string' && relativePath.trim())
+        .forEach((relativePath) => {
+            const absolutePath = getProjectRelativePath(projectId, relativePath);
+            if (fs.existsSync(absolutePath)) {
+                fs.rmSync(absolutePath, { force: true });
+            }
+        });
+}
+
+function cleanupUnusedProjectImageAssets(projectId, payload) {
+    const referencedAssetIds = extractReferencedImageAssetIds(projectId, payload);
+    const index = getProjectImageIndex(projectId);
+    let mutated = false;
+
+    Object.entries(index.assets).forEach(([assetId, asset]) => {
+        if (referencedAssetIds.has(assetId)) {
+            return;
+        }
+
+        removeImageAssetFiles(projectId, asset);
+        delete index.assets[assetId];
+        mutated = true;
+    });
+
+    if (mutated) {
+        saveProjectImageIndex(projectId, index);
+    }
+}
+
 function createProjectMeta(projectId, name, payload, existingMeta = null) {
     const now = getTimestamp();
     const safeName = String(name || existingMeta?.name || projectId).trim() || projectId;
@@ -663,6 +734,7 @@ function createProjectMeta(projectId, name, payload, existingMeta = null) {
         name: safeName,
         createdAt: existingMeta?.createdAt || now,
         updatedAt: now,
+        lastSavedAt: now,
         slideCount: getSlideCount(payload),
         savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || existingMeta?.savedVersion)
     };
@@ -672,10 +744,12 @@ function saveProject(projectId, name, body) {
     const normalizedPayload = normalizeProjectPayload(body, projectId, name || projectId);
     const existingMeta = readProjectMeta(projectId);
     const meta = createProjectMeta(projectId, name, normalizedPayload, existingMeta);
+    normalizedPayload.lastSavedAt = meta.lastSavedAt;
 
     ensureDir(getProjectDir(projectId));
     ensureProjectImageStorage(projectId);
     writeJson(getProjectDataPath(projectId), normalizedPayload);
+    cleanupUnusedProjectImageAssets(projectId, normalizedPayload);
     writeJson(getProjectMetaPath(projectId), meta);
     syncProjectIndexEntry(meta);
 
@@ -684,6 +758,7 @@ function saveProject(projectId, name, body) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
+        lastSavedAt: normalizeTimestamp(meta.lastSavedAt),
         slideCount: meta.slideCount,
         savedVersion: normalizeSavedVersion(meta.savedVersion)
     };
@@ -698,6 +773,7 @@ function loadProjectPayload(projectId) {
         id: meta.id,
         name: meta.name,
         savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || meta.savedVersion),
+        lastSavedAt: normalizeTimestamp(payload.lastSavedAt || meta.lastSavedAt || meta.updatedAt),
         meta
     }, payload);
 }
@@ -718,6 +794,7 @@ function listProjects() {
                 name: meta?.name || project.name || project.id,
                 createdAt: meta?.createdAt || project.createdAt || getTimestamp(),
                 updatedAt: meta?.updatedAt || project.updatedAt || getTimestamp(),
+                lastSavedAt: normalizeTimestamp(project.lastSavedAt || meta?.lastSavedAt || project.updatedAt || meta?.updatedAt),
                 slideCount: Number.isFinite(meta?.slideCount) ? meta.slideCount : getSlideCount(payload),
                 savedVersion
             };

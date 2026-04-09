@@ -6,7 +6,7 @@
 
         function getDefaultProjectSettings(projectName = 'My Guide') {
             return {
-                activeTheme: 'hpe_default',
+                activeTheme: 'nvidia_light',
                 branding: {
                     projectName,
                     guideSubtitle: '가이드 부제',
@@ -49,7 +49,16 @@
             mode: 'open',
             selectedProjectId: null,
             isSubmitting: false,
-            nameDraft: ''
+            isNewProjectSubmitting: false,
+            isLoadingSelection: false,
+            selectedProjectDataId: null,
+            selectedProjectData: null,
+            nameDraft: '',
+            newProjectDraft: {
+                name: '',
+                subtitle: '',
+                footer: ''
+            }
         };
 
         let activeTheme = null;
@@ -167,6 +176,7 @@
         function buildProjectDataDocument(slides = slidesData, settings = projectSettings, projectName = currentProject?.name || settings?.branding?.projectName || 'My Guide') {
             return {
                 savedVersion: getCurrentSavedVersion(),
+                lastSavedAt: currentProject?.lastSavedAt || '',
                 settings: buildProjectSettingsDocument(settings, projectName),
                 slides
             };
@@ -177,7 +187,8 @@
                 ? {
                     id: project.id,
                     name: project.name || project.meta?.name || project.settings?.branding?.projectName || project.id,
-                    savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion)
+                    savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion),
+                    lastSavedAt: project.lastSavedAt || project.meta?.lastSavedAt || project.updatedAt || ''
                 }
                 : null;
             syncProjectBrandingName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');

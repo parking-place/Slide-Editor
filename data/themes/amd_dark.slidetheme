@@ -11,7 +11,8 @@
     "boxBg": "#1f0505",
     "border": "#3d0a0a",
     "textMain": "#FFFFFF",
-    "textDim": "#c0a0a0"
+    "textDim": "#c0a0a0",
+    "secondaryAccent": "#ed6f1c"
   },
   "pptx": {
     "masterBg": "130000",
@@ -32,5 +33,13 @@
     "codeFamily": "D2Coding",
     "pptxBody": "Malgun Gothic",
     "pptxTitle": "Arial"
+  },
+  "glass": {
+    "backgroundColor": "#FFFFFF",
+    "backgroundAlpha": 0.16,
+    "backgroundBlur": 18,
+    "backgroundSaturation": 142,
+    "refraction": 0.08,
+    "depth": 0.11
   }
 }

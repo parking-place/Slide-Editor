@@ -11,7 +11,8 @@
     "boxBg": "#f3f9ff",
     "border": "#cce4f6",
     "textMain": "#1b1b1b",
-    "textDim": "#616161"
+    "textDim": "#616161",
+    "secondaryAccent": "#00b8d4"
   },
   "pptx": {
     "masterBg": "ffffff",
@@ -32,5 +33,13 @@
     "codeFamily": "D2Coding",
     "pptxBody": "Malgun Gothic",
     "pptxTitle": "Segoe UI"
+  },
+  "glass": {
+    "backgroundColor": "#FFFFFF",
+    "backgroundAlpha": 0.34,
+    "backgroundBlur": 11,
+    "backgroundSaturation": 118,
+    "refraction": 0.08,
+    "depth": 0.12
   }
 }

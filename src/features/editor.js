@@ -105,8 +105,40 @@ function generateTocData(slides) {
                 input: document.getElementById(wrapper.dataset.inputId),
                 layoutContainer: document.getElementById(wrapper.dataset.layoutId),
                 status: document.getElementById(wrapper.dataset.statusId),
-                defaultText: wrapper.dataset.defaultText || ''
+                captionContainer: document.getElementById(wrapper.dataset.captionId),
+                captionInput: wrapper.dataset.captionInputId ? document.getElementById(wrapper.dataset.captionInputId) : null,
+                icon: wrapper.querySelector('.media-drop-icon i'),
+                defaultText: wrapper.dataset.defaultText || '',
+                existingText: wrapper.dataset.existingText || wrapper.dataset.defaultText || ''
             };
+        }
+
+        function getImageDisplayName(slide) {
+            const sourceFileName = slide?.imageAsset?.sourceFileName;
+            if (typeof sourceFileName === 'string' && sourceFileName.trim()) {
+                return sourceFileName.trim();
+            }
+
+            const imageValue = typeof slide?.image === 'string' ? slide.image.trim() : '';
+            if (!imageValue) {
+                return '';
+            }
+
+            if (imageValue.startsWith('data:image/')) {
+                return '업로드한 이미지';
+            }
+
+            const normalized = imageValue.replace(/\\/g, '/');
+            const fileName = normalized.split('/').pop() || '';
+            if (!fileName) {
+                return '업로드한 이미지';
+            }
+
+            try {
+                return decodeURIComponent(fileName);
+            } catch (error) {
+                return fileName;
+            }
         }
 
         function updateImageUploadUi(context) {
@@ -115,21 +147,87 @@ function generateTocData(slides) {
             }
 
             const selectedFile = context.input?.files?.[0] || null;
+            const hasExistingImage = context.wrapper.dataset.existingImage === 'true';
+            const pendingRemoval = context.wrapper.dataset.pendingRemoval === 'true';
+            const hasImage = !!selectedFile || (hasExistingImage && !pendingRemoval);
+
             if (selectedFile) {
-                context.status.textContent = `선택된 파일: ${selectedFile.name}`;
+                context.status.textContent = selectedFile.name;
                 context.status.dataset.state = 'selected';
-                if (context.layoutContainer) {
-                    context.layoutContainer.style.display = 'flex';
-                }
+            } else if (hasExistingImage && !pendingRemoval) {
+                context.status.textContent = context.existingText;
+                context.status.dataset.state = 'selected';
+            } else {
+                context.status.textContent = context.defaultText;
+                context.status.dataset.state = 'idle';
+            }
+
+            context.wrapper.dataset.hasImage = String(hasImage);
+            context.wrapper.classList.toggle('has-image', hasImage);
+            context.wrapper.classList.toggle('is-empty', !hasImage);
+
+            if (context.icon) {
+                context.icon.className = hasImage ? 'fa-solid fa-xmark' : 'fa-solid fa-plus';
+            }
+
+            if (context.layoutContainer) {
+                context.layoutContainer.style.display = hasImage ? 'flex' : 'none';
+            }
+
+            if (context.captionContainer) {
+                context.captionContainer.style.display = hasImage ? 'flex' : 'none';
+            }
+
+            if (!hasImage && context.captionInput) {
+                context.captionInput.value = '';
+            }
+        }
+
+        function clearImageUploadSelection(context) {
+            if (!context) {
                 return;
             }
 
-            context.status.textContent = context.defaultText;
-            context.status.dataset.state = 'idle';
+            if (context.input) {
+                context.input.value = '';
+            }
+
+            if (context.wrapper.dataset.existingImage === 'true') {
+                context.wrapper.dataset.pendingRemoval = 'true';
+            } else {
+                context.wrapper.dataset.pendingRemoval = 'false';
+            }
+
+            updateImageUploadUi(context);
         }
 
         window.handleImageInputChange = function(input) {
-            updateImageUploadUi(getImageUploadContext(input));
+            const context = getImageUploadContext(input);
+            if (context) {
+                context.wrapper.dataset.pendingRemoval = 'false';
+            }
+            updateImageUploadUi(context);
+        };
+
+        window.handleImageZoneClick = function(event) {
+            if (event.target.closest('input, textarea, button, label, a, output')) {
+                return;
+            }
+
+            const context = getImageUploadContext(event.currentTarget);
+            if (!context?.input) {
+                return;
+            }
+
+            const selectedFile = context.input.files?.[0] || null;
+            const hasExistingImage = context.wrapper.dataset.existingImage === 'true';
+            const pendingRemoval = context.wrapper.dataset.pendingRemoval === 'true';
+
+            if (selectedFile || (hasExistingImage && !pendingRemoval)) {
+                clearImageUploadSelection(context);
+            } else {
+                context.input.click();
+            }
         };
 
         window.handleImageDragEnter = function(event) {
@@ -182,8 +280,15 @@ function generateTocData(slides) {
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(imageFile);
             context.input.files = dataTransfer.files;
+            context.wrapper.dataset.pendingRemoval = 'false';
             updateImageUploadUi(context);
         };
+
+        function syncAllImageUploadUi() {
+            document.querySelectorAll('.file-drop-zone').forEach((zone) => {
+                updateImageUploadUi(getImageUploadContext(zone));
+            });
+        }
 
         // -------------------------
         // 슬라이드 '추가' 관련 로직
@@ -245,7 +350,6 @@ function generateTocData(slides) {
             const text = document.getElementById('edit-text').value.trim();
             const imageInput = document.getElementById('edit-image');
             const imageCaption = document.getElementById('edit-image-caption').value.trim();
-            const deleteImageChecked = document.getElementById('edit-delete-image')?.checked;
             const textRatioInput = document.getElementById('edit-text-ratio');
             const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
 
@@ -259,8 +363,8 @@ function generateTocData(slides) {
                 };
                 reader.readAsDataURL(imageInput.files[0]);
             } else {
-                // 이미지 업로드 안 한 경우 (기존 이미지 유지 혹은 삭제)
-                const existingImage = deleteImageChecked ? null : slidesData[index].image;
+                // 이미지 업로드 안 한 경우 기존 이미지 유지
+                const existingImage = slidesData[index].image;
                 slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: existingImage, textRatio };
                 editingSlideIndex = null;
                 window.renderPreview();
@@ -320,40 +424,55 @@ function generateTocData(slides) {
                     
                     const editorDiv = document.createElement('div');
                     editorDiv.className = 'editor-section';
-                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그앤드롭';
+                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
                     editorDiv.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 번째 슬라이드 작성하기' : '새 슬라이드 추가'}</h3>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 슬라이드 작성' : '새 슬라이드 추가'}</h3>
                             <button type="button" class="btn-cancel" onclick="window.cancelEditor()"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="input-group">
-                            <input type="text" id="input-chapter" value="${defaultChapter}" placeholder="대제목 (예: 1. 시스템 설정)">
-                            <input type="text" id="input-middle-title" value="${defaultMiddleTitle}" placeholder="중제목 (예: 1.1 네트워크 설정) - 선택">
-                            <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 (예: 1.1.1 관리 IP 설정)">
+                            <input type="text" id="input-chapter" value="${defaultChapter}" placeholder="대제목 예: 1. 설치 준비">
+                            <input type="text" id="input-middle-title" value="${defaultMiddleTitle}" placeholder="중제목 예: 1.1 네트워크 구성">
+                            <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 예: 1.1.1 관리 IP 확인">
                         </div>
-                        <textarea id="input-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)\n## 소제목\n* 설명\n\n\`\`\`bash\n코드 블록 작성 시 여기에 코드를 넣으세요.\n\`\`\`"></textarea>
-                        <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
-                            data-input-id="input-image"
-                            data-layout-id="input-layout-ratio-container"
-                            data-status-id="input-image-status"
-                            data-default-text="${escapeHtml(newImageUploadDefaultText)}"
-                            ondragenter="window.handleImageDragEnter(event)"
-                            ondragover="window.handleImageDragOver(event)"
-                            ondragleave="window.handleImageDragLeave(event)"
-                            ondrop="window.handleImageDrop(event)">
-                            <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                            <input type="file" id="input-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
-                            <span id="input-image-status" class="file-upload-status">${escapeHtml(newImageUploadDefaultText)}</span>
-                            <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                        <div class="editor-compose-grid">
+                            <div class="editor-compose-body">
+                                <textarea id="input-text" placeholder="슬라이드 본문을 입력하세요. (Markdown 지원)&#10;## 단계&#10;* 체크 항목&#10;&#10;\`\`\`bash&#10;명령어 예시를 입력하세요.&#10;\`\`\`"></textarea>
+                            </div>
+                            <div class="editor-compose-media">
+                                <div class="file-upload-wrapper file-drop-zone media-drop-panel"
+                                    data-input-id="input-image"
+                                    data-layout-id="input-layout-ratio-container"
+                                    data-status-id="input-image-status"
+                                    data-caption-id="input-image-caption-wrap"
+                                    data-caption-input-id="input-image-caption"
+                                    data-default-text="${escapeHtml(newImageUploadDefaultText)}"
+                                    data-existing-image="false"
+                                    data-pending-removal="false"
+                                    data-has-image="false"
+                                    onclick="window.handleImageZoneClick(event)"
+                                    ondragenter="window.handleImageDragEnter(event)"
+                                    ondragover="window.handleImageDragOver(event)"
+                                    ondragleave="window.handleImageDragLeave(event)"
+                                    ondrop="window.handleImageDrop(event)">
+                                    <input type="file" id="input-image" accept="image/*" class="visually-hidden-file-input" onchange="window.handleImageInputChange(this)">
+                                    <div class="media-drop-icon"><i class="fa-solid fa-plus"></i></div>
+                                    <span id="input-image-status" class="file-upload-status">${escapeHtml(newImageUploadDefaultText)}</span>
+                                </div>
+                                <div class="media-caption-wrap" id="input-image-caption-wrap" style="display: none;">
+                                    <label for="input-image-caption">이미지 설명</label>
+                                    <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)">
+                                </div>
+                            </div>
                         </div>
-                        <div class="file-upload-wrapper" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
-                            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
-                                <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                        <div class="file-upload-wrapper media-ratio-panel" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                            <div class="media-ratio-labels">
+                                <span><i class="fa-solid fa-align-left"></i> 본문 비중</span>
                                 <span id="input-ratio-text">50% : 50%</span>
-                                <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                                <span>이미지 비중 <i class="fa-regular fa-image"></i></span>
                             </div>
                             <input type="range" id="input-text-ratio" min="20" max="80" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('input-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
-                            <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
+                            <div class="media-ratio-help">본문과 이미지의 좌우 비율을 조정합니다.</div>
                         </div>
                         <button type="button" class="btn-add" onclick="window.insertNewSlide(${i})">
                             <i class="fa-solid fa-plus"></i> 슬라이드 생성
@@ -383,11 +502,9 @@ function generateTocData(slides) {
                         const coverDiv = document.createElement('div');
                         coverDiv.className = 'slide-preview cover-preview middle-cover';
                         coverDiv.id = `preview-cover-${rIndex}`;
-                        coverDiv.style.background = '#111827';
-                        coverDiv.style.borderLeft = '6px solid var(--hpe-green)';
                         coverDiv.innerHTML = `
-                            <div style="font-size: 20px; color: var(--hpe-green); font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
-                            <div style="font-size: 48px; color: #fff; line-height: 1.3; font-weight: bold; letter-spacing: -0.5px;">${escapeHtml(mid)}</div>
+                            <div class="middle-cover-kicker">${escapeHtml(ch)}</div>
+                            <div class="middle-cover-title">${escapeHtml(mid)}</div>
                         `;
                         area.appendChild(coverDiv);
                         rIndex++; // 가상 표지가 1페이지 차지
@@ -398,54 +515,61 @@ function generateTocData(slides) {
                         // ==== 수정 모드 폼 ====
                         const editDiv = document.createElement('div');
                         editDiv.className = 'editor-section edit-mode';
-                        const editImageUploadDefaultText = slide.image
-                            ? '새 이미지 업로드 또는 드래그앤드롭 시 기존 이미지 교체'
-                            : '스크린샷 이미지 업로드 또는 드래그앤드롭';
-                        
-                        const existingImageDeleteCheck = slide.image ? `
-                            <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" id="edit-delete-image" style="width: auto; cursor: pointer;">
-                                <label for="edit-delete-image" style="cursor:pointer; color: #ff5c5c;"><i class="fa-solid fa-trash-can"></i> 기존 사진 삭제하기</label>
-                            </div>
-                        ` : '';
+                        const editImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
+                        const editImageExistingText = getImageDisplayName(slide) || editImageUploadDefaultText;
 
                         editDiv.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> 슬라이드 수정 중</h3>
+                                <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> 슬라이드 수정</h3>
                                 <button type="button" class="btn-cancel" onclick="window.cancelEditSlide()"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                             <div class="input-group">
                                 <input type="text" id="edit-chapter" value="${escapeHtml(slide.chapter)}" placeholder="대제목">
-                                <input type="text" id="edit-middle-title" value="${escapeHtml(slide.middleTitle || '')}" placeholder="중제목 (선택)">
+                                <input type="text" id="edit-middle-title" value="${escapeHtml(slide.middleTitle || '')}" placeholder="중제목(선택사항)">
                                 <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="소제목">
                             </div>
-                            <textarea id="edit-text" placeholder="가이드 상세 내용을 작성하세요. (Markdown 문법 지원)">${escapeHtml(slide.text)}</textarea>
-                            <div class="file-upload-wrapper file-drop-zone" style="flex-wrap: wrap;"
-                                data-input-id="edit-image"
-                                data-layout-id="edit-layout-ratio-container"
-                                data-status-id="edit-image-status"
-                                data-default-text="${escapeHtml(editImageUploadDefaultText)}"
-                                ondragenter="window.handleImageDragEnter(event)"
-                                ondragover="window.handleImageDragOver(event)"
-                                ondragleave="window.handleImageDragLeave(event)"
-                                ondrop="window.handleImageDrop(event)">
-                                <i class="fa-regular fa-image" style="color: var(--text-dim);"></i>
-                                <input type="file" id="edit-image" accept="image/*" style="min-width: 200px;" onchange="window.handleImageInputChange(this)">
-                                <span id="edit-image-status" class="file-upload-status">${escapeHtml(editImageUploadDefaultText)}</span>
-                                <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)" style="width: 100%; margin-top: 10px;">
+                            <div class="editor-compose-grid">
+                                <div class="editor-compose-body">
+                                    <textarea id="edit-text" placeholder="슬라이드 본문을 입력하세요. (Markdown 지원)">${escapeHtml(slide.text)}</textarea>
+                                </div>
+                                <div class="editor-compose-media">
+                                    <div class="file-upload-wrapper file-drop-zone media-drop-panel"
+                                        data-input-id="edit-image"
+                                        data-layout-id="edit-layout-ratio-container"
+                                        data-status-id="edit-image-status"
+                                        data-caption-id="edit-image-caption-wrap"
+                                        data-caption-input-id="edit-image-caption"
+                                        data-default-text="${escapeHtml(editImageUploadDefaultText)}"
+                                        data-existing-text="${escapeHtml(editImageExistingText)}"
+                                        data-existing-image="${slide.image ? 'true' : 'false'}"
+                                        data-pending-removal="false"
+                                        data-has-image="${slide.image ? 'true' : 'false'}"
+                                        onclick="window.handleImageZoneClick(event)"
+                                        ondragenter="window.handleImageDragEnter(event)"
+                                        ondragover="window.handleImageDragOver(event)"
+                                        ondragleave="window.handleImageDragLeave(event)"
+                                        ondrop="window.handleImageDrop(event)">
+                                        <input type="file" id="edit-image" accept="image/*" class="visually-hidden-file-input" onchange="window.handleImageInputChange(this)">
+                                        <div class="media-drop-icon"><i class="fa-solid fa-plus"></i></div>
+                                        <span id="edit-image-status" class="file-upload-status">${escapeHtml(editImageUploadDefaultText)}</span>
+                                    </div>
+                                    <div class="media-caption-wrap" id="edit-image-caption-wrap" style="display: ${slide.image ? 'flex' : 'none'};">
+                                        <label for="edit-image-caption">이미지 설명</label>
+                                        <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="file-upload-wrapper" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim);">
-                                    <span><i class="fa-solid fa-align-left"></i> 텍스트 영역</span>
+                            <div class="file-upload-wrapper media-ratio-panel" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                                <div class="media-ratio-labels">
+                                    <span><i class="fa-solid fa-align-left"></i> 본문 비중</span>
                                     <span id="edit-ratio-text">${slide.textRatio || 50}% : ${100 - (slide.textRatio || 50)}%</span>
-                                    <span>이미지 영역 <i class="fa-regular fa-image"></i></span>
+                                    <span>이미지 비중 <i class="fa-regular fa-image"></i></span>
                                 </div>
                                 <input type="range" id="edit-text-ratio" min="20" max="80" value="${slide.textRatio || 50}" style="width: 100%; cursor: pointer;" oninput="document.getElementById('edit-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
-                                <div style="font-size: 11px; text-align: center; color: #484f58;">텍스트와 이미지가 모두 있을 때 너비 조절용입니다.</div>
+                                <div class="media-ratio-help">본문과 이미지의 좌우 비율을 조정합니다.</div>
                             </div>
-                            ${existingImageDeleteCheck}
                             <button type="button" class="btn-add" onclick="window.saveEditSlide(${i})">
-                                <i class="fa-solid fa-check"></i> 변경사항 저장
+                                <i class="fa-solid fa-check"></i> 슬라이드 저장
                             </button>
                         `;
                         area.appendChild(editDiv);
@@ -480,8 +604,8 @@ function generateTocData(slides) {
                         let imageHtml = '';
                         if (hasImage) {
                             const imageSrc = getSlideImageSrc(slide.image);
-                            let captionHtml = slide.imageCaption ? `<div style="font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${imageSrc}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                            let captionHtml = slide.imageCaption ? `<div class="image-caption">${escapeHtml(slide.imageCaption)}</div>` : '';
+                            imageHtml = `<div class="box image-box${hasText ? '' : ' image-box--solo'}" style="flex: ${imgFlex};"><img src="${imageSrc}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                         }
 
                         const middleTitleHtml = slide.middleTitle 
@@ -505,7 +629,7 @@ function generateTocData(slides) {
                                 ${middleTitleHtml}
                                 <div class="preview-title">${escapeHtml(slide.title)}</div>
                             </div>
-                            <div class="preview-body">
+                            <div class="preview-body${!hasText && hasImage ? ' preview-body--image-only' : ''}">
                                 ${textContentHtml}
                                 ${imageHtml}
                             </div>
@@ -531,6 +655,7 @@ function generateTocData(slides) {
             }
 
             // 동적 TOC 사이드바 갱신
+            syncAllImageUploadUi();
             updateDynamicTOC();
         };
 
@@ -548,7 +673,7 @@ function generateTocData(slides) {
                 nav.innerHTML = `
                     <div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>
                     <div class="toc-sidebar-empty">
-                        <i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom: 8px; display: block;"></i>
+                        <i class="fa-solid fa-file-circle-plus toc-sidebar-empty-icon"></i>
                         슬라이드를 추가하면<br>목차가 여기에 표시됩니다.
                     </div>
                 `;
@@ -601,28 +726,52 @@ function generateTocData(slides) {
             const slideEls = document.querySelectorAll('.slide-preview[id^="preview-slide-"]');
             if (slideEls.length === 0) return;
 
-            tocObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
+            const syncActiveToc = () => {
+                const focusBandTop = window.innerHeight * 0.24;
+                let bestSlideIndex = null;
+                let bestVisibleHeight = -1;
+                let bestScore = Number.POSITIVE_INFINITY;
 
-                    const idParts = entry.target.id.split('-');
-                    const idx     = parseInt(idParts[idParts.length - 1], 10);
+                slideEls.forEach((slideEl) => {
+                    const rect = slideEl.getBoundingClientRect();
+                    if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+                        return;
+                    }
 
-                    // 모든 활성 클래스 초기화
-                    document.querySelectorAll('.toc-nav-title.active').forEach(el => el.classList.remove('active'));
-
-                    // 중복 슬라이드도 첫 번째 항목 id로 하이라이트
-                    // (사이드바 자동 스크롤 없음 — 사용자 지정 위치 유지)
-                    const tocId  = slideToTocId[idx];
-                    const tocItem = tocId ? document.getElementById(tocId) : null;
-                    if (tocItem) tocItem.classList.add('active');
+                    const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                    const slideMidpoint = rect.top + rect.height / 2;
+                    const score = Math.abs(slideMidpoint - focusBandTop);
+                    if (visibleHeight > bestVisibleHeight || (visibleHeight === bestVisibleHeight && score < bestScore)) {
+                        bestVisibleHeight = visibleHeight;
+                        bestScore = score;
+                        const idParts = slideEl.id.split('-');
+                        bestSlideIndex = parseInt(idParts[idParts.length - 1], 10);
+                    }
                 });
+
+                document.querySelectorAll('.toc-nav-title.active').forEach((el) => el.classList.remove('active'));
+                if (bestSlideIndex === null) {
+                    return;
+                }
+
+                const tocId = slideToTocId[bestSlideIndex];
+                const tocItem = tocId ? document.getElementById(tocId) : null;
+                if (tocItem) {
+                    tocItem.classList.add('active');
+                }
+            };
+
+            tocObserver = new IntersectionObserver((entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    syncActiveToc();
+                }
             }, {
                 rootMargin: '-20% 0px -60% 0px',
                 threshold: 0
             });
 
             slideEls.forEach(el => tocObserver.observe(el));
+            syncActiveToc();
         }
 
 
