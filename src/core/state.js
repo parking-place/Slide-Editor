@@ -49,6 +49,9 @@
             mode: 'open',
             selectedProjectId: null,
             isSubmitting: false,
+            isLoadingSelection: false,
+            selectedProjectDataId: null,
+            selectedProjectData: null,
             nameDraft: ''
         };
 

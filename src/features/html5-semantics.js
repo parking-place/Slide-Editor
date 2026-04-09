@@ -196,27 +196,19 @@
         closeDialog(document.getElementById('branding-modal'));
     };
 
+    const baseOpenProjectModal = window.openProjectModal;
     window.openProjectModal = async function (mode = 'open') {
         const modal = document.getElementById('project-modal');
         if (!modal) return;
-
-        projectModalState.mode = mode;
-        projectModalState.isSubmitting = false;
-
-        try {
-            await refreshProjectList();
-            projectModalState.selectedProjectId = currentProject?.id || availableProjects[0]?.id || null;
-            projectModalState.nameDraft = mode === 'rename'
-                ? (getSelectedProjectFromModal()?.name || '')
-                : getProjectModalDefaultName(mode);
-            renderProjectModal();
-            openDialog(modal);
-        } catch (err) {
-            showModal('Failed to load project list.\n' + err.message);
-        }
+        await baseOpenProjectModal.call(this, mode);
+        openDialog(modal);
     };
 
+    const baseCloseProjectModal = window.closeProjectModal;
     window.closeProjectModal = function () {
+        if (typeof baseCloseProjectModal === 'function') {
+            baseCloseProjectModal.call(this);
+        }
         closeDialog(document.getElementById('project-modal'));
     };
 

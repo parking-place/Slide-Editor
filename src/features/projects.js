@@ -1,369 +1,389 @@
 // Auto-extracted modular segment: Projects Base
 
-function getProjectModalDefaultName(mode) {
-            if (mode === 'saveAs') {
-                return currentProject?.name ? `${currentProject.name} Copy` : 'My Guide Copy';
-            }
-            if (mode === 'new') {
-                return currentProject?.name || projectSettings?.branding?.projectName || 'My Guide';
-            }
-            return '';
+function ensureProjectModalSelection() {
+    if (!availableProjects.length) {
+        projectModalState.selectedProjectId = null;
+        return;
+    }
+
+    const stillExists = availableProjects.some((project) => project.id === projectModalState.selectedProjectId);
+    if (stillExists) return;
+
+    projectModalState.selectedProjectId = currentProject?.id || availableProjects[0].id;
+}
+
+function getSelectedProjectFromModal() {
+    ensureProjectModalSelection();
+    return availableProjects.find((project) => project.id === projectModalState.selectedProjectId) || null;
+}
+
+function getProjectModalDetails(projectId) {
+    if (!projectId) return null;
+
+    if (currentProject?.id === projectId) {
+        return {
+            id: currentProject.id,
+            name: currentProject.name,
+            savedVersion: currentProject.savedVersion,
+            slideCount: slidesData.length,
+            settings: projectSettings,
+            slides: slidesData
+        };
+    }
+
+    if (projectModalState.selectedProjectDataId === projectId) {
+        return projectModalState.selectedProjectData;
+    }
+
+    return null;
+}
+
+function buildProjectModalMetaLine(projectDetails, slideCountOverride) {
+    if (!projectDetails) {
+        return 'No project selected';
+    }
+
+    const slideCount = Number.isFinite(slideCountOverride)
+        ? slideCountOverride
+        : (Number.isFinite(projectDetails.slideCount) ? projectDetails.slideCount : Array.isArray(projectDetails.slides) ? projectDetails.slides.length : 0);
+
+    return `${projectDetails.id} / ${slideCount} slides / ${getSavedVersionLabel(projectDetails.savedVersion)}`;
+}
+
+function syncProjectModalDraftFromCurrent() {
+    projectModalState.nameDraft = currentProject?.name || projectSettings?.branding?.projectName || 'My Guide';
+    syncBrandingUI();
+}
+
+async function loadProjectModalDetails(projectId) {
+    if (!projectId) {
+        projectModalState.selectedProjectDataId = null;
+        projectModalState.selectedProjectData = null;
+        return null;
+    }
+
+    if (currentProject?.id === projectId) {
+        const details = getProjectModalDetails(projectId);
+        projectModalState.selectedProjectDataId = projectId;
+        projectModalState.selectedProjectData = details;
+        return details;
+    }
+
+    if (projectModalState.selectedProjectDataId === projectId && projectModalState.selectedProjectData) {
+        return projectModalState.selectedProjectData;
+    }
+
+    projectModalState.isLoadingSelection = true;
+    renderProjectModal();
+
+    try {
+        const details = await requestJson(`/api/projects/${encodeURIComponent(projectId)}`);
+        projectModalState.selectedProjectDataId = projectId;
+        projectModalState.selectedProjectData = details;
+        return details;
+    } finally {
+        projectModalState.isLoadingSelection = false;
+    }
+}
+
+function buildProjectListMarkup() {
+    if (!availableProjects.length) {
+        return '<div class="project-empty-state">No saved projects yet. Create your first project from the project tools below.</div>';
+    }
+
+    return availableProjects.map((project) => {
+        const isActive = project.id === projectModalState.selectedProjectId;
+        const isCurrent = project.id === currentProject?.id;
+        const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
+        const versionLabel = getSavedVersionLabel(project.savedVersion);
+
+        return `
+            <div class="project-list-item ${isActive ? 'active' : ''} ${isCurrent ? 'is-current' : ''}" onclick="window.selectProjectModalProject('${project.id}')">
+                <div class="project-list-item-main">
+                    <div class="project-list-item-name">${escapeHtml(project.name || project.id)}</div>
+                    <div class="project-list-item-meta">${slideCount} slides / ${escapeHtml(project.id)} / ${escapeHtml(versionLabel)}</div>
+                </div>
+                <div class="project-list-item-actions">
+                    <span class="project-list-state ${isCurrent ? 'is-visible' : ''}" title="Current project">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </span>
+                    <button type="button" class="project-list-delete-btn" title="Delete project" onclick="window.deleteProjectFromModal(event, '${project.id}')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderProjectModal() {
+    const modal = document.getElementById('project-modal');
+    if (!modal) return;
+
+    ensureProjectModalSelection();
+
+    const selectedProject = getSelectedProjectFromModal();
+    const selectedDetails = getProjectModalDetails(selectedProject?.id);
+    const isCurrentSelection = !!selectedProject && selectedProject.id === currentProject?.id;
+
+    const listEl = document.getElementById('project-list-items');
+    const currentPanel = document.getElementById('project-modal-current-panel');
+    const selectedPanel = document.getElementById('project-modal-selected-panel');
+    const currentNameEl = document.getElementById('project-modal-current-name');
+    const currentMetaEl = document.getElementById('project-modal-current-meta');
+    const currentNameInput = document.getElementById('project-modal-name-input');
+    const currentHelpEl = document.getElementById('project-modal-help');
+    const saveBtn = document.getElementById('project-modal-save-btn');
+
+    const selectedHeadingEl = document.getElementById('project-modal-selected-name-heading');
+    const selectedMetaEl = document.getElementById('project-modal-selected-meta');
+    const selectedNameInput = document.getElementById('project-modal-selected-name');
+    const selectedSubtitleInput = document.getElementById('project-modal-selected-subtitle');
+    const selectedFooterInput = document.getElementById('project-modal-selected-footer');
+    const openBtn = document.getElementById('project-modal-open-btn');
+
+    if (listEl) {
+        listEl.innerHTML = buildProjectListMarkup();
+    }
+
+    if (currentNameEl) {
+        currentNameEl.textContent = currentProject?.name || 'No project opened';
+    }
+
+    if (currentMetaEl) {
+        currentMetaEl.textContent = currentProject
+            ? buildProjectModalMetaLine(currentProject, slidesData.length)
+            : 'Start from a new project or open an existing one.';
+    }
+
+    if (currentNameInput) {
+        currentNameInput.value = projectModalState.nameDraft || currentProject?.name || projectSettings?.branding?.projectName || '';
+        currentNameInput.disabled = projectModalState.isSubmitting || !isCurrentSelection;
+    }
+
+    if (currentHelpEl) {
+        currentHelpEl.textContent = isCurrentSelection
+            ? 'Save applies the edited name, subtitle, and footer to the current project.'
+            : 'Select the current project from the list to edit and save its branding values here.';
+    }
+
+    if (saveBtn) {
+        saveBtn.disabled = projectModalState.isSubmitting || !isCurrentSelection || !currentProject;
+    }
+
+    if (currentPanel) {
+        currentPanel.hidden = !isCurrentSelection;
+    }
+
+    if (selectedPanel) {
+        selectedPanel.hidden = isCurrentSelection;
+    }
+
+    if (selectedHeadingEl) {
+        selectedHeadingEl.textContent = selectedProject?.name || 'No selection';
+    }
+
+    if (selectedMetaEl) {
+        if (!selectedProject) {
+            selectedMetaEl.textContent = 'Select a project from the list.';
+        } else if (projectModalState.isLoadingSelection && !selectedDetails) {
+            selectedMetaEl.textContent = 'Loading selected project details...';
+        } else {
+            selectedMetaEl.textContent = buildProjectModalMetaLine(selectedDetails || selectedProject);
         }
+    }
 
-        function ensureProjectModalSelection() {
-            if (!availableProjects.length) {
-                projectModalState.selectedProjectId = null;
-                return;
-            }
+    if (selectedNameInput) {
+        selectedNameInput.value = selectedDetails?.name || selectedProject?.name || '';
+    }
 
-            const stillExists = availableProjects.some(project => project.id === projectModalState.selectedProjectId);
-            if (stillExists) return;
+    if (selectedSubtitleInput) {
+        selectedSubtitleInput.value = selectedDetails?.settings?.branding?.guideSubtitle || '';
+    }
 
-            projectModalState.selectedProjectId = currentProject?.id || availableProjects[0].id;
-        }
+    if (selectedFooterInput) {
+        selectedFooterInput.value = selectedDetails?.settings?.branding?.footerCopy || '';
+    }
 
-        function getSelectedProjectFromModal() {
-            ensureProjectModalSelection();
-            return availableProjects.find(project => project.id === projectModalState.selectedProjectId) || null;
-        }
+    if (openBtn) {
+        openBtn.disabled = projectModalState.isSubmitting || !selectedProject || isCurrentSelection;
+    }
+}
 
-        function buildProjectListMarkup() {
-            if (!availableProjects.length) {
-                return '<div class="project-empty-state">No saved projects yet. Create your first project from the New tab.</div>';
-            }
+window.setProjectModalNameDraft = function (value) {
+    projectModalState.nameDraft = value;
+};
 
-            return availableProjects.map(project => {
-                const isActive = project.id === projectModalState.selectedProjectId;
-                const isCurrent = project.id === currentProject?.id;
-                const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
-                const versionLabel = getSavedVersionLabel(project.savedVersion);
-                return `
-                    <div class="project-list-item ${isActive ? 'active' : ''}" onclick="window.selectProjectModalProject('${project.id}')">
-                        <div class="project-list-item-name">${escapeHtml(project.name || project.id)}</div>
-                        <div class="project-list-item-meta">${slideCount} slides / ${escapeHtml(project.id)} / ${escapeHtml(versionLabel)}</div>
-                        ${isCurrent ? '<span class="project-badge"><i class="fa-solid fa-circle-check"></i> Current</span>' : ''}
-                    </div>
-                `;
-            }).join('');
-        }
+window.selectProjectModalProject = async function (projectId) {
+    projectModalState.selectedProjectId = projectId;
 
-        function renderProjectModal() {
-            const modal = document.getElementById('project-modal');
-            if (!modal) return;
+    if (projectId === currentProject?.id) {
+        syncProjectModalDraftFromCurrent();
+    }
 
-            ensureProjectModalSelection();
+    await loadProjectModalDetails(projectId);
+    renderProjectModal();
+};
 
-            const selectedProject = getSelectedProjectFromModal();
-            const mode = projectModalState.mode;
-            const currentNameEl = document.getElementById('project-modal-current-name');
-            const currentMetaEl = document.getElementById('project-modal-current-meta');
-            const listEl = document.getElementById('project-list-items');
-            const inputEl = document.getElementById('project-modal-name-input');
-            const inputLabelEl = document.getElementById('project-modal-name-label');
-            const helpEl = document.getElementById('project-modal-help');
-            const selectionEl = document.getElementById('project-modal-selection');
-            const primaryBtn = document.getElementById('project-modal-primary-btn');
+window.setProjectModalMode = function () {
+    renderProjectModal();
+};
 
-            if (currentNameEl) {
-                currentNameEl.textContent = currentProject?.name || 'No project opened';
-            }
+window.openProjectModal = async function () {
+    projectModalState.mode = 'open';
+    projectModalState.isSubmitting = false;
+    projectModalState.isLoadingSelection = false;
 
-            if (currentMetaEl) {
-                currentMetaEl.textContent = currentProject
-                    ? `${currentProject.id} / ${slidesData.length} slides currently loaded / ${getSavedVersionLabel(currentProject.savedVersion)}`
-                    : 'Start from a new project or open an existing one.';
-            }
+    try {
+        await refreshProjectList();
+        projectModalState.selectedProjectId = currentProject?.id || availableProjects[0]?.id || null;
+        projectModalState.selectedProjectDataId = null;
+        projectModalState.selectedProjectData = null;
+        syncProjectModalDraftFromCurrent();
+        await loadProjectModalDetails(projectModalState.selectedProjectId);
+        renderProjectModal();
+    } catch (err) {
+        showModal('Failed to load project list.\n' + err.message);
+    }
+};
 
-            syncBrandingUI();
+window.closeProjectModal = function () {
+    projectModalState.isSubmitting = false;
+};
 
-            if (listEl) {
-                listEl.innerHTML = buildProjectListMarkup();
-            }
+window.refreshProjectModalList = async function () {
+    try {
+        await refreshProjectList();
+        ensureProjectModalSelection();
+        projectModalState.selectedProjectDataId = null;
+        projectModalState.selectedProjectData = null;
+        await loadProjectModalDetails(projectModalState.selectedProjectId);
+        renderProjectModal();
+    } catch (err) {
+        showModal('Failed to refresh project list.\n' + err.message);
+    }
+};
 
-            ['open', 'new', 'saveAs', 'rename', 'delete'].forEach(modeName => {
-                const buttonId = modeName === 'saveAs' ? 'project-mode-saveas' : `project-mode-${modeName}`;
-                const button = document.getElementById(buttonId);
-                if (!button) return;
-                button.classList.toggle('active', modeName === mode);
-                button.disabled = projectModalState.isSubmitting;
+window.saveCurrentProjectFromModal = async function () {
+    if (projectModalState.isSubmitting || !currentProject?.id) return;
+
+    const input = document.getElementById('project-modal-name-input');
+    if (input && !input.reportValidity()) {
+        return;
+    }
+
+    const nextName = (projectModalState.nameDraft || '').trim();
+    if (!nextName) {
+        showModal('Enter a project name first.');
+        return;
+    }
+
+    projectModalState.isSubmitting = true;
+    renderProjectModal();
+
+    try {
+        collectBrandingFromUI();
+
+        if (nextName !== currentProject.name) {
+            const renamed = await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}/meta`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: nextName })
             });
 
-            if (inputEl) {
-                inputEl.disabled = mode === 'open' || mode === 'delete' || projectModalState.isSubmitting;
-                inputEl.value = mode === 'open' || mode === 'delete'
-                    ? (selectedProject?.name || '')
-                    : (projectModalState.nameDraft || '');
-                inputEl.placeholder = mode === 'saveAs' ? 'My Guide Copy' : (mode === 'rename' ? 'Rename project' : 'My Guide');
-            }
-
-            if (inputLabelEl) {
-                inputLabelEl.textContent = mode === 'new'
-                    ? 'New Project Name'
-                    : mode === 'saveAs'
-                        ? 'Save As Project Name'
-                        : mode === 'rename'
-                            ? 'Rename Selected Project'
-                            : mode === 'delete'
-                                ? 'Project to Delete'
-                                : 'Project to Open';
-            }
-
-            if (helpEl) {
-                helpEl.textContent = mode === 'new'
-                    ? 'Create a clean project without touching the currently opened project.'
-                    : mode === 'saveAs'
-                        ? 'Duplicate the current editor state into a brand new saved project.'
-                        : mode === 'rename'
-                            ? 'Update the display name of the selected project while keeping its project id the same.'
-                            : mode === 'delete'
-                                ? 'Delete the selected project and its saved slide data. If the current project is deleted, the next available project will open automatically.'
-                                : 'Choose a saved project from the list to load it into the editor.';
-            }
-
-            if (selectionEl) {
-                if (!selectedProject) {
-                    selectionEl.classList.add('is-empty');
-                    selectionEl.innerHTML = 'Select a project from the list.';
-                } else if (mode === 'open') {
-                    selectionEl.classList.remove('is-empty');
-                    selectionEl.innerHTML = `
-                        <span class="project-badge"><i class="fa-solid ${selectedProject.id === currentProject?.id ? 'fa-circle-check' : 'fa-folder-open'}"></i> ${selectedProject.id === currentProject?.id ? 'Already open' : 'Ready to open'}</span>
-                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
-                    `;
-                } else if (mode === 'rename') {
-                    selectionEl.classList.remove('is-empty');
-                    selectionEl.innerHTML = `
-                        <span class="project-badge"><i class="fa-solid fa-pen"></i> Rename target</span>
-                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
-                    `;
-                } else if (mode === 'delete') {
-                    selectionEl.classList.remove('is-empty');
-                    selectionEl.innerHTML = `
-                        <span class="project-badge"><i class="fa-solid fa-trash"></i> Delete target</span>
-                        <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
-                    `;
-                } else {
-                    selectionEl.classList.remove('is-empty');
-                    selectionEl.innerHTML = `
-                        <span class="project-badge"><i class="fa-solid fa-layer-group"></i> Source</span>
-                        <strong>${escapeHtml(currentProject?.name || 'Current editor state')}</strong>
-                        <span>${slidesData.length} slides and the current branding/theme settings will be copied.</span>
-                    `;
-                }
-            }
-
-            if (primaryBtn) {
-                const label = mode === 'new'
-                    ? 'Create Project'
-                    : mode === 'saveAs'
-                        ? 'Save As New Project'
-                        : mode === 'rename'
-                            ? 'Rename Project'
-                            : mode === 'delete'
-                                ? 'Delete Project'
-                                : 'Open Selected Project';
-                const iconClass = mode === 'new'
-                    ? 'fa-folder-plus'
-                    : mode === 'saveAs'
-                        ? 'fa-copy'
-                        : mode === 'rename'
-                            ? 'fa-pen'
-                            : mode === 'delete'
-                                ? 'fa-trash'
-                                : 'fa-folder-open';
-                primaryBtn.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${label}`;
-                primaryBtn.disabled = projectModalState.isSubmitting
-                    || (mode === 'open' && (!selectedProject || selectedProject.id === currentProject?.id))
-                    || ((mode === 'rename' || mode === 'delete') && !selectedProject);
-            }
+            currentProject = {
+                id: currentProject.id,
+                name: renamed.project.name,
+                savedVersion: normalizeSavedVersion(renamed.project.savedVersion)
+            };
+            syncProjectBrandingName(renamed.project.name);
+            updateProjectIndicator();
         }
 
-        window.setProjectModalNameDraft = function(value) {
-            projectModalState.nameDraft = value;
-        };
+        await window.exportData();
+        await refreshProjectList();
+        projectModalState.selectedProjectId = currentProject.id;
+        syncProjectModalDraftFromCurrent();
+        await loadProjectModalDetails(currentProject.id);
+        renderProjectModal();
+    } catch (err) {
+        showModal('Failed to save the current project.\n' + err.message);
+    } finally {
+        projectModalState.isSubmitting = false;
+        renderProjectModal();
+    }
+};
 
-        window.selectProjectModalProject = function(projectId) {
-            projectModalState.selectedProjectId = projectId;
-            if (projectModalState.mode === 'rename') {
-                const selectedProject = getSelectedProjectFromModal();
-                projectModalState.nameDraft = selectedProject?.name || '';
-            }
-            renderProjectModal();
-        };
+window.openSelectedProjectFromModal = async function () {
+    if (projectModalState.isSubmitting) return;
 
-        window.setProjectModalMode = function(mode) {
-            projectModalState.mode = mode;
-            if (mode === 'rename') {
-                const selectedProject = getSelectedProjectFromModal();
-                projectModalState.nameDraft = selectedProject?.name || '';
-            } else {
-                projectModalState.nameDraft = getProjectModalDefaultName(mode);
-            }
-            renderProjectModal();
-        };
+    const selectedProject = getSelectedProjectFromModal();
+    if (!selectedProject) {
+        showModal('Choose a project from the list first.');
+        return;
+    }
 
-        window.openProjectModal = async function(mode = 'open') {
-            const modal = document.getElementById('project-modal');
-            if (!modal) return;
+    if (selectedProject.id === currentProject?.id) {
+        showModal('That project is already open.');
+        return;
+    }
 
-            projectModalState.mode = mode;
-            projectModalState.isSubmitting = false;
+    projectModalState.isSubmitting = true;
+    renderProjectModal();
 
-            try {
-                await refreshProjectList();
-                projectModalState.selectedProjectId = currentProject?.id || availableProjects[0]?.id || null;
-                projectModalState.nameDraft = mode === 'rename'
-                    ? (getSelectedProjectFromModal()?.name || '')
-                    : getProjectModalDefaultName(mode);
-                modal.style.display = 'flex';
-                renderProjectModal();
-            } catch (err) {
-                showModal('Failed to load project list.\n' + err.message);
-            }
-        };
+    try {
+        await loadProjectById(selectedProject.id, { showMessage: true });
+        projectModalState.selectedProjectId = currentProject?.id || selectedProject.id;
+        syncProjectModalDraftFromCurrent();
+        await loadProjectModalDetails(projectModalState.selectedProjectId);
+        renderProjectModal();
+    } catch (err) {
+        showModal('Failed to open the selected project.\n' + err.message);
+    } finally {
+        projectModalState.isSubmitting = false;
+        renderProjectModal();
+    }
+};
 
-        window.closeProjectModal = function() {
-            const modal = document.getElementById('project-modal');
-            if (modal) modal.style.display = 'none';
-        };
+window.deleteProjectFromModal = function (event, projectId) {
+    event?.stopPropagation();
 
-        window.refreshProjectModalList = async function() {
-            try {
-                await refreshProjectList();
-                ensureProjectModalSelection();
-                renderProjectModal();
-            } catch (err) {
-                showModal('Failed to refresh project list.\n' + err.message);
-            }
-        };
+    const targetProject = availableProjects.find((project) => project.id === projectId);
+    if (!targetProject) return;
 
-        window.submitProjectModalAction = async function() {
-            if (projectModalState.isSubmitting) return;
-
-            const mode = projectModalState.mode;
-            const selectedProject = getSelectedProjectFromModal();
-            const name = (projectModalState.nameDraft || '').trim();
-
-            if ((mode === 'new' || mode === 'saveAs' || mode === 'rename') && !name) {
-                showModal('Enter a project name first.');
-                return;
-            }
-
-            if ((mode === 'open' || mode === 'rename' || mode === 'delete') && !selectedProject) {
-                showModal('Choose a project from the list first.');
-                return;
-            }
-
-            if (mode === 'delete') {
-                showModal(`Delete project "${selectedProject.name}"?\nThis will remove its saved data.`, true, async () => {
-                    try {
-                        projectModalState.isSubmitting = true;
-                        renderProjectModal();
-                        const deleted = await requestJson(`/api/projects/${encodeURIComponent(selectedProject.id)}`, {
-                            method: 'DELETE'
-                        });
-                        await refreshProjectList();
-                        if (deleted.currentProjectId) {
-                            await loadProjectById(deleted.currentProjectId);
-                        }
-                        window.closeProjectModal();
-                        showModal(`Deleted project: ${selectedProject.name}`);
-                    } catch (err) {
-                        showModal('Failed to delete the selected project.\n' + err.message);
-                    } finally {
-                        projectModalState.isSubmitting = false;
-                        renderProjectModal();
-                    }
-                });
-                return;
-            }
-
+    showModal(`Delete project "${targetProject.name}"?\nThis will remove its saved data.`, true, async () => {
+        try {
             projectModalState.isSubmitting = true;
             renderProjectModal();
 
-            try {
-                if (mode === 'new') {
-                    const created = await requestJson('/api/projects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, template: 'empty', savedVersion: getCurrentSavedVersion() })
-                    });
-                    await loadProjectById(created.id);
-                    window.closeProjectModal();
-                    showModal(`Created a new project: ${created.name}`);
-                    return;
-                }
+            const deleted = await requestJson(`/api/projects/${encodeURIComponent(projectId)}`, {
+                method: 'DELETE'
+            });
 
-                if (mode === 'saveAs') {
-                    const created = await requestJson('/api/projects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(Object.assign({ name }, buildProjectDataDocument(slidesData, projectSettings, name)))
-                    });
-                    await loadProjectById(created.id);
-                    window.closeProjectModal();
-                    showModal(`Saved as a new project: ${created.name}`);
-                    return;
-                }
+            await refreshProjectList();
 
-                if (mode === 'rename') {
-                    const renamed = await requestJson(`/api/projects/${encodeURIComponent(selectedProject.id)}/meta`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name })
-                    });
-                    await refreshProjectList();
-                    if (selectedProject.id === currentProject?.id) {
-                        currentProject = {
-                            id: selectedProject.id,
-                            name: renamed.project.name,
-                            savedVersion: normalizeSavedVersion(renamed.project.savedVersion)
-                        };
-                        syncProjectBrandingName(renamed.project.name);
-                        updateProjectIndicator();
-                        window.renderPreview();
-                    }
-                    projectModalState.nameDraft = renamed.project.name;
-                    renderProjectModal();
-                    showModal(`Renamed project: ${renamed.project.name}`);
-                    return;
-                }
-
-                if (selectedProject.id === currentProject?.id) {
-                    showModal('That project is already open.');
-                    return;
-                }
-
-                await loadProjectById(selectedProject.id, { showMessage: true });
-                window.closeProjectModal();
-            } catch (err) {
-                const prefix = mode === 'new'
-                    ? 'Failed to create a new project.\n'
-                    : mode === 'saveAs'
-                        ? 'Failed to save as a new project.\n'
-                        : mode === 'rename'
-                            ? 'Failed to rename the selected project.\n'
-                            : mode === 'delete'
-                                ? 'Failed to delete the selected project.\n'
-                                : 'Failed to open the selected project.\n';
-                showModal(prefix + err.message);
-            } finally {
-                projectModalState.isSubmitting = false;
-                renderProjectModal();
+            if (deleted.currentProjectId) {
+                await loadProjectById(deleted.currentProjectId);
             }
-        };
 
-        window.createProject = function() {
-            window.openProjectModal('new');
-        };
+            projectModalState.selectedProjectId = deleted.currentProjectId || currentProject?.id || availableProjects[0]?.id || null;
+            syncProjectModalDraftFromCurrent();
+            await loadProjectModalDetails(projectModalState.selectedProjectId);
+            renderProjectModal();
+            showModal(`Deleted project: ${targetProject.name}`);
+        } catch (err) {
+            showModal('Failed to delete the selected project.\n' + err.message);
+        } finally {
+            projectModalState.isSubmitting = false;
+            renderProjectModal();
+        }
+    });
+};
 
-        window.saveAsProject = function() {
-            window.openProjectModal('saveAs');
-        };
-
-        window.openProjectPicker = function() {
-            window.openProjectModal('open');
-        };
+window.submitProjectModalAction = async function () {
+    const selectedProject = getSelectedProjectFromModal();
+    if (selectedProject && selectedProject.id === currentProject?.id) {
+        return window.saveCurrentProjectFromModal();
+    }
+    return window.openSelectedProjectFromModal();
+};

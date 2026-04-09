@@ -207,70 +207,95 @@
             </div>
             <div class="theme-modal-body">
                 <div class="theme-list project-list-panel">
-                    <div class="theme-list-title">Saved Projects</div>
-                    <div id="project-list-items"></div>
-                    <div class="theme-list-actions">
-                        <button type="button" class="theme-action-btn" onclick="window.refreshProjectModalList()">
-                            <i class="fa-solid fa-rotate"></i> Refresh
+                    <div class="project-list-header">
+                        <div class="theme-list-title">Saved Projects</div>
+                        <button type="button" class="theme-action-btn project-list-refresh-btn" title="Refresh project list" onclick="window.refreshProjectModalList()">
+                            <i class="fa-solid fa-rotate"></i>
                         </button>
                     </div>
+                    <div id="project-list-items"></div>
                 </div>
                 <div class="theme-editor project-editor-panel">
-                    <div class="project-current-card">
-                        <div class="project-current-label">Current Project</div>
-                        <div id="project-modal-current-name" class="project-current-name">-</div>
+                    <section id="project-modal-current-panel" class="project-state-card">
+                        <div class="project-state-header">
+                            <div>
+                                <div class="project-current-label">Current Project</div>
+                                <div id="project-modal-current-name" class="project-current-name">-</div>
+                            </div>
+                            <span class="project-state-badge project-state-badge--current">Loaded</span>
+                        </div>
                         <div id="project-modal-current-meta" class="project-current-meta">No project selected</div>
-                    </div>
 
-                    <div class="project-mode-switch" role="tablist" aria-label="Project actions">
-                        <button type="button" id="project-mode-open" class="project-mode-btn" onclick="window.setProjectModalMode('open')">
-                            <i class="fa-solid fa-folder-open"></i> Open
-                        </button>
-                        <button type="button" id="project-mode-new" class="project-mode-btn" onclick="window.setProjectModalMode('new')">
-                            <i class="fa-solid fa-folder-plus"></i> New
-                        </button>
-                        <button type="button" id="project-mode-saveas" class="project-mode-btn" onclick="window.setProjectModalMode('saveAs')">
-                            <i class="fa-solid fa-copy"></i> Save As
-                        </button>
-                        <button type="button" id="project-mode-rename" class="project-mode-btn" onclick="window.setProjectModalMode('rename')">
-                            <i class="fa-solid fa-pen"></i> Rename
-                        </button>
-                        <button type="button" id="project-mode-delete" class="project-mode-btn project-mode-btn--danger" onclick="window.setProjectModalMode('delete')">
-                            <i class="fa-solid fa-trash"></i> Delete
-                        </button>
-                    </div>
-
-                    <div class="project-editor-section">
-                        <label id="project-modal-name-label" class="theme-section-label" for="project-modal-name-input">Project Name</label>
-                        <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" maxlength="120" autocomplete="off" required oninput="window.setProjectModalNameDraft(this.value)">
-                        <p id="project-modal-help" class="project-help-text"></p>
-                    </div>
-
-                    <div class="project-editor-section">
-                        <div class="theme-section-label">Branding</div>
-                        <div class="project-branding-card">
-                            <p class="project-branding-note">프로젝트명은 저장 이름과 항상 동일하게 유지됩니다.</p>
+                        <div class="project-form-stack">
                             <div class="branding-field">
-                                <label class="branding-field-label">프로젝트명 <span>(현재 저장 이름과 동기화됨)</span></label>
-                                <div id="project-branding-name-display" class="project-branding-name-display">-</div>
+                                <label id="project-modal-name-label" class="branding-field-label" for="project-modal-name-input">Name</label>
+                                <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" maxlength="120" autocomplete="off" required oninput="window.setProjectModalNameDraft(this.value)">
                             </div>
                             <div class="branding-field">
-                                <label class="branding-field-label" for="project-branding-guide-subtitle">부제 <span>(헤더 부제)</span></label>
+                                <label class="branding-field-label" for="project-branding-guide-subtitle">Subtitle</label>
                                 <input type="text" id="project-branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
-                                    placeholder="설치 및 구성 가이드" oninput="window.updateProjectBrandingDraft()">
+                                    placeholder="?? ? ?? ???" oninput="window.updateProjectBrandingDraft()">
                             </div>
                             <div class="branding-field">
-                                <label class="branding-field-label" for="project-branding-footer-copy">Footer 문구 <span>(페이지 하단)</span></label>
+                                <label class="branding-field-label" for="project-branding-footer-copy">Footer</label>
                                 <input type="text" id="project-branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
                                     placeholder="My Guide" oninput="window.updateProjectBrandingDraft()">
                             </div>
                         </div>
-                    </div>
 
-                    <div class="project-editor-section">
-                        <div class="theme-section-label">Data Tools</div>
+                        <p id="project-modal-help" class="project-help-text"></p>
+
+                        <div class="project-state-actions">
+                            <button type="button" id="project-modal-save-btn" class="theme-btn-apply" onclick="window.saveCurrentProjectFromModal()">
+                                <i class="fa-solid fa-floppy-disk"></i> Save
+                            </button>
+                        </div>
+                    </section>
+
+                    <section id="project-modal-selected-panel" class="project-state-card" hidden>
+                        <div class="project-state-header">
+                            <div>
+                                <div class="project-current-label">Selected Project</div>
+                                <div id="project-modal-selected-name-heading" class="project-current-name">-</div>
+                            </div>
+                            <span class="project-state-badge project-state-badge--selected">Ready</span>
+                        </div>
+                        <div id="project-modal-selected-meta" class="project-current-meta">Select a project from the list.</div>
+
+                        <div class="project-form-stack">
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-modal-selected-name">Name</label>
+                                <input type="text" id="project-modal-selected-name" class="theme-text-input" readonly>
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-modal-selected-subtitle">Subtitle</label>
+                                <input type="text" id="project-modal-selected-subtitle" class="theme-text-input" readonly>
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-modal-selected-footer">Footer</label>
+                                <input type="text" id="project-modal-selected-footer" class="theme-text-input" readonly>
+                            </div>
+                        </div>
+
+                        <p class="project-help-text">Open switches the editor to the selected project. Delete is available from each row in the project list.</p>
+
+                        <div class="project-state-actions">
+                            <button type="button" id="project-modal-open-btn" class="theme-btn-apply" onclick="window.openSelectedProjectFromModal()">
+                                <i class="fa-solid fa-folder-open"></i> Open
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="project-utility-card">
+                        <div class="project-current-label">Project Tools</div>
                         <div class="project-tools-grid">
                             <input type="file" id="project-import-data-input" accept=".json" style="display:none;" onchange="window.importData(event)">
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="window.createProject()">
+                                <i class="fa-solid fa-folder-plus"></i> New Project
+                            </button>
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="window.saveAsProject()">
+                                <i class="fa-solid fa-copy"></i> Save As
+                            </button>
                             <button type="button" class="theme-action-btn project-tool-btn" onclick="document.getElementById('project-import-data-input').click()">
                                 <i class="fa-solid fa-file-import"></i> Import JSON
                             </button>
@@ -278,23 +303,7 @@
                                 <i class="fa-solid fa-download"></i> Backup JSON
                             </button>
                         </div>
-                    </div>
-
-                    <div class="project-editor-section">
-                        <div class="theme-section-label">Selected Project</div>
-                        <div id="project-modal-selection" class="project-selection-card">
-                            Select a project from the list.
-                        </div>
-                    </div>
-
-                    <div class="theme-modal-footer">
-                        <button type="button" id="project-modal-primary-btn" class="theme-btn-apply" onclick="window.submitProjectModalAction()">
-                            <i class="fa-solid fa-check"></i> Continue
-                        </button>
-                        <button type="button" class="theme-action-btn" onclick="window.closeProjectModal()">
-                            Cancel
-                        </button>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
