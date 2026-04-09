@@ -358,6 +358,7 @@
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    color: var(--text-dim);
 }
 
 .project-current-label {
