@@ -185,6 +185,8 @@
 이 구조를 기준으로 이후 에디터 카드, 모달, HTML 가이드까지 같은 glass 토큰 체계를 공유합니다.
 헤더와 라이트모드 배경 쪽은 여기서 파생된 `--accent-glow` 토큰을 함께 사용해
 강조색 계열의 glow를 배경과 shell 하이라이트에 재활용합니다.
+또한 `colors.secondaryAccent`를 함께 정규화해, hover/soft highlight/보조 glass tint가
+테마마다 다른 보조강조색을 사용할 수 있도록 확장했습니다.
 
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
@@ -215,6 +217,7 @@ body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니
 가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.
 모바일 폭과 `backdrop-filter` 미지원 환경에서는 Phase 5 조정 규칙에 따라
 blur 강도와 패딩을 낮추고, semi-transparent solid fallback으로 내려갑니다.
+메인 배경은 현재 glass blur를 읽히게 하기 위해 점선 격자와 약한 노이즈 레이어를 함께 사용합니다.
 또한 dialog는 백드롭 암전/블러를 제거하고 패널 그림자를 강화하는 쪽으로 조정해,
 유리 재질 자체의 투명도는 살리면서도 레이어 구분은 유지합니다.
 Navigator active 계산은 같은 제목이 이어지는 여러 슬라이드에서도 단일 항목 강조가 유지되도록

@@ -67,6 +67,14 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             return `#${toHex(rr)}${toHex(gg)}${toHex(bb)}`;
         }
 
+        function deriveSecondaryAccent(accentValue, isDarkMode = true) {
+            return shiftHexHue(
+                accentValue,
+                isDarkMode ? 26 : -18,
+                isDarkMode ? '#38bdf8' : '#0ea5e9'
+            );
+        }
+
         function clampGlassValue(value, min, max, fallback) {
             const numeric = Number(value);
             if (!Number.isFinite(numeric)) return fallback;
@@ -77,21 +85,21 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             if (isDarkMode) {
                 return {
                     backgroundColor: '#FFFFFF',
-                    backgroundAlpha: 0.11,
-                    backgroundBlur: 14,
-                    backgroundSaturation: 126,
-                    refraction: 0.12,
-                    depth: 0.24
+                    backgroundAlpha: 0.16,
+                    backgroundBlur: 18,
+                    backgroundSaturation: 142,
+                    refraction: 0.08,
+                    depth: 0.11
                 };
             }
 
             return {
                 backgroundColor: '#FFFFFF',
-                backgroundAlpha: 0.36,
-                backgroundBlur: 10,
-                backgroundSaturation: 114,
+                backgroundAlpha: 0.34,
+                backgroundBlur: 11,
+                backgroundSaturation: 118,
                 refraction: 0.08,
-                depth: 0.14
+                depth: 0.12
             };
         }
 
@@ -103,6 +111,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 isDarkMode: true,
                 colors: {
                     accent:   '#00E676',
+                    secondaryAccent: '#14b8a6',
                     codeColor:'#00E676',
                     bgDark:   '#010409',
                     slideBg:  '#0D1117',
@@ -136,7 +145,11 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 displayName: safeTheme.displayName || safeTheme.name || baseTheme.displayName,
                 version: safeTheme.version || baseTheme.version,
                 isDarkMode,
-                colors: Object.assign({}, baseTheme.colors, safeTheme.colors || {}),
+                colors: Object.assign({}, baseTheme.colors, safeTheme.colors || {}, {
+                    secondaryAccent: /^#[0-9a-fA-F]{6}$/.test(safeTheme?.colors?.secondaryAccent || '')
+                        ? safeTheme.colors.secondaryAccent
+                        : deriveSecondaryAccent((safeTheme?.colors?.accent || baseTheme.colors.accent), isDarkMode)
+                }),
                 webGuide: Object.assign({}, baseTheme.webGuide, safeTheme.webGuide || {}),
                 fonts: Object.assign({}, baseTheme.fonts, safeTheme.fonts || {}),
                 glass: {
@@ -171,6 +184,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             const root = document.documentElement.style;
             root.setProperty('--hpe-green', normalizedTheme.colors.accent);
             root.setProperty('--hpe-green-alpha', normalizedTheme.colors.accent + '14');
+            root.setProperty('--secondary-accent', normalizedTheme.colors.secondaryAccent || deriveSecondaryAccent(normalizedTheme.colors.accent, normalizedTheme.isDarkMode !== false));
             root.setProperty('--accent-glow', shiftHexHue(normalizedTheme.colors.accent, normalizedTheme.isDarkMode ? -10 : 14, normalizedTheme.colors.accent));
             root.setProperty('--code-color', normalizedTheme.colors.codeColor || normalizedTheme.colors.accent);
             root.setProperty('--code-bg', (normalizedTheme.colors.codeColor || normalizedTheme.colors.accent) + '1A');
@@ -190,14 +204,14 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             root.setProperty('--glass-depth', glass.depth.toFixed(2));
 
             const borderAlpha = normalizedTheme.isDarkMode
-                ? 0.14 + (glass.refraction * 0.5)
-                : 0.24 + (glass.refraction * 0.8);
+                ? 0.12 + (glass.refraction * 0.30)
+                : 0.24 + (glass.refraction * 0.72);
             const shadowAlpha = normalizedTheme.isDarkMode
-                ? 0.10 + (glass.depth * 0.22)
-                : 0.06 + (glass.depth * 0.12);
+                ? 0.06 + (glass.depth * 0.10)
+                : 0.05 + (glass.depth * 0.10);
             const highlightAlpha = normalizedTheme.isDarkMode
-                ? 0.16 + (glass.refraction * 0.4)
-                : 0.26 + (glass.refraction * 0.5);
+                ? 0.10 + (glass.refraction * 0.18)
+                : 0.24 + (glass.refraction * 0.42);
 
             root.setProperty('--glass-border-alpha', borderAlpha.toFixed(2));
             root.setProperty('--glass-shadow-alpha', shadowAlpha.toFixed(2));
@@ -336,6 +350,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
 
             const colorFields = [
                 { key: 'accent',   label: '강조색 (Accent)' },
+                { key: 'secondaryAccent', label: 'Secondary Accent' },
                 { key: 'codeColor',label: '코드 텍스트색 (Code Color)' },
                 { key: 'bgDark',   label: '에디터 배경 (bgDark)' },
                 { key: 'slideBg',  label: '슬라이드 배경 (slideBg)' },
@@ -411,12 +426,12 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 else document.body.classList.add('light-mode');
             }
 
-            const keys = ['accent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            const keys = ['accent','secondaryAccent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
             keys.forEach(key => {
                 const hexEl = document.getElementById('hex-' + key);
                 if (hexEl && /^#[0-9a-fA-F]{6}$/.test(hexEl.value)) {
                     const map = {
-                        accent: '--hpe-green', codeColor: '--code-color', bgDark: '--bg-dark', slideBg: '--slide-bg',
+                        accent: '--hpe-green', secondaryAccent: '--secondary-accent', codeColor: '--code-color', bgDark: '--bg-dark', slideBg: '--slide-bg',
                         boxBg: '--box-bg', border: '--border-color', textMain: '--text-main', textDim: '--text-dim'
                     };
                     document.documentElement.style.setProperty(map[key], hexEl.value);
@@ -501,7 +516,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
         };
 
         function buildThemeFromModal() {
-            const keys = ['accent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
+            const keys = ['accent','secondaryAccent','codeColor','bgDark','slideBg','boxBg','border','textMain','textDim'];
             const colors = {};
             keys.forEach(k => {
                 const hexEl = document.getElementById('hex-' + k);

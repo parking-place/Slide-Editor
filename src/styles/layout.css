@@ -64,7 +64,7 @@
 
         .toc-sidebar-empty i,
         .toc-sidebar-empty-icon {
-            color: color-mix(in srgb, var(--hpe-green) 58%, var(--text-dim) 42%);
+            color: color-mix(in srgb, var(--secondary-accent) 58%, var(--text-dim) 42%);
         }
 
         .toc-sidebar-empty-icon {
@@ -103,7 +103,7 @@
         }
         .toc-nav-middle:hover {
             background: var(--hpe-green-alpha);
-            color: var(--hpe-green);
+            color: var(--secondary-accent);
             padding-left: 18px;
         }
 
@@ -128,7 +128,7 @@
         .toc-nav-title.active {
             color: color-mix(in srgb, var(--hpe-green) 80%, var(--text-main) 20%);
             background:
-                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 18%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.10)) 82%), color-mix(in srgb, var(--hpe-green) 10%, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.62)) 90%));
+                linear-gradient(180deg, color-mix(in srgb, var(--secondary-accent) 18%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.10)) 82%), color-mix(in srgb, var(--secondary-accent) 10%, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.62)) 90%));
             border-left: 2px solid var(--hpe-green);
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) + 0.04)),
@@ -142,12 +142,12 @@
         }
         body.light-mode .toc-nav-title.active {
             background:
-                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 14%, rgba(255,255,255,0.94) 86%), color-mix(in srgb, var(--hpe-green) 8%, rgba(255,255,255,0.82) 92%));
+                linear-gradient(180deg, color-mix(in srgb, var(--secondary-accent) 14%, rgba(255,255,255,0.94) 86%), color-mix(in srgb, var(--secondary-accent) 8%, rgba(255,255,255,0.82) 92%));
             color: #047857;
             border-left-color: var(--hpe-green);
         }
         body.light-mode .toc-nav-chapter { color: var(--hpe-green); }
-        body.light-mode .toc-nav-middle:hover { color: var(--hpe-green); background: var(--hpe-green-alpha); }
+        body.light-mode .toc-nav-middle:hover { color: var(--secondary-accent); background: color-mix(in srgb, var(--secondary-accent) 14%, transparent); }
         body.light-mode .toc-nav-title:hover { background: rgba(0,0,0,0.04); color: var(--text-main); }
         body.light-mode .toc-nav-middle,
         body.light-mode .toc-nav-title,
@@ -161,8 +161,8 @@
 
         .header-nav {
             background:
-                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 10%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.10)) 90%), rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.01))),
-                radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--hpe-green) 18%, transparent), transparent 48%);
+                linear-gradient(180deg, color-mix(in srgb, var(--secondary-accent) 10%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.10)) 90%), rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.01))),
+                radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--secondary-accent) 18%, transparent), transparent 48%);
             backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(calc(var(--glass-saturation) + 8%));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(calc(var(--glass-saturation) + 8%));
             border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 62%, var(--border-color) 38%);
@@ -182,13 +182,15 @@
 
         body.light-mode .header-nav {
             background:
-                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 8%, rgba(255,255,255,0.96) 92%), rgba(255,255,255,0.84)),
-                radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--hpe-green) 16%, transparent), transparent 52%);
+                linear-gradient(180deg, color-mix(in srgb, var(--secondary-accent) 8%, rgba(255,255,255,0.96) 92%), rgba(255,255,255,0.84)),
+                radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--secondary-accent) 16%, transparent), transparent 52%);
         }
 
         body.light-mode .project-indicator,
         body.light-mode .btn-hdr {
-            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+            background:
+                linear-gradient(180deg, color-mix(in srgb, var(--secondary-accent) 10%, rgba(255,255,255,0.92) 90%), color-mix(in srgb, var(--secondary-accent) 6%, rgba(255,255,255,0.72) 94%)),
+                radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--secondary-accent) 12%, transparent), transparent 58%);
             color: #334155;
             -webkit-text-fill-color: #334155;
         }

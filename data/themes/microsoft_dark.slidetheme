@@ -11,7 +11,8 @@
     "boxBg": "#11212f",
     "border": "#173347",
     "textMain": "#FFFFFF",
-    "textDim": "#71c9ed"
+    "textDim": "#71c9ed",
+    "secondaryAccent": "#003cef"
   },
   "pptx": {
     "masterBg": "0c1a26",
@@ -35,10 +36,10 @@
   },
   "glass": {
     "backgroundColor": "#FFFFFF",
-    "backgroundAlpha": 0.11,
-    "backgroundBlur": 14,
-    "backgroundSaturation": 126,
-    "refraction": 0.12,
-    "depth": 0.24
+    "backgroundAlpha": 0.16,
+    "backgroundBlur": 18,
+    "backgroundSaturation": 142,
+    "refraction": 0.08,
+    "depth": 0.11
   }
 }
