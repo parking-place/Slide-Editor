@@ -38,19 +38,33 @@
             right: 30px;
             width: 50px;
             height: 50px;
-            background: var(--hpe-green);
-            color: #000;
+            background:
+                linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.14)), rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.03))),
+                linear-gradient(145deg, color-mix(in srgb, var(--hpe-green) 28%, transparent), transparent 58%);
+            color: color-mix(in srgb, var(--hpe-green) 78%, var(--text-main) 22%);
             border-radius: 50%;
-            border: none;
+            border: 1px solid color-mix(in srgb, var(--hpe-green) 52%, rgba(var(--glass-rgb), var(--glass-border-alpha)) 48%);
             font-size: 20px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow:
+                0 calc(16px + 14px * var(--glass-depth)) calc(32px + 18px * var(--glass-depth)) rgba(2, 6, 23, calc(var(--glass-shadow-alpha) + 0.16)),
+                0 calc(6px + 8px * var(--glass-depth)) calc(16px + 10px * var(--glass-depth)) rgba(15, 23, 42, calc(var(--glass-shadow-alpha) + 0.06)),
+                inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) + 0.08));
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.75px)) saturate(calc(var(--glass-saturation) * 1%));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.75px)) saturate(calc(var(--glass-saturation) * 1%));
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             visibility: hidden;
-            transition: 0.3s;
+            transition:
+                transform 0.25s ease,
+                opacity 0.25s ease,
+                visibility 0.25s ease,
+                box-shadow 0.25s ease,
+                border-color 0.25s ease,
+                background 0.25s ease,
+                color 0.25s ease;
             z-index: 9999;
         }
         .btn-top.show {
@@ -58,8 +72,16 @@
             visibility: visible;
         }
         .btn-top:hover {
-            transform: translateY(-5px);
-            filter: brightness(1.1);
+            transform: translateY(-4px);
+            color: color-mix(in srgb, var(--hpe-green) 88%, var(--text-main) 12%);
+            border-color: color-mix(in srgb, var(--hpe-green) 68%, rgba(var(--glass-rgb), var(--glass-border-alpha)) 32%);
+            background:
+                linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.18)), rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.06))),
+                linear-gradient(145deg, color-mix(in srgb, var(--hpe-green) 36%, transparent), transparent 56%);
+            box-shadow:
+                0 calc(18px + 16px * var(--glass-depth)) calc(36px + 20px * var(--glass-depth)) rgba(2, 6, 23, calc(var(--glass-shadow-alpha) + 0.18)),
+                0 calc(8px + 8px * var(--glass-depth)) calc(18px + 12px * var(--glass-depth)) rgba(15, 23, 42, calc(var(--glass-shadow-alpha) + 0.08)),
+                inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) + 0.10));
         }
 
         /* ==== ?숈쟻 TOC ?ㅻ퉬寃뚯씠???덉씠?꾩썐 ==== */
