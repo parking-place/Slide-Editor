@@ -163,20 +163,20 @@
             ? 'rgba(15, 23, 42, 0.12)'
             : 'rgba(255, 255, 255, 0.12)';
         const codeBlockHeaderBg = bodyClass === 'light-mode'
-            ? 'rgba(0, 0, 0, 0.08)'
-            : 'rgba(0, 0, 0, 0.35)';
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))';
         const codeBlockButtonBg = bodyClass === 'light-mode'
-            ? 'rgba(255, 255, 255, 0.82)'
+            ? 'rgba(255, 255, 255, 0.08)'
             : 'rgba(255, 255, 255, 0.04)';
         const codeBlockButtonHoverBg = bodyClass === 'light-mode'
-            ? 'rgba(255, 255, 255, 0.96)'
-            : 'rgba(255, 255, 255, 0.08)';
+            ? 'rgba(255, 255, 255, 0.16)'
+            : 'rgba(255, 255, 255, 0.10)';
         const codeBlockButtonText = bodyClass === 'light-mode'
-            ? '#475569'
-            : '#8b949e';
+            ? '#e2e8f0'
+            : '#cbd5e1';
         const codeBlockBackground = bodyClass === 'light-mode'
-            ? '#1e1e1e'
-            : '#010409';
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.82), rgba(2,6,23,0.76))'
+            : 'linear-gradient(180deg, rgba(15,23,42,0.84), rgba(2,6,23,0.72))';
         const guideScrollTrack = bodyClass === 'light-mode'
             ? 'rgba(226, 232, 240, 0.75)'
             : 'rgba(15, 23, 42, 0.72)';
@@ -189,7 +189,7 @@
         const guideScrollBorder = bodyClass === 'light-mode'
             ? 'rgba(255, 255, 255, 0.92)'
             : 'rgba(15, 23, 42, 0.86)';
-        const guideGlassRgb = rootStyles.getPropertyValue('--glass-rgb').trim() || '255 255 255';
+        const guideGlassRgb = rootStyles.getPropertyValue('--glass-rgb').trim() || '255, 255, 255';
         const guideGlassAlpha = rootStyles.getPropertyValue('--glass-alpha').trim() || (bodyClass === 'light-mode' ? '0.36' : '0.11');
         const guideGlassBlur = rootStyles.getPropertyValue('--glass-blur').trim() || (bodyClass === 'light-mode' ? '10px' : '14px');
         const guideGlassSaturation = rootStyles.getPropertyValue('--glass-saturation').trim() || (bodyClass === 'light-mode' ? '114%' : '126%');
@@ -429,13 +429,24 @@
         .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 20px; margin: 0 0 1em; }
         .markdown-body :not(pre) > code { background: ${guideCodeColor}1A; color: ${guideCodeColor}; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
-        .code-block-wrapper { margin-top: 10px; margin-bottom: 10px; border: 1px solid ${codeBlockBorder}; border-left: 3px solid ${editorAccentColor}; border-radius: 6px; overflow: hidden; background: ${bodyClass === 'light-mode' ? '#ffffff' : '#111827'}; }
+        .code-block-wrapper {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: 1px solid ${codeBlockBorder};
+            border-left: 3px solid ${editorAccentColor};
+            border-radius: 10px;
+            overflow: hidden;
+            background: ${codeBlockBackground};
+            box-shadow: 0 14px 28px rgba(2, 6, 23, 0.24), inset 0 1px 0 rgba(255,255,255,0.06);
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.55)) saturate(calc(var(--glass-saturation) - 6%));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.55)) saturate(calc(var(--glass-saturation) - 6%));
+        }
         .code-block-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; background: ${codeBlockHeaderBg}; border-bottom: 1px solid ${codeBlockBorder}; }
         .code-lang-label { font-family: 'D2Coding', monospace; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: ${guideCodeColor}; }
         .btn-copy-code { display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${codeBlockBorder}; border-radius: 999px; background: ${codeBlockButtonBg}; color: ${codeBlockButtonText}; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
         .btn-copy-code:hover, .btn-copy-code:focus-visible { background: ${codeBlockButtonHoverBg}; color: ${guideCodeColor}; border-color: ${guideCodeColor}; outline: none; }
         .btn-copy-code.copied { color: ${guideCodeColor}; border-color: ${guideCodeColor}; }
-        .code-block-wrapper pre { margin: 0; overflow-x: auto; background: ${codeBlockBackground}; border: none; border-radius: 0; padding: 15px; }
+        .code-block-wrapper pre { margin: 0; overflow-x: auto; background: transparent; border: none; border-radius: 0; padding: 15px; }
         .code-block-wrapper pre code.hljs { display: block; overflow-x: auto; padding: 0; background: transparent; color: inherit; }
         .guide-footer {
             max-width: 1440px;

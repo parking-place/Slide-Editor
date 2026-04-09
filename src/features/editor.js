@@ -442,11 +442,9 @@ function generateTocData(slides) {
                         const coverDiv = document.createElement('div');
                         coverDiv.className = 'slide-preview cover-preview middle-cover';
                         coverDiv.id = `preview-cover-${rIndex}`;
-                        coverDiv.style.background = '#111827';
-                        coverDiv.style.borderLeft = '6px solid var(--hpe-green)';
                         coverDiv.innerHTML = `
-                            <div style="font-size: 20px; color: var(--hpe-green); font-weight: bold; margin-bottom: 25px;">${escapeHtml(ch)}</div>
-                            <div style="font-size: 48px; color: #fff; line-height: 1.3; font-weight: bold; letter-spacing: -0.5px;">${escapeHtml(mid)}</div>
+                            <div class="middle-cover-kicker">${escapeHtml(ch)}</div>
+                            <div class="middle-cover-title">${escapeHtml(mid)}</div>
                         `;
                         area.appendChild(coverDiv);
                         rIndex++; // 가상 표지가 1페이지 차지

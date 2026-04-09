@@ -1,13 +1,13 @@
 // Auto-extracted modular segment: Theme Base
 
-function hexToRgbString(value, fallback = '255 255 255') {
+function hexToRgbString(value, fallback = '255, 255, 255') {
             const hex = typeof value === 'string' ? value.trim() : '';
             const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.slice(1) : '';
             if (!normalized) return fallback;
             const r = parseInt(normalized.slice(0, 2), 16);
             const g = parseInt(normalized.slice(2, 4), 16);
             const b = parseInt(normalized.slice(4, 6), 16);
-            return `${r} ${g} ${b}`;
+            return `${r}, ${g}, ${b}`;
         }
 
         function shiftHexHue(value, degrees, fallback = '#38bdf8') {
