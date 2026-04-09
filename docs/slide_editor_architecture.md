@@ -216,6 +216,10 @@
 이 입력값은 live preview로 즉시 반영되고,
 저장 시 `.slidetheme`의 `glass` 섹션에 함께 기록됩니다.
 
+테마 편집기 라벨은 현재 한글 기반으로 정리되어 있으며,
+섹션 제목 `Glass Surface`는 영어를 유지하고 세부 옵션만 한글화합니다.
+라이트모드의 dialog 입력 요소는 일반 텍스트와 구분되도록 별도의 밝은 field surface를 사용합니다.
+
 HTML 가이드 쪽은 `src/features/export-enhancements.js`가 현재 활성 theme의 `glass` 토큰을 읽어
 body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니다.
 가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.

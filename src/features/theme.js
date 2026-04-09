@@ -166,11 +166,11 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
         }
 
         const GLASS_FIELD_DEFINITIONS = [
-            { key: 'backgroundAlpha', label: 'Background Alpha', min: 0.04, max: 0.42, step: 0.01 },
-            { key: 'backgroundBlur', label: 'Background Filter Blur', min: 0, max: 40, step: 1, unit: 'px' },
-            { key: 'backgroundSaturation', label: 'Background Filter Saturation', min: 80, max: 220, step: 1, unit: '%' },
-            { key: 'refraction', label: 'Refraction', min: 0, max: 0.4, step: 0.01 },
-            { key: 'depth', label: 'Depth', min: 0, max: 1, step: 0.01 }
+            { key: 'backgroundAlpha', label: '배경 투명도', min: 0.04, max: 0.42, step: 0.01 },
+            { key: 'backgroundBlur', label: '배경 블러', min: 0, max: 40, step: 1, unit: 'px' },
+            { key: 'backgroundSaturation', label: '배경 채도', min: 80, max: 220, step: 1, unit: '%' },
+            { key: 'refraction', label: '굴절', min: 0, max: 0.4, step: 0.01 },
+            { key: 'depth', label: '깊이', min: 0, max: 1, step: 0.01 }
         ];
 
         function getDefaultThemeObject() {
@@ -350,7 +350,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
 
             const colorFields = [
                 { key: 'accent',   label: '강조색 (Accent)' },
-                { key: 'secondaryAccent', label: 'Secondary Accent' },
+                { key: 'secondaryAccent', label: '보조 강조색 (Secondary Accent)' },
                 { key: 'codeColor',label: '코드 텍스트색 (Code Color)' },
                 { key: 'bgDark',   label: '에디터 배경 (bgDark)' },
                 { key: 'slideBg',  label: '슬라이드 배경 (slideBg)' },
@@ -385,7 +385,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 const glass = t.glass || getDefaultThemeObject().glass;
                 glassEl.innerHTML = `
                     <div class="theme-glass-color-row">
-                        <span class="color-row-label">Background Color</span>
+                        <span class="color-row-label">배경 색상</span>
                         <input type="color" id="glass-backgroundColor" value="${glass.backgroundColor}"
                             oninput="document.getElementById('glass-backgroundColor-hex').value=this.value; window.applyGlassPreview()">
                         <input type="text" id="glass-backgroundColor-hex" value="${glass.backgroundColor}" maxlength="7" class="hex-input"

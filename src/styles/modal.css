@@ -238,6 +238,29 @@
             border-color: var(--hpe-green);
         }
 
+        body.light-mode .theme-text-input,
+        body.light-mode .hex-input,
+        body.light-mode .theme-glass-row input[type="number"],
+        body.light-mode #project-modal-selected-panel input[readonly] {
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.88));
+            border-color: color-mix(in srgb, var(--secondary-accent) 24%, var(--border-color) 76%);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.9),
+                inset 0 0 0 1px rgba(15, 23, 42, 0.02),
+                0 8px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        body.light-mode .theme-text-input:focus,
+        body.light-mode .hex-input:focus,
+        body.light-mode .theme-glass-row input[type="number"]:focus {
+            border-color: color-mix(in srgb, var(--hpe-green) 56%, var(--secondary-accent) 44%);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.92),
+                0 0 0 1px color-mix(in srgb, var(--secondary-accent) 20%, transparent),
+                0 12px 20px rgba(15, 23, 42, 0.08);
+        }
+
         /* ?됱긽 ??(?쎌빱 + HEX ?낅젰) */
         .color-row {
             display: flex;
@@ -268,8 +291,8 @@
         .color-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
 
         .hex-input {
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.07)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.26)));
+            border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--border-color) 36%);
             color: var(--text-main);
             padding: 7px 10px;
             border-radius: 6px;
@@ -323,13 +346,19 @@
 
         .theme-glass-row input[type="number"] {
             width: 100%;
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.07)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.24)));
+            border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--border-color) 36%);
             color: var(--text-main);
             padding: 7px 10px;
             border-radius: 6px;
             font-size: 13px;
             font-family: 'D2Coding', monospace;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .theme-glass-row input[type="number"]:focus {
+            outline: none;
+            border-color: var(--secondary-accent);
         }
 
         .theme-glass-unit {
@@ -634,8 +663,9 @@
 }
 
 .project-state-badge--selected {
-    color: #caa4ff;
-    background: rgba(138, 92, 255, 0.14);
+    color: var(--secondary-accent);
+    background: color-mix(in srgb, var(--secondary-accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--secondary-accent) 42%, transparent);
 }
 
 .project-help-text {
@@ -778,11 +808,11 @@
 }
 
 .project-list-state--current {
-    color: #f6c453;
+    color: color-mix(in srgb, #f59e0b 82%, var(--text-main) 18%);
 }
 
 .project-list-state--selected {
-    color: var(--hpe-green);
+    color: var(--secondary-accent);
 }
 
 .project-list-state.is-visible {
@@ -816,6 +846,17 @@
     color: color-mix(in srgb, var(--text-main) 86%, var(--text-dim) 14%);
     background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.18)));
     cursor: default;
+}
+
+body.light-mode .theme-modal-content .branding-field input,
+body.light-mode .project-state-card input,
+body.light-mode .new-project-modal-body input {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,250,252,0.90));
+    border-color: color-mix(in srgb, var(--secondary-accent) 22%, var(--border-color) 78%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.92),
+        0 8px 16px rgba(15, 23, 42, 0.05);
 }
 
 .new-project-modal-content {
