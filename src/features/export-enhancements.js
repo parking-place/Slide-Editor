@@ -147,9 +147,22 @@
         return { html, slideToTocId };
     }
 
-    function generateGuideHtml(sourceSlides = slidesData) {
+    function formatGuideTimestamp(dateInput = new Date()) {
+        const value = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        const day = String(value.getDate()).padStart(2, '0');
+        const hours = String(value.getHours()).padStart(2, '0');
+        const minutes = String(value.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
+    function generateGuideHtml(sourceSlides = slidesData, options = {}) {
+        const portable = Boolean(options.portable);
+        const generatedAt = options.generatedAt instanceof Date ? options.generatedAt : new Date();
         const themeGuide = (activeTheme && activeTheme.webGuide) || {};
         const branding = projectSettings.branding || {};
+        const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
         const accentColor = themeGuide.accentColor || '#01a982';
         const headerBg = themeGuide.headerBg || accentColor;
         const darkAccent = themeGuide.darkAccent || '#00e676';
@@ -166,7 +179,6 @@
         const guideCodeColor = rootStyles.getPropertyValue('--code-color').trim() || themeGuide.codeColor || activeTheme?.colors?.codeColor || darkAccent;
         const footerCopy = branding.footerCopy || branding.projectName || 'My Guide';
         const navigatorModel = buildGuideNavigatorModel(sourceSlides);
-        const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
         const codeBlockBorder = bodyClass === 'light-mode'
             ? 'rgba(15, 23, 42, 0.12)'
             : 'rgba(255, 255, 255, 0.12)';
@@ -211,6 +223,9 @@
             : `color-mix(in srgb, ${accentColor} 82%, #f8fafc 18%)`;
         const guideGlassStrong = bodyClass === 'light-mode' ? 'rgba(255,255,255,0.94)' : 'rgba(13,17,23,0.78)';
         const guideGlassSoft = bodyClass === 'light-mode' ? 'rgba(255,255,255,0.82)' : 'rgba(13,17,23,0.54)';
+        const viewerTitle = branding.projectName || 'Slide Viewer';
+        const viewerSubtitle = branding.subtitle || '';
+        const generatedLabel = `생성 ${formatGuideTimestamp(generatedAt)}`;
 
         const cardsHtml = sourceSlides.map((slide, index) => {
             const imageSrc = getSlideImageSrc(resolveSlideImageSource(slide) || slide.image);
@@ -233,7 +248,7 @@
                             decoding="async"
                             tabindex="0"
                             role="button"
-                            aria-label="${imageAlt} 이미지 확대 보기"
+                            aria-label="${imageAlt} ?대?吏 ?뺣? 蹂닿린"
                             data-guide-zoomable="true">
                     </picture>
                     ${slide.imageCaption ? `<figcaption>${escapeHtml(slide.imageCaption)}</figcaption>` : ''}
@@ -266,9 +281,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(branding.projectName || 'Slide Editor Guide')}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
+    <title>${escapeHtml(portable ? `${viewerTitle}.html` : `${viewerTitle} - Slide Viewer`)}</title>
     <style>
         :root {
             color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'};
@@ -294,30 +307,44 @@
         }
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
+        body, button, input, textarea {
+            font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        }
+        code, pre, kbd, samp {
+            font-family: 'D2Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
         body,
         .guide-aside,
+        .viewer-navigator,
         .guide-main,
+        .viewer-content,
         .markdown-body pre {
             scrollbar-width: thin;
             scrollbar-color: ${guideScrollThumb} ${guideScrollTrack};
         }
         body::-webkit-scrollbar,
         .guide-aside::-webkit-scrollbar,
+        .viewer-navigator::-webkit-scrollbar,
         .guide-main::-webkit-scrollbar,
+        .viewer-content::-webkit-scrollbar,
         .markdown-body pre::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         body::-webkit-scrollbar-track,
         .guide-aside::-webkit-scrollbar-track,
+        .viewer-navigator::-webkit-scrollbar-track,
         .guide-main::-webkit-scrollbar-track,
+        .viewer-content::-webkit-scrollbar-track,
         .markdown-body pre::-webkit-scrollbar-track {
             background: ${guideScrollTrack};
             border-radius: 999px;
         }
         body::-webkit-scrollbar-thumb,
         .guide-aside::-webkit-scrollbar-thumb,
+        .viewer-navigator::-webkit-scrollbar-thumb,
         .guide-main::-webkit-scrollbar-thumb,
+        .viewer-content::-webkit-scrollbar-thumb,
         .markdown-body pre::-webkit-scrollbar-thumb {
             background: ${guideScrollThumb};
             border-radius: 999px;
@@ -326,23 +353,28 @@
         }
         body::-webkit-scrollbar-thumb:hover,
         .guide-aside::-webkit-scrollbar-thumb:hover,
+        .viewer-navigator::-webkit-scrollbar-thumb:hover,
         .guide-main::-webkit-scrollbar-thumb:hover,
+        .viewer-content::-webkit-scrollbar-thumb:hover,
         .markdown-body pre::-webkit-scrollbar-thumb:hover {
             background: ${guideScrollThumbHover};
         }
         body::-webkit-scrollbar-button,
         .guide-aside::-webkit-scrollbar-button,
+        .viewer-navigator::-webkit-scrollbar-button,
         .guide-main::-webkit-scrollbar-button,
+        .viewer-content::-webkit-scrollbar-button,
         .markdown-body pre::-webkit-scrollbar-button,
         body::-webkit-scrollbar-corner,
         .guide-aside::-webkit-scrollbar-corner,
+        .viewer-navigator::-webkit-scrollbar-corner,
         .guide-main::-webkit-scrollbar-corner,
+        .viewer-content::-webkit-scrollbar-corner,
         .markdown-body pre::-webkit-scrollbar-corner {
             background: transparent;
         }
         body {
             margin: 0;
-            font-family: 'Pretendard', 'Segoe UI', sans-serif;
             color: var(--guide-text-main);
             background:
                 radial-gradient(circle at top right, color-mix(in srgb, ${editorAccentColor} 20%, transparent), transparent 24%),
@@ -383,27 +415,67 @@
             mix-blend-mode: soft-light;
             filter: contrast(116%) saturate(108%);
         }
-        .guide-header {
+        .viewer-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .viewer-header {
             background:
                 linear-gradient(180deg, color-mix(in srgb, ${headerBg} 14%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.08)) 86%), color-mix(in srgb, ${headerBg} 8%, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.34)) 92%)),
                 radial-gradient(circle at 18% 16%, color-mix(in srgb, ${editorSecondaryAccent} 18%, transparent), transparent 54%);
             color: ${guideHeaderText};
-            padding: 48px 24px;
-            text-align: center;
-            border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 56%, var(--guide-border-color) 44%);
-            border-radius: 0 0 20px 20px;
+            padding: 28px 28px 30px;
+            border-bottom: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 56%, var(--guide-border-color) 44%);
             box-shadow:
-                0 calc(8px + 14px * var(--glass-depth)) calc(18px + 22px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.78)),
+                0 calc(8px + 12px * var(--glass-depth)) calc(18px + 20px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.74)),
                 inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) * 0.8));
             backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
         }
-        .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
-        .guide-header p { margin: 0; font-size: 18px; color: ${guideHeaderSubtext}; }
-        .guide-layout { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 24px 20px; align-items: flex-start; }
-        .guide-aside {
-            width: 240px;
-            flex-shrink: 0;
+        .viewer-header-bar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+        .viewer-brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: ${guideHeaderText};
+        }
+        .viewer-generated-at {
+            font-size: 13px;
+            color: ${guideHeaderSubtext};
+            white-space: nowrap;
+        }
+        .viewer-heading h1 {
+            margin: 0;
+            font-size: clamp(34px, 4vw, 48px);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+        }
+        .viewer-heading p {
+            margin: 10px 0 0;
+            font-size: clamp(17px, 2vw, 22px);
+            color: ${guideHeaderSubtext};
+            max-width: 880px;
+        }
+        .viewer-layout {
+            flex: 1;
+            width: 100%;
+            max-width: 1480px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            gap: 20px;
+            padding: 24px 20px 32px;
+            align-items: start;
+        }
+        .guide-aside,
+        .viewer-navigator {
             position: sticky;
             top: 24px;
             max-height: calc(100vh - 48px);
@@ -418,16 +490,26 @@
             backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-saturation));
         }
-        .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${guideNavText}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
-        .guide-aside .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .guide-aside .toc-nav-chapter:first-child { margin-top: 0; }
-        .guide-aside .toc-nav-middle { font-size: 12px; font-weight: 600; color: ${guideNavText}; padding: 3px 6px 3px 14px; margin-bottom: 2px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-aside .toc-sidebar-title,
+        .viewer-navigator .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${guideNavText}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
+        .guide-aside .toc-nav-chapter,
+        .viewer-navigator .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-aside .toc-nav-chapter:first-child,
+        .viewer-navigator .toc-nav-chapter:first-child { margin-top: 0; }
+        .guide-aside .toc-nav-middle,
+        .viewer-navigator .toc-nav-middle { font-size: 12px; font-weight: 600; color: ${guideNavText}; padding: 3px 6px 3px 14px; margin-bottom: 2px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-aside .toc-nav-middle:hover,
-        .guide-aside .toc-nav-middle:focus-visible { background: color-mix(in srgb, ${editorSecondaryAccent} 16%, transparent); color: ${editorSecondaryAccent}; padding-left: 18px; outline: none; }
-        .guide-aside .toc-nav-title { font-size: 12px; color: ${guideNavText}; padding: 4px 6px 4px 24px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent; }
+        .guide-aside .toc-nav-middle:focus-visible,
+        .viewer-navigator .toc-nav-middle:hover,
+        .viewer-navigator .toc-nav-middle:focus-visible { background: color-mix(in srgb, ${editorSecondaryAccent} 16%, transparent); color: ${editorSecondaryAccent}; padding-left: 18px; outline: none; }
+        .guide-aside .toc-nav-title,
+        .viewer-navigator .toc-nav-title { font-size: 12px; color: ${guideNavText}; padding: 4px 6px 4px 24px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent; }
         .guide-aside .toc-nav-title:hover,
-        .guide-aside .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${guideNavTextStrong}; padding-left: 27px; outline: none; }
-        .guide-aside .toc-nav-title.active {
+        .guide-aside .toc-nav-title:focus-visible,
+        .viewer-navigator .toc-nav-title:hover,
+        .viewer-navigator .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${guideNavTextStrong}; padding-left: 27px; outline: none; }
+        .guide-aside .toc-nav-title.active,
+        .viewer-navigator .toc-nav-title.active {
             color: ${guideActiveText};
             background: linear-gradient(180deg, color-mix(in srgb, ${editorAccentColor} 16%, ${guideGlassStrong} 84%), color-mix(in srgb, ${editorAccentColor} 9%, ${guideGlassSoft} 91%));
             border-left: 2px solid ${editorAccentColor};
@@ -436,7 +518,8 @@
                 0 6px 16px rgba(15, 23, 42, calc(var(--glass-shadow-alpha) * 0.55));
             font-weight: 600;
         }
-        .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+        .guide-main,
+        .viewer-content { min-width: 0; display: flex; flex-direction: column; gap: 24px; }
         .guide-card {
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.03)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.46)));
             border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--guide-border-color) 36%);
@@ -526,7 +609,9 @@
         .guide-lightbox-close:hover,
         .guide-lightbox-close:focus-visible { background: rgba(255, 255, 255, 0.24); outline: none; }
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .viewer-header,
             .guide-header,
+            .viewer-navigator,
             .guide-aside,
             .guide-card {
                 backdrop-filter: none;
@@ -535,10 +620,15 @@
             }
         }
         @media (max-width: 1100px) {
+            .viewer-layout { grid-template-columns: 1fr; }
+            .viewer-navigator { position: static; max-height: none; }
             .guide-layout { flex-direction: column; }
             .guide-aside { width: 100%; position: static; max-height: none; border-right: none; border-bottom: 1px solid rgba(148,163,184,0.2); margin-bottom: 16px; }
         }
         @media (max-width: 720px) {
+            .viewer-header { padding: 24px 18px 26px; }
+            .viewer-header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .viewer-layout { padding: 18px 14px 24px; }
             .guide-header { padding: 36px 18px; border-radius: 0 0 16px 16px; }
             .guide-layout { padding: 18px 14px; }
             .guide-card-header { padding: 20px 20px 16px; }
@@ -549,22 +639,28 @@
     </style>
 </head>
 <body class="${bodyClass}">
-    <header class="guide-header">
-        <h1>${escapeHtml(branding.projectName || 'My Guide')}</h1>
-        <p>${escapeHtml(branding.guideSubtitle || '')}</p>
-    </header>
-    <div class="guide-layout">
-        <aside class="guide-aside" aria-label="문서 목차">
+    <div class="viewer-shell">
+        <header class="viewer-header">
+        <div class="viewer-header-bar">
+            <div class="viewer-brand">Slide Viewer</div>
+            <div class="viewer-generated-at">${escapeHtml(generatedLabel)}</div>
+        </div>
+        <div class="viewer-heading">
+            <h1>${escapeHtml(viewerTitle)}</h1>
+            ${viewerSubtitle ? `<p>${escapeHtml(viewerSubtitle)}</p>` : ''}
+        </div>
+        </header>
+        <div class="viewer-layout">
+            <aside class="viewer-navigator" aria-label="문서 목차">
             <div class="toc-sidebar-title">Navigator</div>
             ${navigatorModel.html}
         </aside>
-        <main class="guide-main">
+            <main class="viewer-content">
             ${cardsHtml}
-        </main>
+            </main>
+        </div>
+        ${footerCopy ? `<footer class="guide-footer">${escapeHtml(footerCopy)}</footer>` : ''}
     </div>
-    <footer class="guide-footer">
-        ${escapeHtml(footerCopy)} · Generated by Slide Editor
-    </footer>
     <div id="guide-lightbox" class="guide-lightbox" hidden aria-hidden="true" aria-label="확대 이미지 보기">
         <button type="button" id="guide-lightbox-close" class="guide-lightbox-close" aria-label="확대 이미지 닫기">&times;</button>
         <figure class="guide-lightbox-figure">
@@ -574,8 +670,8 @@
     </div>
     <script>
         (function () {
-            var tocItems = Array.prototype.slice.call(document.querySelectorAll('.guide-aside .toc-nav-title'));
-            var tocMiddleItems = Array.prototype.slice.call(document.querySelectorAll('.guide-aside .toc-nav-middle'));
+            var tocItems = Array.prototype.slice.call(document.querySelectorAll('.viewer-navigator .toc-nav-title'));
+            var tocMiddleItems = Array.prototype.slice.call(document.querySelectorAll('.viewer-navigator .toc-nav-middle'));
             var guideCards = Array.prototype.slice.call(document.querySelectorAll('.guide-card[id^="guide-slide-"]'));
             var lightbox = document.getElementById('guide-lightbox');
             var lightboxImage = document.getElementById('guide-lightbox-image');
@@ -590,10 +686,10 @@
                 if (!code) return;
 
                 function markCopied() {
-                    button.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨';
+                    button.textContent = '완료';
                     button.classList.add('copied');
                     window.setTimeout(function () {
-                        button.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
+                        button.textContent = '복사';
                         button.classList.remove('copied');
                     }, 2000);
                 }
@@ -731,7 +827,7 @@
 
     async function downloadGuideHtml() {
         const portableSlides = await buildPortableSlides(slidesData);
-        const htmlContent = generateGuideHtml(portableSlides);
+        const htmlContent = generateGuideHtml(portableSlides, { portable: true, generatedAt: new Date() });
         const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -745,18 +841,18 @@
 
     window.viewWebGuide = async function () {
         if (slidesData.length === 0) {
-            showModal('배포할 슬라이드 내용을 하나 이상 작성해주세요.');
+            showModal('諛고룷???щ씪?대뱶 ?댁슜???섎굹 ?댁긽 ?묒꽦?댁＜?몄슂.');
             return;
         }
 
         const button = document.getElementById('dl-html-view-btn');
         if (button) {
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 泥섎━ 以?.';
             button.disabled = true;
         }
 
         try {
-            const htmlContent = generateGuideHtml(slidesData);
+            const htmlContent = generateGuideHtml(slidesData, { generatedAt: new Date() });
             const response = await fetch('/api/saveHtml', {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/html' },
@@ -781,13 +877,13 @@
 
     window.exportToHTML = async function () {
         if (slidesData.length === 0) {
-            showModal('다운로드할 슬라이드가 없습니다!');
+            showModal('?ㅼ슫濡쒕뱶???щ씪?대뱶媛 ?놁뒿?덈떎!');
             return;
         }
 
         const button = document.getElementById('dl-html-btn');
         if (button) {
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 泥섎━ 以?.';
             button.disabled = true;
         }
 
@@ -795,7 +891,7 @@
             await downloadGuideHtml();
         } catch (error) {
             console.error('[Phase5] exportToHTML failed', error);
-            showModal('HTML 다운로드용 이미지를 준비하는 중 오류가 발생했습니다.\n' + error.message);
+            showModal('HTML ?ㅼ슫濡쒕뱶???대?吏瑜?以鍮꾪븯??以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.\n' + error.message);
         } finally {
             if (button) {
                 button.innerHTML = '<i class="fa-solid fa-file-code"></i> HTML';
@@ -808,3 +904,6 @@
     window.__phase5GenerateGuideHtml = generateGuideHtml;
     window.__buildGuideDownloadName = buildGuideDownloadName;
 })();
+
+
+
