@@ -264,6 +264,176 @@
             border-color: var(--hpe-green);
         }
 
+        .theme-glass-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .theme-glass-color-row,
+        .theme-glass-row {
+            display: grid;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.02)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.28)));
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.72)) saturate(var(--glass-saturation));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.72)) saturate(var(--glass-saturation));
+        }
+
+        .theme-glass-color-row {
+            grid-template-columns: minmax(150px, 1fr) 42px 110px;
+        }
+
+        .theme-glass-row {
+            grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.3fr) 88px 32px;
+        }
+
+        .theme-glass-row-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .theme-glass-row input[type="range"] {
+            width: 100%;
+            accent-color: var(--hpe-green);
+        }
+
+        .theme-glass-row input[type="number"] {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'D2Coding', monospace;
+        }
+
+        .theme-glass-unit {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-align: right;
+        }
+
+        .theme-glass-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+        }
+
+        .theme-glass-preview-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .theme-glass-preview-copy strong {
+            color: var(--text-main);
+            font-size: 13px;
+        }
+
+        .theme-glass-preview-copy span {
+            color: var(--text-dim);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .theme-glass-sample {
+            position: relative;
+            min-height: 180px;
+            padding: 18px;
+            border-radius: 12px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at top right, color-mix(in srgb, var(--sample-accent, var(--hpe-green)) 30%, transparent), transparent 30%),
+                radial-gradient(circle at 14% 18%, rgba(255,255,255,0.18), transparent 26%),
+                linear-gradient(135deg, color-mix(in srgb, var(--sample-bg-dark, var(--bg-dark)) 90%, #09101c 10%), color-mix(in srgb, var(--sample-bg-dark, var(--bg-dark)) 86%, #05271f 14%));
+            color: var(--sample-text-main, var(--text-main));
+        }
+
+        .theme-glass-sample.light-mode {
+            background:
+                radial-gradient(circle at top right, color-mix(in srgb, var(--sample-accent, var(--hpe-green)) 22%, transparent), transparent 26%),
+                radial-gradient(circle at 16% 18%, rgba(255,255,255,0.4), transparent 28%),
+                linear-gradient(135deg, color-mix(in srgb, var(--sample-bg-dark, var(--bg-dark)) 94%, #ffffff 6%), color-mix(in srgb, var(--sample-bg-dark, var(--bg-dark)) 90%, #ecfeff 10%));
+        }
+
+        .theme-glass-sample-shell {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 144px;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(var(--sample-glass-rgb, var(--glass-rgb)), calc(var(--sample-glass-alpha, var(--glass-alpha)) + 0.03)), rgba(var(--sample-glass-rgb, var(--glass-rgb)), calc(var(--sample-glass-alpha, var(--glass-alpha)) * 0.42)));
+            border: 1px solid rgba(255,255,255, calc(0.14 + var(--sample-glass-refraction, var(--glass-refraction))));
+            box-shadow:
+                0 calc(10px + 18px * var(--sample-glass-depth, var(--glass-depth))) calc(22px + 28px * var(--sample-glass-depth, var(--glass-depth))) rgba(0,0,0, calc(0.12 + var(--sample-glass-depth, var(--glass-depth)) * 0.12)),
+                inset 0 1px 0 rgba(255,255,255, calc(0.18 + var(--sample-glass-refraction, var(--glass-refraction)) * 0.4));
+            backdrop-filter: blur(var(--sample-glass-blur, var(--glass-blur))) saturate(var(--sample-glass-saturation, var(--glass-saturation)));
+            -webkit-backdrop-filter: blur(var(--sample-glass-blur, var(--glass-blur))) saturate(var(--sample-glass-saturation, var(--glass-saturation)));
+            overflow: hidden;
+        }
+
+        .theme-glass-sample-shell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(145deg, rgba(255,255,255, calc(0.08 + var(--sample-glass-refraction, var(--glass-refraction)))), transparent 34%),
+                radial-gradient(circle at 82% 16%, rgba(255,255,255, calc(0.04 + var(--sample-glass-refraction, var(--glass-refraction)))), transparent 30%);
+        }
+
+        .theme-glass-sample-kicker {
+            position: relative;
+            z-index: 1;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sample-accent, var(--hpe-green));
+            font-weight: 700;
+        }
+
+        .theme-glass-sample-title {
+            position: relative;
+            z-index: 1;
+            color: var(--sample-text-main, var(--text-main));
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .theme-glass-sample-body {
+            position: relative;
+            z-index: 1;
+            max-width: 320px;
+            color: var(--sample-text-dim, var(--text-dim));
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .theme-glass-sample-chip {
+            position: relative;
+            z-index: 1;
+            align-self: flex-start;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--sample-box-bg, var(--box-bg)) 84%, rgba(255,255,255,0.2) 16%);
+            border: 1px solid color-mix(in srgb, var(--sample-border, var(--border-color)) 80%, rgba(255,255,255,0.2) 20%);
+            color: var(--sample-text-main, var(--text-main));
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         /* 釉뚮옖????*/
         .branding-row {
             display: flex;

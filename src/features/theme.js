@@ -38,8 +38,37 @@ function hexToRgbString(value, fallback = '255 255 255') {
             };
         }
 
+        function getBaseThemeTemplate() {
+            return {
+                name: 'hpe_default',
+                displayName: 'HPE Default (Dark)',
+                version: '1.0',
+                isDarkMode: true,
+                colors: {
+                    accent:   '#00E676',
+                    codeColor:'#00E676',
+                    bgDark:   '#010409',
+                    slideBg:  '#0D1117',
+                    boxBg:    '#161B22',
+                    border:   '#30363D',
+                    textMain: '#FFFFFF',
+                    textDim:  '#8B949E'
+                },
+                webGuide: {
+                    headerBg:    '#01a982',
+                    accentColor: '#01a982',
+                    darkAccent:  '#00e676',
+                    codeColor:   '#00e676'
+                },
+                fonts: {
+                    uiFamily:   'Pretendard',
+                    codeFamily: 'D2Coding'
+                }
+            };
+        }
+
         function normalizeThemeObject(theme) {
-            const baseTheme = getDefaultThemeObject();
+            const baseTheme = getBaseThemeTemplate();
             const safeTheme = theme && typeof theme === 'object' ? theme : {};
             const isDarkMode = safeTheme.isDarkMode !== false;
             const defaultGlass = getDefaultGlassSettings(isDarkMode);
@@ -66,33 +95,16 @@ function hexToRgbString(value, fallback = '255 255 255') {
             };
         }
 
+        const GLASS_FIELD_DEFINITIONS = [
+            { key: 'backgroundAlpha', label: 'Background Alpha', min: 0.04, max: 0.42, step: 0.01 },
+            { key: 'backgroundBlur', label: 'Background Filter Blur', min: 0, max: 40, step: 1, unit: 'px' },
+            { key: 'backgroundSaturation', label: 'Background Filter Saturation', min: 80, max: 220, step: 1, unit: '%' },
+            { key: 'refraction', label: 'Refraction', min: 0, max: 0.4, step: 0.01 },
+            { key: 'depth', label: 'Depth', min: 0, max: 1, step: 0.01 }
+        ];
+
         function getDefaultThemeObject() {
-            return normalizeThemeObject({
-                name: 'hpe_default',
-                displayName: 'HPE Default (Dark)',
-                version: '1.0',
-                isDarkMode: true,
-                colors: {
-                    accent:   '#00E676',
-                    codeColor:'#00E676',
-                    bgDark:   '#010409',
-                    slideBg:  '#0D1117',
-                    boxBg:    '#161B22',
-                    border:   '#30363D',
-                    textMain: '#FFFFFF',
-                    textDim:  '#8B949E'
-                },
-                webGuide: {
-                    headerBg:    '#01a982',
-                    accentColor: '#01a982',
-                    darkAccent:  '#00e676',
-                    codeColor:   '#00e676'
-                },
-                fonts: {
-                    uiFamily:   'Pretendard',
-                    codeFamily: 'D2Coding'
-                }
-            });
+            return normalizeThemeObject(getBaseThemeTemplate());
         }
 
         // 에디터 CSS 변수를 테마로 교체
@@ -295,6 +307,31 @@ function hexToRgbString(value, fallback = '255 255 255') {
             const darkEl = document.getElementById('theme-is-dark');
             if (darkEl) darkEl.checked = t.isDarkMode !== false;
 
+            const glassEl = document.getElementById('theme-glass-editor');
+            if (glassEl) {
+                const glass = t.glass || getDefaultThemeObject().glass;
+                glassEl.innerHTML = `
+                    <div class="theme-glass-color-row">
+                        <span class="color-row-label">Background Color</span>
+                        <input type="color" id="glass-backgroundColor" value="${glass.backgroundColor}"
+                            oninput="document.getElementById('glass-backgroundColor-hex').value=this.value; window.applyGlassPreview()">
+                        <input type="text" id="glass-backgroundColor-hex" value="${glass.backgroundColor}" maxlength="7" class="hex-input"
+                            oninput="window.syncGlassColorFromHex()">
+                    </div>
+                    ${GLASS_FIELD_DEFINITIONS.map(({ key, label, min, max, step, unit = '' }) => `
+                        <div class="theme-glass-row">
+                            <label class="theme-glass-row-label" for="glass-${key}-range">${label}</label>
+                            <input type="range" id="glass-${key}-range" min="${min}" max="${max}" step="${step}" value="${glass[key]}"
+                                oninput="window.syncGlassControl('${key}', 'range')">
+                            <input type="number" id="glass-${key}-number" min="${min}" max="${max}" step="${step}" value="${glass[key]}"
+                                oninput="window.syncGlassControl('${key}', 'number')">
+                            <span class="theme-glass-unit">${unit}</span>
+                        </div>
+                    `).join('')}
+                `;
+            }
+
+            updateThemeGlassSample(t);
             syncBrandingUI();
         }
 
@@ -330,6 +367,79 @@ function hexToRgbString(value, fallback = '255 255 255') {
                     }
                 }
             });
+
+            window.applyGlassPreview();
+        };
+
+        function getThemeGlassFromModal() {
+            const theme = activeTheme || getDefaultThemeObject();
+            const fallback = getDefaultGlassSettings(document.getElementById('theme-is-dark')?.checked !== false);
+            const currentGlass = theme.glass || fallback;
+
+            const colorInput = document.getElementById('glass-backgroundColor-hex');
+            const colorValue = colorInput?.value?.trim();
+
+            return {
+                backgroundColor: /^#[0-9a-fA-F]{6}$/.test(colorValue || '')
+                    ? colorValue
+                    : currentGlass.backgroundColor,
+                backgroundAlpha: clampGlassValue(document.getElementById('glass-backgroundAlpha-number')?.value, 0.04, 0.42, currentGlass.backgroundAlpha),
+                backgroundBlur: clampGlassValue(document.getElementById('glass-backgroundBlur-number')?.value, 0, 40, currentGlass.backgroundBlur),
+                backgroundSaturation: clampGlassValue(document.getElementById('glass-backgroundSaturation-number')?.value, 80, 220, currentGlass.backgroundSaturation),
+                refraction: clampGlassValue(document.getElementById('glass-refraction-number')?.value, 0, 0.4, currentGlass.refraction),
+                depth: clampGlassValue(document.getElementById('glass-depth-number')?.value, 0, 1, currentGlass.depth)
+            };
+        }
+
+        function updateThemeGlassSample(theme) {
+            const sample = document.getElementById('theme-glass-sample');
+            if (!sample) return;
+
+            const normalizedTheme = normalizeThemeObject(theme);
+            const glass = normalizedTheme.glass;
+            sample.classList.toggle('light-mode', normalizedTheme.isDarkMode === false);
+            sample.style.setProperty('--sample-glass-rgb', hexToRgbString(glass.backgroundColor));
+            sample.style.setProperty('--sample-glass-alpha', glass.backgroundAlpha.toFixed(2));
+            sample.style.setProperty('--sample-glass-blur', `${glass.backgroundBlur}px`);
+            sample.style.setProperty('--sample-glass-saturation', `${glass.backgroundSaturation}%`);
+            sample.style.setProperty('--sample-glass-refraction', glass.refraction.toFixed(2));
+            sample.style.setProperty('--sample-glass-depth', glass.depth.toFixed(2));
+            sample.style.setProperty('--sample-accent', normalizedTheme.colors.accent);
+            sample.style.setProperty('--sample-bg-dark', normalizedTheme.colors.bgDark);
+            sample.style.setProperty('--sample-slide-bg', normalizedTheme.colors.slideBg);
+            sample.style.setProperty('--sample-box-bg', normalizedTheme.colors.boxBg);
+            sample.style.setProperty('--sample-border', normalizedTheme.colors.border);
+            sample.style.setProperty('--sample-text-main', normalizedTheme.colors.textMain);
+            sample.style.setProperty('--sample-text-dim', normalizedTheme.colors.textDim);
+        }
+
+        window.syncGlassColorFromHex = function() {
+            const hexEl = document.getElementById('glass-backgroundColor-hex');
+            const pickerEl = document.getElementById('glass-backgroundColor');
+            if (!hexEl || !pickerEl) return;
+            const val = hexEl.value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                pickerEl.value = val;
+                window.applyGlassPreview();
+            }
+        };
+
+        window.syncGlassControl = function(key, source) {
+            const rangeEl = document.getElementById(`glass-${key}-range`);
+            const numberEl = document.getElementById(`glass-${key}-number`);
+            if (!rangeEl || !numberEl) return;
+            if (source === 'range') {
+                numberEl.value = rangeEl.value;
+            } else {
+                rangeEl.value = numberEl.value;
+            }
+            window.applyGlassPreview();
+        };
+
+        window.applyGlassPreview = function() {
+            const theme = buildThemeFromModal();
+            applyThemeToEditor(theme);
+            updateThemeGlassSample(theme);
         };
 
         function buildThemeFromModal() {
@@ -360,7 +470,7 @@ function hexToRgbString(value, fallback = '255 255 255') {
                     codeColor:   colors.codeColor || colors.accent
                 },
                 fonts: t.fonts || getDefaultThemeObject().fonts,
-                glass: t.glass || getDefaultThemeObject().glass
+                glass: getThemeGlassFromModal()
             });
         }
 

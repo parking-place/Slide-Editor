@@ -21,6 +21,8 @@
 - 기본 제공 `.slidetheme` 파일에 dark/light 공용 glass 기본값을 추가하고, 구버전 테마 로드 시 자동 fallback 되도록 정리했습니다.
 - 에디터 배경에 테마 기반 그라데이션을 추가하고, 헤더·Navigator·슬라이드 카드·편집 패널에 중간 강도의 glass shell을 적용하기 시작했습니다.
 - 입력 필드는 완전한 유리층으로 바꾸지 않고, shell 안의 읽기 중심 solid surface로 유지하도록 정리했습니다.
+- 테마 모달에 `Glass Surface` 섹션과 live sample card를 추가해 glass 값을 즉시 조정하고 미리볼 수 있게 했습니다.
+- glass 색상, alpha, blur, saturation, refraction, depth는 테마 저장 시 `.slidetheme`에 함께 기록되도록 연결했습니다.
 
 ## Fixed
 

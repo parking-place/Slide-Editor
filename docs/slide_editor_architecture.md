@@ -45,7 +45,7 @@
 - `src/features/export.js`
   - HTML 가이드 저장/다운로드, JSON 백업/임포트를 담당합니다.
 - `src/features/theme.js`
-  - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입을 담당합니다.
+  - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입, 테마 모달의 glass 편집 UI를 담당합니다.
 - `src/features/media.js`
   - 이미지 업로드, WebP 변환 상태 polling, 구버전 이미지 backfill을 담당합니다.
 - `src/features/html5-semantics.js`
@@ -68,7 +68,7 @@
 - `editor.css`
   - 편집기 폼과 슬라이드 카드 스타일, glass shell + readable inner content 구조
 - `modal.css`
-  - 프로젝트/테마/확인 모달 스타일
+  - 프로젝트/테마/확인 모달 스타일, glass 편집 필드와 live sample card
 - `enhancements.css`
   - WebP 상태 UI, lazy 렌더링, HTML5 보강 스타일
 
@@ -187,6 +187,18 @@
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
 입력 필드는 완전한 glass가 아니라, shell 안에 놓이는 읽기 중심의 solid surface로 유지합니다.
+
+테마 모달에서는 `Glass Surface` 섹션을 통해 아래 값을 직접 조정할 수 있습니다.
+
+- `backgroundColor`
+- `backgroundAlpha`
+- `backgroundBlur`
+- `backgroundSaturation`
+- `refraction`
+- `depth`
+
+이 입력값은 live preview로 즉시 반영되고,
+저장 시 `.slidetheme`의 `glass` 섹션에 함께 기록됩니다.
 
 ## 4. 프로젝트 저장 구조
 
