@@ -548,7 +548,7 @@ function generateTocData(slides) {
                 nav.innerHTML = `
                     <div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>
                     <div class="toc-sidebar-empty">
-                        <i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom: 8px; display: block;"></i>
+                        <i class="fa-solid fa-file-circle-plus toc-sidebar-empty-icon"></i>
                         슬라이드를 추가하면<br>목차가 여기에 표시됩니다.
                     </div>
                 `;

@@ -27,6 +27,7 @@
 - 가이드 본문은 가독성을 우선해 shell 바깥보다 더 짙은 readable surface를 쓰도록 분리했습니다.
 - 모바일 폭에서는 header, editor shell, guide shell의 blur/패딩/그림자를 한 단계 낮춰 과한 무게감을 줄이도록 조정했습니다.
 - `backdrop-filter` 미지원 환경에서는 glass 표면이 semi-transparent solid fallback으로 내려가도록 기본 폴백을 추가했습니다.
+- 라이트모드에서는 헤더 버튼, 가이드 헤더 제목, Navigator 빈 상태 문구와 현재 위치 하이라이트의 대비를 다시 조정해 너무 밝게 날아가던 텍스트와 아이콘을 보강했습니다.
 
 ## Fixed
 

@@ -198,6 +198,15 @@
         const guideGlassBorderAlpha = rootStyles.getPropertyValue('--glass-border-alpha').trim() || (bodyClass === 'light-mode' ? '0.30' : '0.20');
         const guideGlassShadowAlpha = rootStyles.getPropertyValue('--glass-shadow-alpha').trim() || (bodyClass === 'light-mode' ? '0.08' : '0.15');
         const guideGlassHighlightAlpha = rootStyles.getPropertyValue('--glass-highlight-alpha').trim() || (bodyClass === 'light-mode' ? '0.30' : '0.21');
+        const guideHeaderText = bodyClass === 'light-mode' ? '#0f172a' : '#f8fafc';
+        const guideHeaderSubtext = bodyClass === 'light-mode' ? '#334155' : 'rgba(248,250,252,0.92)';
+        const guideNavText = bodyClass === 'light-mode' ? '#475569' : '#8b949e';
+        const guideNavTextStrong = bodyClass === 'light-mode' ? '#0f172a' : '#f8fafc';
+        const guideActiveText = bodyClass === 'light-mode'
+            ? `color-mix(in srgb, ${accentColor} 76%, #0f172a 24%)`
+            : `color-mix(in srgb, ${accentColor} 82%, #f8fafc 18%)`;
+        const guideGlassStrong = bodyClass === 'light-mode' ? 'rgba(255,255,255,0.94)' : 'rgba(13,17,23,0.76)';
+        const guideGlassSoft = bodyClass === 'light-mode' ? 'rgba(255,255,255,0.82)' : 'rgba(13,17,23,0.52)';
 
         const cardsHtml = sourceSlides.map((slide, index) => {
             const imageSrc = getSlideImageSrc(resolveSlideImageSource(slide) || slide.image);
@@ -319,8 +328,9 @@
         }
         .guide-header {
             background:
-                linear-gradient(180deg, color-mix(in srgb, ${headerBg} 82%, rgba(var(--glass-rgb), 0.24) 18%), color-mix(in srgb, ${headerBg} 70%, rgba(var(--glass-rgb), 0.14) 30%));
-            color: #fff;
+                linear-gradient(180deg, color-mix(in srgb, ${headerBg} 18%, ${guideGlassStrong} 82%), color-mix(in srgb, ${headerBg} 12%, ${guideGlassSoft} 88%)),
+                radial-gradient(circle at 18% 16%, color-mix(in srgb, ${accentColor} 18%, transparent), transparent 54%);
+            color: ${guideHeaderText};
             padding: 48px 24px;
             text-align: center;
             border: 1px solid rgba(255,255,255, calc(var(--glass-border-alpha) + 0.06));
@@ -332,7 +342,7 @@
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.72)) saturate(var(--glass-saturation));
         }
         .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
-        .guide-header p { margin: 0; font-size: 18px; opacity: 0.92; }
+        .guide-header p { margin: 0; font-size: 18px; color: ${guideHeaderSubtext}; }
         .guide-layout { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 24px 20px; align-items: flex-start; }
         .guide-aside {
             width: 240px;
@@ -351,16 +361,24 @@
             backdrop-filter: blur(calc(var(--glass-blur) * 0.82)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.82)) saturate(var(--glass-saturation));
         }
-        .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
+        .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${guideNavText}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
         .guide-aside .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-aside .toc-nav-chapter:first-child { margin-top: 0; }
-        .guide-aside .toc-nav-middle { font-size: 12px; font-weight: 600; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; padding: 3px 6px 3px 14px; margin-bottom: 2px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-aside .toc-nav-middle { font-size: 12px; font-weight: 600; color: ${guideNavText}; padding: 3px 6px 3px 14px; margin-bottom: 2px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-aside .toc-nav-middle:hover,
         .guide-aside .toc-nav-middle:focus-visible { background: ${accentColor}1A; color: ${accentColor}; padding-left: 18px; outline: none; }
-        .guide-aside .toc-nav-title { font-size: 12px; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; padding: 4px 6px 4px 24px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent; }
+        .guide-aside .toc-nav-title { font-size: 12px; color: ${guideNavText}; padding: 4px 6px 4px 24px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent; }
         .guide-aside .toc-nav-title:hover,
-        .guide-aside .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; padding-left: 27px; outline: none; }
-        .guide-aside .toc-nav-title.active { color: ${accentColor}; background: ${accentColor}1A; border-left: 2px solid ${accentColor}; font-weight: 600; }
+        .guide-aside .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${guideNavTextStrong}; padding-left: 27px; outline: none; }
+        .guide-aside .toc-nav-title.active {
+            color: ${guideActiveText};
+            background: linear-gradient(180deg, color-mix(in srgb, ${accentColor} 16%, ${guideGlassStrong} 84%), color-mix(in srgb, ${accentColor} 9%, ${guideGlassSoft} 91%));
+            border-left: 2px solid ${accentColor};
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) + 0.04)),
+                0 6px 16px rgba(15, 23, 42, calc(var(--glass-shadow-alpha) * 0.55));
+            font-weight: 600;
+        }
         .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
         .guide-card {
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.4)));
