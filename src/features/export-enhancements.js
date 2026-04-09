@@ -185,18 +185,13 @@
         const codeBlockBackground = bodyClass === 'light-mode'
             ? 'linear-gradient(180deg, rgba(15,23,42,0.82), rgba(2,6,23,0.76))'
             : 'linear-gradient(180deg, rgba(15,23,42,0.84), rgba(2,6,23,0.72))';
-        const guideScrollTrack = bodyClass === 'light-mode'
-            ? 'rgba(226, 232, 240, 0.75)'
-            : 'rgba(15, 23, 42, 0.72)';
+        const guideScrollTrack = 'transparent';
         const guideScrollThumb = bodyClass === 'light-mode'
-            ? `color-mix(in srgb, ${accentColor} 32%, #94a3b8 68%)`
-            : `color-mix(in srgb, ${accentColor} 44%, rgba(148, 163, 184, 0.42) 56%)`;
+            ? `color-mix(in srgb, ${accentColor} 86%, rgba(15, 23, 42, 0.12) 14%)`
+            : `color-mix(in srgb, ${accentColor} 86%, rgba(255, 255, 255, 0.14) 14%)`;
         const guideScrollThumbHover = bodyClass === 'light-mode'
-            ? `color-mix(in srgb, ${accentColor} 58%, #475569 42%)`
-            : `color-mix(in srgb, ${accentColor} 70%, #f8fafc 30%)`;
-        const guideScrollBorder = bodyClass === 'light-mode'
-            ? 'rgba(255, 255, 255, 0.92)'
-            : 'rgba(15, 23, 42, 0.86)';
+            ? `color-mix(in srgb, ${accentColor} 78%, #0f172a 22%)`
+            : `color-mix(in srgb, ${accentColor} 72%, #f8fafc 28%)`;
         const guideGlassRgb = rootStyles.getPropertyValue('--glass-rgb').trim() || '255, 255, 255';
         const guideGlassAlpha = rootStyles.getPropertyValue('--glass-alpha').trim() || (bodyClass === 'light-mode' ? '0.36' : '0.11');
         const guideGlassBlur = rootStyles.getPropertyValue('--glass-blur').trim() || (bodyClass === 'light-mode' ? '10px' : '14px');
@@ -324,16 +319,26 @@
         .guide-aside::-webkit-scrollbar-thumb,
         .guide-main::-webkit-scrollbar-thumb,
         .markdown-body pre::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, ${guideScrollThumbHover}, ${guideScrollThumb});
+            background: ${guideScrollThumb};
             border-radius: 999px;
-            border: 2px solid ${guideScrollBorder};
+            border: 2px solid transparent;
             min-height: 28px;
         }
         body::-webkit-scrollbar-thumb:hover,
         .guide-aside::-webkit-scrollbar-thumb:hover,
         .guide-main::-webkit-scrollbar-thumb:hover,
         .markdown-body pre::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, ${guideScrollThumbHover}, color-mix(in srgb, ${guideScrollThumb} 78%, ${guideScrollThumbHover} 22%));
+            background: ${guideScrollThumbHover};
+        }
+        body::-webkit-scrollbar-button,
+        .guide-aside::-webkit-scrollbar-button,
+        .guide-main::-webkit-scrollbar-button,
+        .markdown-body pre::-webkit-scrollbar-button,
+        body::-webkit-scrollbar-corner,
+        .guide-aside::-webkit-scrollbar-corner,
+        .guide-main::-webkit-scrollbar-corner,
+        .markdown-body pre::-webkit-scrollbar-corner {
+            background: transparent;
         }
         body {
             margin: 0;

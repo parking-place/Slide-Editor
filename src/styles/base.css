@@ -19,10 +19,10 @@
             --glass-shadow-alpha: 0.03;
             --glass-highlight-alpha: 0.04;
             --scrollbar-size: 8px;
-            --scrollbar-track: linear-gradient(180deg, rgba(var(--glass-rgb), 0.06), rgba(var(--glass-rgb), 0.02));
-            --scrollbar-thumb: color-mix(in srgb, var(--secondary-accent) 38%, var(--border-color) 62%);
-            --scrollbar-thumb-hover: color-mix(in srgb, var(--secondary-accent) 56%, var(--text-main) 44%);
-            --scrollbar-thumb-border: color-mix(in srgb, var(--bg-dark) 64%, transparent);
+            --scrollbar-track: transparent;
+            --scrollbar-thumb: color-mix(in srgb, var(--hpe-green) 86%, rgba(255, 255, 255, 0.14) 14%);
+            --scrollbar-thumb-hover: color-mix(in srgb, var(--hpe-green) 72%, var(--text-main) 28%);
+            --scrollbar-thumb-border: transparent;
             --surface-grid-dot: rgba(255, 255, 255, 0.05);
             --surface-noise-opacity: 0.055;
         }
@@ -43,10 +43,10 @@
             --glass-border-alpha: 0.30;
             --glass-shadow-alpha: 0.08;
             --glass-highlight-alpha: 0.30;
-            --scrollbar-track: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.34));
-            --scrollbar-thumb: color-mix(in srgb, var(--secondary-accent) 30%, #94a3b8 70%);
-            --scrollbar-thumb-hover: color-mix(in srgb, var(--secondary-accent) 48%, #475569 52%);
-            --scrollbar-thumb-border: color-mix(in srgb, var(--slide-bg) 70%, transparent);
+            --scrollbar-track: transparent;
+            --scrollbar-thumb: color-mix(in srgb, var(--hpe-green) 86%, rgba(15, 23, 42, 0.12) 14%);
+            --scrollbar-thumb-hover: color-mix(in srgb, var(--hpe-green) 78%, #0f172a 22%);
+            --scrollbar-thumb-border: transparent;
             --surface-grid-dot: rgba(0, 0, 0, 0.05);
             --surface-noise-opacity: 0.03;
         }
@@ -163,9 +163,6 @@
         .code-block-wrapper pre::-webkit-scrollbar-track {
             background: var(--scrollbar-track);
             border-radius: 999px;
-            box-shadow:
-                inset 0 0 0 1px color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 60%, transparent),
-                inset 0 6px 12px rgba(15, 23, 42, 0.08);
         }
 
         html::-webkit-scrollbar-thumb,
@@ -180,7 +177,7 @@
         .box::-webkit-scrollbar-thumb,
         .markdown-body pre::-webkit-scrollbar-thumb,
         .code-block-wrapper pre::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--scrollbar-thumb-hover), var(--scrollbar-thumb));
+            background: var(--scrollbar-thumb);
             border-radius: 999px;
             border: 2px solid var(--scrollbar-thumb-border);
             min-height: 28px;
@@ -198,7 +195,34 @@
         .box::-webkit-scrollbar-thumb:hover,
         .markdown-body pre::-webkit-scrollbar-thumb:hover,
         .code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, var(--scrollbar-thumb-hover), color-mix(in srgb, var(--scrollbar-thumb) 78%, var(--scrollbar-thumb-hover) 22%));
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        html::-webkit-scrollbar-button,
+        body::-webkit-scrollbar-button,
+        .toc-sidebar::-webkit-scrollbar-button,
+        .theme-list::-webkit-scrollbar-button,
+        .theme-editor::-webkit-scrollbar-button,
+        .project-list-panel::-webkit-scrollbar-button,
+        .project-editor-panel::-webkit-scrollbar-button,
+        .new-project-modal-body::-webkit-scrollbar-button,
+        .editor-section textarea::-webkit-scrollbar-button,
+        .box::-webkit-scrollbar-button,
+        .markdown-body pre::-webkit-scrollbar-button,
+        .code-block-wrapper pre::-webkit-scrollbar-button,
+        html::-webkit-scrollbar-corner,
+        body::-webkit-scrollbar-corner,
+        .toc-sidebar::-webkit-scrollbar-corner,
+        .theme-list::-webkit-scrollbar-corner,
+        .theme-editor::-webkit-scrollbar-corner,
+        .project-list-panel::-webkit-scrollbar-corner,
+        .project-editor-panel::-webkit-scrollbar-corner,
+        .new-project-modal-body::-webkit-scrollbar-corner,
+        .editor-section textarea::-webkit-scrollbar-corner,
+        .box::-webkit-scrollbar-corner,
+        .markdown-body pre::-webkit-scrollbar-corner,
+        .code-block-wrapper pre::-webkit-scrollbar-corner {
+            background: transparent;
         }
 
         /* 而⑦듃濡??⑤꼸 */

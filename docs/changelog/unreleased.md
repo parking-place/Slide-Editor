@@ -10,6 +10,9 @@
 
 ## Changed
 
+- 에디터 슬라이드 이미지의 곡률은 유지하고, 에디터 전용 이미지 드롭섀도우는 제거했습니다.
+- 에디터, Navigator, 모달, 코드 블록, HTML 가이드의 스크롤바를 `accent` thumb + transparent track 규칙으로 통일했습니다.
+- 가이드 export 스크롤바도 editor와 같은 원칙을 따르도록 정리해, guide aside/main/code block이 동일한 thumb/track 구조를 사용합니다.
 - 웹 가이드 HTML도 에디터와 같은 glass 토큰, 배경 그리드/노이즈, shell 공식을 사용하도록 정리해 editor와 guide가 같은 테마 언어를 공유하도록 맞췄습니다.
 - 다크모드 glass 기본값을 `backgroundColor #000000`, `backgroundAlpha 0`, `backgroundBlur 40`, `backgroundSaturation 151`, `refraction 0.01` 기준으로 다시 조정했습니다.
 - `glass.noiseOpacity`의 조절 범위를 `0 ~ 1`로 확장하고, 테마 모달의 `Glass Surface`에서도 같은 최대값으로 저장되도록 맞췄습니다.
