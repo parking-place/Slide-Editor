@@ -6,6 +6,11 @@
             --text-main: #FFFFFF;
             --text-dim: #8B949E;
             --box-bg: #161B22;
+            --scrollbar-size: 8px;
+            --scrollbar-track: color-mix(in srgb, var(--bg-dark) 72%, var(--slide-bg) 28%);
+            --scrollbar-thumb: color-mix(in srgb, var(--hpe-green) 42%, var(--border-color) 58%);
+            --scrollbar-thumb-hover: color-mix(in srgb, var(--hpe-green) 64%, var(--text-main) 36%);
+            --scrollbar-thumb-border: color-mix(in srgb, var(--bg-dark) 64%, transparent);
         }
 
         body.light-mode {
@@ -15,6 +20,10 @@
             --text-main: #111827;
             --text-dim: #4b5563;
             --box-bg: #f9fafb;
+            --scrollbar-track: color-mix(in srgb, var(--slide-bg) 70%, var(--bg-dark) 30%);
+            --scrollbar-thumb: color-mix(in srgb, var(--hpe-green) 32%, #94a3b8 68%);
+            --scrollbar-thumb-hover: color-mix(in srgb, var(--hpe-green) 54%, #475569 46%);
+            --scrollbar-thumb-border: color-mix(in srgb, var(--slide-bg) 70%, transparent);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,6 +33,72 @@
             font-family: 'Pretendard', sans-serif;
             color: var(--text-dim);
             padding-bottom: 50px;
+        }
+
+        html,
+        body,
+        .toc-sidebar,
+        .theme-list,
+        .theme-editor,
+        .editor-section textarea,
+        .box,
+        .markdown-body pre,
+        .code-block-wrapper pre {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .toc-sidebar::-webkit-scrollbar,
+        .theme-list::-webkit-scrollbar,
+        .theme-editor::-webkit-scrollbar,
+        .editor-section textarea::-webkit-scrollbar,
+        .box::-webkit-scrollbar,
+        .markdown-body pre::-webkit-scrollbar,
+        .code-block-wrapper pre::-webkit-scrollbar {
+            width: var(--scrollbar-size);
+            height: var(--scrollbar-size);
+        }
+
+        html::-webkit-scrollbar-track,
+        body::-webkit-scrollbar-track,
+        .toc-sidebar::-webkit-scrollbar-track,
+        .theme-list::-webkit-scrollbar-track,
+        .theme-editor::-webkit-scrollbar-track,
+        .editor-section textarea::-webkit-scrollbar-track,
+        .box::-webkit-scrollbar-track,
+        .markdown-body pre::-webkit-scrollbar-track,
+        .code-block-wrapper pre::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 999px;
+        }
+
+        html::-webkit-scrollbar-thumb,
+        body::-webkit-scrollbar-thumb,
+        .toc-sidebar::-webkit-scrollbar-thumb,
+        .theme-list::-webkit-scrollbar-thumb,
+        .theme-editor::-webkit-scrollbar-thumb,
+        .editor-section textarea::-webkit-scrollbar-thumb,
+        .box::-webkit-scrollbar-thumb,
+        .markdown-body pre::-webkit-scrollbar-thumb,
+        .code-block-wrapper pre::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--scrollbar-thumb-hover), var(--scrollbar-thumb));
+            border-radius: 999px;
+            border: 2px solid var(--scrollbar-thumb-border);
+            min-height: 28px;
+        }
+
+        html::-webkit-scrollbar-thumb:hover,
+        body::-webkit-scrollbar-thumb:hover,
+        .toc-sidebar::-webkit-scrollbar-thumb:hover,
+        .theme-list::-webkit-scrollbar-thumb:hover,
+        .theme-editor::-webkit-scrollbar-thumb:hover,
+        .editor-section textarea::-webkit-scrollbar-thumb:hover,
+        .box::-webkit-scrollbar-thumb:hover,
+        .markdown-body pre::-webkit-scrollbar-thumb:hover,
+        .code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--scrollbar-thumb-hover), color-mix(in srgb, var(--scrollbar-thumb) 78%, var(--scrollbar-thumb-hover) 22%));
         }
 
         /* 而⑦듃濡??⑤꼸 */

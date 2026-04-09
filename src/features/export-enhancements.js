@@ -126,6 +126,18 @@
         const footerCopy = branding.footerCopy || branding.projectName || 'My Guide';
         const navigatorModel = buildGuideNavigatorModel(sourceSlides);
         const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
+        const guideScrollTrack = bodyClass === 'light-mode'
+            ? 'rgba(226, 232, 240, 0.75)'
+            : 'rgba(15, 23, 42, 0.72)';
+        const guideScrollThumb = bodyClass === 'light-mode'
+            ? `color-mix(in srgb, ${accentColor} 32%, #94a3b8 68%)`
+            : `color-mix(in srgb, ${accentColor} 44%, rgba(148, 163, 184, 0.42) 56%)`;
+        const guideScrollThumbHover = bodyClass === 'light-mode'
+            ? `color-mix(in srgb, ${accentColor} 58%, #475569 42%)`
+            : `color-mix(in srgb, ${accentColor} 70%, #f8fafc 30%)`;
+        const guideScrollBorder = bodyClass === 'light-mode'
+            ? 'rgba(255, 255, 255, 0.92)'
+            : 'rgba(15, 23, 42, 0.86)';
 
         const cardsHtml = sourceSlides.map((slide, index) => {
             const imageSrc = slide.image ? getSlideImageSrc(slide.image) : resolveSlideImageSource(slide);
@@ -188,16 +200,48 @@
         :root { color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'}; }
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
+        body,
+        .guide-aside,
+        .guide-main,
+        .markdown-body pre {
+            scrollbar-width: thin;
+            scrollbar-color: ${guideScrollThumb} ${guideScrollTrack};
+        }
+        body::-webkit-scrollbar,
+        .guide-aside::-webkit-scrollbar,
+        .guide-main::-webkit-scrollbar,
+        .markdown-body pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        body::-webkit-scrollbar-track,
+        .guide-aside::-webkit-scrollbar-track,
+        .guide-main::-webkit-scrollbar-track,
+        .markdown-body pre::-webkit-scrollbar-track {
+            background: ${guideScrollTrack};
+            border-radius: 999px;
+        }
+        body::-webkit-scrollbar-thumb,
+        .guide-aside::-webkit-scrollbar-thumb,
+        .guide-main::-webkit-scrollbar-thumb,
+        .markdown-body pre::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, ${guideScrollThumbHover}, ${guideScrollThumb});
+            border-radius: 999px;
+            border: 2px solid ${guideScrollBorder};
+            min-height: 28px;
+        }
+        body::-webkit-scrollbar-thumb:hover,
+        .guide-aside::-webkit-scrollbar-thumb:hover,
+        .guide-main::-webkit-scrollbar-thumb:hover,
+        .markdown-body pre::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, ${guideScrollThumbHover}, color-mix(in srgb, ${guideScrollThumb} 78%, ${guideScrollThumbHover} 22%));
+        }
         body { margin: 0; font-family: 'Pretendard', 'Segoe UI', sans-serif; background: ${bodyClass === 'light-mode' ? '#f3f4f6' : '#010409'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; }
         .guide-header { background: ${headerBg}; color: #fff; padding: 48px 24px; text-align: center; }
         .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
         .guide-header p { margin: 0; font-size: 18px; opacity: 0.92; }
         .guide-layout { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 24px 20px; align-items: flex-start; }
         .guide-aside { width: 240px; flex-shrink: 0; position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; padding: 20px 16px; border-right: 1px solid rgba(148,163,184,0.2); }
-        .guide-aside::-webkit-scrollbar { width: 4px; }
-        .guide-aside::-webkit-scrollbar-track { background: transparent; }
-        .guide-aside::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.4); border-radius: 4px; }
-        .guide-aside::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.7); }
         .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
         .guide-aside .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-aside .toc-nav-chapter:first-child { margin-top: 0; }
