@@ -11,6 +11,7 @@
 
 ## Changed
 
+- `app.js` 끝에 통합돼 있던 미디어 처리, HTML5 보강, export 후행 레이어를 `src/features` 하위 기능 파일로 분리해 로드 순서와 책임 범위를 명확히 정리했습니다.
 - `style.css`를 로더 파일로 축소하고 `src/styles/base.css`, `layout.css`, `editor.css`, `modal.css`, `enhancements.css`로 분리해 CSS 책임을 모듈 단위로 정리했습니다.
 - `src`의 페이즈별 JavaScript/CSS 오버레이 파일을 메인 `app.js`, `style.css`로 통합하고, HTML 로드 경로를 단일 엔트리 기준으로 정리했습니다.
 
