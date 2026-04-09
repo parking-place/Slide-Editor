@@ -893,7 +893,7 @@
             await downloadGuideHtml();
         } finally {
             if (button) {
-                button.innerHTML = '<i class="fa-solid fa-book-open"></i> Guide';
+                button.innerHTML = '<i class="fa-solid fa-book-open"></i> Viewer';
                 button.disabled = false;
             }
         }

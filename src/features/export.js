@@ -451,7 +451,7 @@
                 console.warn('통신 오류. 로컬 다운로드 전환:', err);
                 window.exportToHTML();
             } finally {
-                btn.innerHTML = '<i class="fa-solid fa-book-open"></i> 가이드 보기';
+                btn.innerHTML = '<i class="fa-solid fa-book-open"></i> Viewer';
             }
         };
 
