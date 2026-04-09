@@ -6,7 +6,7 @@
 
         function getDefaultProjectSettings(projectName = 'My Guide') {
             return {
-                activeTheme: 'hpe_default',
+                activeTheme: 'nvidia_light',
                 branding: {
                     projectName,
                     guideSubtitle: '가이드 부제',

@@ -120,26 +120,26 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
 
         function getBaseThemeTemplate() {
             return {
-                name: 'hpe_default',
-                displayName: 'HPE Default (Dark)',
+                name: 'nvidia_light',
+                displayName: 'NVIDIA Light',
                 version: '1.0',
-                isDarkMode: true,
+                isDarkMode: false,
                 colors: {
-                    accent:   '#00E676',
-                    secondaryAccent: '#14b8a6',
-                    codeColor:'#00E676',
-                    bgDark:   '#010409',
-                    slideBg:  '#0D1117',
-                    boxBg:    '#161B22',
-                    border:   '#30363D',
-                    textMain: '#FFFFFF',
-                    textDim:  '#8B949E'
+                    accent:   '#5a8f00',
+                    secondaryAccent: '#858f00',
+                    codeColor:'#5a8f00',
+                    bgDark:   '#e8f2d5',
+                    slideBg:  '#ffffff',
+                    boxBg:    '#f2f9e5',
+                    border:   '#cce68f',
+                    textMain: '#1a1a1a',
+                    textDim:  '#5a5a5a'
                 },
                 webGuide: {
-                    headerBg:    '#01a982',
-                    accentColor: '#01a982',
-                    darkAccent:  '#00e676',
-                    codeColor:   '#00e676'
+                    headerBg:    '#5a8f00',
+                    accentColor: '#5a8f00',
+                    darkAccent:  '#447000',
+                    codeColor:   '#5a8f00'
                 },
                 fonts: {
                     uiFamily:   'Pretendard',

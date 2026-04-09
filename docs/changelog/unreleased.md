@@ -10,6 +10,7 @@
 
 ## Changed
 
+- 새 프로젝트와 폴백 로드에 사용하는 기본 테마를 `hpe_default`에서 `nvidia_light`로 변경했습니다.
 - 라이트 모드에서 `Glass Surface` 7개 옵션과 `bgDark`/`slideBg`/`boxBg`/`border` 색상 설정이 샘플뿐 아니라 실제 editor surfaces에도 즉시 반영되도록 복구했습니다.
 - 에디터 슬라이드 이미지의 곡률은 유지하고, 에디터 전용 이미지 드롭섀도우는 제거했습니다.
 - 에디터, Navigator, 모달, 코드 블록, HTML 가이드의 스크롤바를 `accent` thumb + transparent track 규칙으로 통일했습니다.
