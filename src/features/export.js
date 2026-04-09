@@ -1,7 +1,7 @@
 // Auto-extracted modular segment: Export Base
 
         // HTML 웹 가이드 문자열 템플릿 생성 헬퍼
-        function generateHTMLContent(sourceSlides = slidesData) {
+        function generateLegacyHTMLContent(sourceSlides = slidesData) {
             // 테마 및 브랜딩 변수 추출 (없으면 기본값)
             const th = (activeTheme && activeTheme.webGuide) ? activeTheme.webGuide : { headerBg: '#01a982', accentColor: '#01a982', darkAccent: '#00e676', codeColor: '#00e676' };
             const br = projectSettings.branding;
@@ -34,6 +34,52 @@
     <style>
         body { margin: 0; padding: 0; background: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; }
         html { scroll-behavior: smooth; }
+        body,
+        .guide-toc,
+        .markdown-body pre,
+        .code-block-wrapper pre {
+            scrollbar-width: thin;
+            scrollbar-color: ${accentColor} transparent;
+        }
+        body::-webkit-scrollbar,
+        .guide-toc::-webkit-scrollbar,
+        .markdown-body pre::-webkit-scrollbar,
+        .code-block-wrapper pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        body::-webkit-scrollbar-track,
+        .guide-toc::-webkit-scrollbar-track,
+        .markdown-body pre::-webkit-scrollbar-track,
+        .code-block-wrapper pre::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 999px;
+        }
+        body::-webkit-scrollbar-thumb,
+        .guide-toc::-webkit-scrollbar-thumb,
+        .markdown-body pre::-webkit-scrollbar-thumb,
+        .code-block-wrapper pre::-webkit-scrollbar-thumb {
+            background: ${accentColor};
+            border-radius: 999px;
+            border: 2px solid transparent;
+            min-height: 28px;
+        }
+        body::-webkit-scrollbar-thumb:hover,
+        .guide-toc::-webkit-scrollbar-thumb:hover,
+        .markdown-body pre::-webkit-scrollbar-thumb:hover,
+        .code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
+            background: color-mix(in srgb, ${accentColor} 78%, #0f172a 22%);
+        }
+        body::-webkit-scrollbar-button,
+        .guide-toc::-webkit-scrollbar-button,
+        .markdown-body pre::-webkit-scrollbar-button,
+        .code-block-wrapper pre::-webkit-scrollbar-button,
+        body::-webkit-scrollbar-corner,
+        .guide-toc::-webkit-scrollbar-corner,
+        .markdown-body pre::-webkit-scrollbar-corner,
+        .code-block-wrapper pre::-webkit-scrollbar-corner {
+            background: transparent;
+        }
         .header { background: ${headerBg}; color: #ffffff; padding: 40px 20px; text-align: center; }
         .header h1 { margin: 0 0 10px 0; font-size: 32px; }
         .header p { margin: 0; font-size: 18px; opacity: 0.9; }
@@ -96,7 +142,6 @@
         /* Guide TOC Navigator */
         .page-layout { display: flex; align-items: flex-start; max-width: 1400px; margin: -20px auto 40px; padding: 0 20px; }
         .guide-toc { width: 240px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; padding: 20px 14px; background: #ffffff; border-right: 1px solid #e5e7eb; border-radius: 12px 0 0 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .guide-toc::-webkit-scrollbar { width: 3px; } .guide-toc::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
         .guide-toc-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${accentColor}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
         .guide-toc-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 3px; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-toc-chapter:first-child { margin-top: 0; }
@@ -115,6 +160,14 @@
         body.dark-mode .guide-toc-item { color: #8b949e; }
         body.dark-mode .guide-toc-item:hover { background: ${darkAccent}0D; color: ${darkAccent}; }
         body.dark-mode .guide-toc-item.active { color: ${darkAccent}; border-left-color: ${darkAccent}; background: ${darkAccent}14; }
+        body.dark-mode::-webkit-scrollbar-thumb,
+        body.dark-mode .guide-toc::-webkit-scrollbar-thumb,
+        body.dark-mode .markdown-body pre::-webkit-scrollbar-thumb,
+        body.dark-mode .code-block-wrapper pre::-webkit-scrollbar-thumb { background: ${darkAccent}; }
+        body.dark-mode::-webkit-scrollbar-thumb:hover,
+        body.dark-mode .guide-toc::-webkit-scrollbar-thumb:hover,
+        body.dark-mode .markdown-body pre::-webkit-scrollbar-thumb:hover,
+        body.dark-mode .code-block-wrapper pre::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, ${darkAccent} 72%, #f8fafc 28%); }
 
         /* Code Block Wrapper & Copy Button */
         .code-block-wrapper { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; border-left: 3px solid ${codeColor}; }
@@ -360,6 +413,13 @@
 
 
             return htmlContent;
+        }
+
+        function generateHTMLContent(sourceSlides = slidesData) {
+            if (typeof window.__phase5GenerateGuideHtml === 'function') {
+                return window.__phase5GenerateGuideHtml(sourceSlides);
+            }
+            return generateLegacyHTMLContent(sourceSlides);
         }
 
         // 웹 가이드 서버 배포 및 새 탭 창 열기

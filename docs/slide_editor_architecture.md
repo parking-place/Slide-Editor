@@ -44,6 +44,7 @@
   - 슬라이드 추가/수정/삭제와 미리보기 렌더링을 담당합니다.
 - `src/features/export.js`
   - HTML 가이드 저장/다운로드, JSON 백업/임포트를 담당합니다.
+  - 현재는 구형 HTML 문자열 빌더를 직접 렌더링하지 않고, 가능하면 `src/features/export-enhancements.js`의 최신 가이드 생성기로 위임합니다.
 - `src/features/theme.js`
   - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입, 테마 모달의 glass 편집 UI를 담당합니다.
 - `src/features/media.js`
@@ -58,6 +59,7 @@
   - outline 메타데이터와 HTML 가이드 동기화 보강을 담당합니다.
 - `src/features/export-enhancements.js`
   - 가이드용 Navigator, 이미지 fallback, portable HTML 변환, glass 토큰이 반영된 HTML 가이드 셸 보강을 담당합니다.
+  - `Guide` 미리보기와 `HTML` 다운로드가 공통으로 사용하는 최신 HTML 가이드 생성 경로입니다.
   - 코드 블록 본문, 코드 헤더, 언어 라벨, 복사 버튼 텍스트는 테마의 `codeColor`를 우선 사용하도록 맞춥니다.
 
 ### 2.3 `src/styles/`
@@ -374,7 +376,7 @@ data/projects/<projectId>/
 - HTML 가이드는 `src/features/export-enhancements.js`에서 editor가 사용하는 glass 토큰과 동일한 값을 읽어 body 배경, 헤더, Navigator, 카드, 코드 블록 표면에 반영합니다.
 - guide의 배경도 editor처럼 그리드와 노이즈 레이어를 포함하며, active navigator 상태는 `accent`/`secondaryAccent` 기반 glass 강조를 사용합니다.
 
-HTML 가이드는 다음 두 경로를 지원합니다.
+HTML 가이드는 다음 두 UI 경로를 지원하지만, 실제 HTML 생성은 하나의 최신 가이드 생성 경로로 통합되어 있습니다.
 
 - `Guide`
   - 서버에 저장한 HTML을 새 창에서 미리보기
