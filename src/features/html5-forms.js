@@ -11,12 +11,12 @@
             ['#input-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#input-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#input-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
-            ['#input-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#input-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done', placeholder: '이미지 설명(선택사항)' }],
             ['#edit-chapter', { maxlength: '120', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
             ['#edit-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
-            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done', placeholder: '이미지 설명(선택사항)' }],
             ['#theme-name-input', { maxlength: '80', autocomplete: 'off', enterkeyhint: 'done' }],
             ['#project-branding-guide-subtitle', { maxlength: '160' }],
             ['#project-branding-footer-copy', { maxlength: '80' }],
@@ -48,7 +48,13 @@
         const inputGroup = section.querySelector('.input-group');
         const textArea = section.querySelector('textarea');
         const mediaWrapper = section.querySelector('.file-upload-wrapper.file-drop-zone');
+        const captionWrapper = section.querySelector('.media-caption-wrap');
         const ratioWrapper = section.querySelector('.file-upload-wrapper[id$="layout-ratio-container"]');
+        const captionLabel = captionWrapper ? captionWrapper.querySelector('label') : null;
+
+        if (captionLabel) {
+            captionLabel.remove();
+        }
 
         const form = document.createElement('form');
         form.className = 'phase6-editor-form';
@@ -79,6 +85,9 @@
                 const mediaPane = document.createElement('div');
                 mediaPane.className = 'editor-compose-media';
                 mediaPane.appendChild(mediaWrapper);
+                if (captionWrapper) {
+                    mediaPane.appendChild(captionWrapper);
+                }
                 composeGrid.appendChild(mediaPane);
             }
 

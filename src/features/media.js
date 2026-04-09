@@ -442,6 +442,8 @@
         const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
         const previousSlide = slidesData[index];
         const hasNewImage = !!(imageInput.files && imageInput.files[0]);
+        const imageZone = imageInput?.closest ? imageInput.closest('.file-drop-zone') : null;
+        const pendingRemoval = imageZone?.dataset?.pendingRemoval === 'true';
 
         try {
             if (previousSlide && previousSlide.imageAsset && previousSlide.imageAsset.assetId) {
@@ -462,6 +464,10 @@
             if (hasNewImage) {
                 const asset = await uploadImageFile(imageInput.files[0], imageStatus);
                 mergeSlideImageAsset(nextSlide, asset);
+            } else if (pendingRemoval) {
+                nextSlide.image = null;
+                nextSlide.imageAsset = null;
+                nextSlide.imageCaption = '';
             }
 
             slidesData[index] = nextSlide;

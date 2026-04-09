@@ -106,6 +106,8 @@ function generateTocData(slides) {
                 layoutContainer: document.getElementById(wrapper.dataset.layoutId),
                 status: document.getElementById(wrapper.dataset.statusId),
                 captionContainer: document.getElementById(wrapper.dataset.captionId),
+                captionInput: wrapper.dataset.captionInputId ? document.getElementById(wrapper.dataset.captionInputId) : null,
+                icon: wrapper.querySelector('.media-drop-icon i'),
                 defaultText: wrapper.dataset.defaultText || '',
                 existingText: wrapper.dataset.existingText || wrapper.dataset.defaultText || ''
             };
@@ -145,13 +147,14 @@ function generateTocData(slides) {
             }
 
             const selectedFile = context.input?.files?.[0] || null;
-            const hasExistingImage = context.wrapper.dataset.hasImage === 'true';
-            const hasImage = !!selectedFile || hasExistingImage;
+            const hasExistingImage = context.wrapper.dataset.existingImage === 'true';
+            const pendingRemoval = context.wrapper.dataset.pendingRemoval === 'true';
+            const hasImage = !!selectedFile || (hasExistingImage && !pendingRemoval);
 
             if (selectedFile) {
                 context.status.textContent = selectedFile.name;
                 context.status.dataset.state = 'selected';
-            } else if (hasExistingImage) {
+            } else if (hasExistingImage && !pendingRemoval) {
                 context.status.textContent = context.existingText;
                 context.status.dataset.state = 'selected';
             } else {
@@ -161,6 +164,11 @@ function generateTocData(slides) {
 
             context.wrapper.dataset.hasImage = String(hasImage);
             context.wrapper.classList.toggle('has-image', hasImage);
+            context.wrapper.classList.toggle('is-empty', !hasImage);
+
+            if (context.icon) {
+                context.icon.className = hasImage ? 'fa-solid fa-xmark' : 'fa-solid fa-plus';
+            }
 
             if (context.layoutContainer) {
                 context.layoutContainer.style.display = hasImage ? 'flex' : 'none';
@@ -169,10 +177,36 @@ function generateTocData(slides) {
             if (context.captionContainer) {
                 context.captionContainer.style.display = hasImage ? 'flex' : 'none';
             }
+
+            if (!hasImage && context.captionInput) {
+                context.captionInput.value = '';
+            }
+        }
+
+        function clearImageUploadSelection(context) {
+            if (!context) {
+                return;
+            }
+
+            if (context.input) {
+                context.input.value = '';
+            }
+
+            if (context.wrapper.dataset.existingImage === 'true') {
+                context.wrapper.dataset.pendingRemoval = 'true';
+            } else {
+                context.wrapper.dataset.pendingRemoval = 'false';
+            }
+
+            updateImageUploadUi(context);
         }
 
         window.handleImageInputChange = function(input) {
-            updateImageUploadUi(getImageUploadContext(input));
+            const context = getImageUploadContext(input);
+            if (context) {
+                context.wrapper.dataset.pendingRemoval = 'false';
+            }
+            updateImageUploadUi(context);
         };
 
         window.handleImageZoneClick = function(event) {
@@ -181,7 +215,17 @@ function generateTocData(slides) {
             }
 
             const context = getImageUploadContext(event.currentTarget);
-            if (context?.input) {
+            if (!context?.input) {
+                return;
+            }
+
+            const selectedFile = context.input.files?.[0] || null;
+            const hasExistingImage = context.wrapper.dataset.existingImage === 'true';
+            const pendingRemoval = context.wrapper.dataset.pendingRemoval === 'true';
+
+            if (selectedFile || (hasExistingImage && !pendingRemoval)) {
+                clearImageUploadSelection(context);
+            } else {
                 context.input.click();
             }
         };
@@ -236,6 +280,7 @@ function generateTocData(slides) {
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(imageFile);
             context.input.files = dataTransfer.files;
+            context.wrapper.dataset.pendingRemoval = 'false';
             updateImageUploadUi(context);
         };
 
@@ -400,7 +445,10 @@ function generateTocData(slides) {
                                     data-layout-id="input-layout-ratio-container"
                                     data-status-id="input-image-status"
                                     data-caption-id="input-image-caption-wrap"
+                                    data-caption-input-id="input-image-caption"
                                     data-default-text="${escapeHtml(newImageUploadDefaultText)}"
+                                    data-existing-image="false"
+                                    data-pending-removal="false"
                                     data-has-image="false"
                                     onclick="window.handleImageZoneClick(event)"
                                     ondragenter="window.handleImageDragEnter(event)"
@@ -490,8 +538,11 @@ function generateTocData(slides) {
                                         data-layout-id="edit-layout-ratio-container"
                                         data-status-id="edit-image-status"
                                         data-caption-id="edit-image-caption-wrap"
+                                        data-caption-input-id="edit-image-caption"
                                         data-default-text="${escapeHtml(editImageUploadDefaultText)}"
                                         data-existing-text="${escapeHtml(editImageExistingText)}"
+                                        data-existing-image="${slide.image ? 'true' : 'false'}"
+                                        data-pending-removal="false"
                                         data-has-image="${slide.image ? 'true' : 'false'}"
                                         onclick="window.handleImageZoneClick(event)"
                                         ondragenter="window.handleImageDragEnter(event)"
