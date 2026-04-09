@@ -174,7 +174,6 @@
         }
 
         .project-indicator,
-        .app-version,
         .btn-hdr {
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.9)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.35)));
             border-color: color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 56%, var(--border-color) 44%);
@@ -188,7 +187,6 @@
         }
 
         body.light-mode .project-indicator,
-        body.light-mode .app-version,
         body.light-mode .btn-hdr {
             background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
             color: #334155;

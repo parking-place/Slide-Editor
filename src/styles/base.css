@@ -1,6 +1,7 @@
 :root {
             --hpe-green: #00E676;
             --hpe-green-alpha: #00E67614;
+            --accent-glow: #38bdf8;
             --bg-dark: #010409;
             --slide-bg: #0D1117;
             --border-color: #30363D;
@@ -62,7 +63,7 @@
         body.light-mode {
             background-image:
                 radial-gradient(circle at top right, color-mix(in srgb, var(--hpe-green) 20%, transparent), transparent 22%),
-                radial-gradient(circle at 14% 18%, color-mix(in srgb, #7dd3fc 24%, transparent), transparent 26%),
+                radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent-glow) 26%, transparent), transparent 26%),
                 linear-gradient(135deg, color-mix(in srgb, var(--bg-dark) 94%, #ffffff 6%), color-mix(in srgb, var(--bg-dark) 92%, #ecfeff 8%));
         }
 
@@ -181,16 +182,16 @@
         .app-version {
             display: inline-flex;
             align-items: center;
-            padding: 2px 8px;
-            border-radius: 999px;
-            border: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.04);
+            padding: 0;
+            border: 0;
+            background: transparent;
             color: var(--text-dim);
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 600;
             letter-spacing: 0.03em;
             line-height: 1;
             white-space: nowrap;
+            opacity: 0.9;
         }
         .app-version[hidden] { display: none; }
         .header-actions {

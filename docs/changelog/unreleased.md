@@ -28,6 +28,8 @@
 - 모바일 폭에서는 header, editor shell, guide shell의 blur/패딩/그림자를 한 단계 낮춰 과한 무게감을 줄이도록 조정했습니다.
 - `backdrop-filter` 미지원 환경에서는 glass 표면이 semi-transparent solid fallback으로 내려가도록 기본 폴백을 추가했습니다.
 - 라이트모드에서는 헤더 버튼, 가이드 헤더 제목, Navigator 빈 상태 문구와 현재 위치 하이라이트의 대비를 다시 조정해 너무 밝게 날아가던 텍스트와 아이콘을 보강했습니다.
+- 좌상단 버전 표시는 pill 배지를 제거하고 더 작은 plain text 메타 정보로 축소했습니다.
+- 라이트모드 배경의 좌상단 glow는 고정된 블루 대신 현재 강조색과 가까운 hue를 쓰도록 바꿨습니다.
 
 ## Fixed
 

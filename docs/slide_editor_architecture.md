@@ -183,6 +183,8 @@
 
 정규화된 glass 값은 `src/styles/base.css`의 `--glass-*` CSS 변수로 연결됩니다.
 이 구조를 기준으로 이후 에디터 카드, 모달, HTML 가이드까지 같은 glass 토큰 체계를 공유합니다.
+헤더와 라이트모드 배경 쪽은 여기서 파생된 `--accent-glow` 토큰을 함께 사용해
+강조색 계열의 glow를 배경과 shell 하이라이트에 재활용합니다.
 
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.

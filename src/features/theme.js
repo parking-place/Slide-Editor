@@ -10,6 +10,63 @@ function hexToRgbString(value, fallback = '255 255 255') {
             return `${r} ${g} ${b}`;
         }
 
+        function shiftHexHue(value, degrees, fallback = '#38bdf8') {
+            const hex = typeof value === 'string' ? value.trim() : '';
+            const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.slice(1) : '';
+            if (!normalized) return fallback;
+
+            const r = parseInt(normalized.slice(0, 2), 16) / 255;
+            const g = parseInt(normalized.slice(2, 4), 16) / 255;
+            const b = parseInt(normalized.slice(4, 6), 16) / 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const delta = max - min;
+
+            let h = 0;
+            const l = (max + min) / 2;
+            const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+            if (delta !== 0) {
+                switch (max) {
+                    case r:
+                        h = 60 * (((g - b) / delta) % 6);
+                        break;
+                    case g:
+                        h = 60 * (((b - r) / delta) + 2);
+                        break;
+                    default:
+                        h = 60 * (((r - g) / delta) + 4);
+                        break;
+                }
+            }
+
+            const hue = ((h + degrees) % 360 + 360) % 360;
+            const chroma = (1 - Math.abs(2 * l - 1)) * s;
+            const x = chroma * (1 - Math.abs(((hue / 60) % 2) - 1));
+            const m = l - chroma / 2;
+
+            let rr = 0;
+            let gg = 0;
+            let bb = 0;
+
+            if (hue < 60) {
+                rr = chroma; gg = x; bb = 0;
+            } else if (hue < 120) {
+                rr = x; gg = chroma; bb = 0;
+            } else if (hue < 180) {
+                rr = 0; gg = chroma; bb = x;
+            } else if (hue < 240) {
+                rr = 0; gg = x; bb = chroma;
+            } else if (hue < 300) {
+                rr = x; gg = 0; bb = chroma;
+            } else {
+                rr = chroma; gg = 0; bb = x;
+            }
+
+            const toHex = (channel) => Math.round((channel + m) * 255).toString(16).padStart(2, '0');
+            return `#${toHex(rr)}${toHex(gg)}${toHex(bb)}`;
+        }
+
         function clampGlassValue(value, min, max, fallback) {
             const numeric = Number(value);
             if (!Number.isFinite(numeric)) return fallback;
@@ -114,6 +171,7 @@ function hexToRgbString(value, fallback = '255 255 255') {
             const root = document.documentElement.style;
             root.setProperty('--hpe-green', normalizedTheme.colors.accent);
             root.setProperty('--hpe-green-alpha', normalizedTheme.colors.accent + '14');
+            root.setProperty('--accent-glow', shiftHexHue(normalizedTheme.colors.accent, normalizedTheme.isDarkMode ? -10 : 14, normalizedTheme.colors.accent));
             root.setProperty('--code-color', normalizedTheme.colors.codeColor || normalizedTheme.colors.accent);
             root.setProperty('--code-bg', (normalizedTheme.colors.codeColor || normalizedTheme.colors.accent) + '1A');
             root.setProperty('--bg-dark', normalizedTheme.colors.bgDark);
