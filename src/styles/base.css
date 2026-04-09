@@ -48,9 +48,21 @@
 
         body {
             background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(circle at top right, color-mix(in srgb, var(--hpe-green) 20%, transparent), transparent 24%),
+                radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--text-main) 10%, transparent), transparent 22%),
+                linear-gradient(135deg, color-mix(in srgb, var(--bg-dark) 92%, #09101c 8%), color-mix(in srgb, var(--bg-dark) 90%, #05271f 10%));
+            background-attachment: fixed;
             font-family: 'Pretendard', sans-serif;
             color: var(--text-dim);
             padding-bottom: 50px;
+        }
+
+        body.light-mode {
+            background-image:
+                radial-gradient(circle at top right, color-mix(in srgb, var(--hpe-green) 20%, transparent), transparent 22%),
+                radial-gradient(circle at 14% 18%, color-mix(in srgb, #7dd3fc 24%, transparent), transparent 26%),
+                linear-gradient(135deg, color-mix(in srgb, var(--bg-dark) 94%, #ffffff 6%), color-mix(in srgb, var(--bg-dark) 92%, #ecfeff 8%));
         }
 
         html,

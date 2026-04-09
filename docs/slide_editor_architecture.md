@@ -64,9 +64,9 @@
 - `base.css`
   - 변수, 공통 리셋, 버튼/입력 기본 스타일, glass 공통 토큰
 - `layout.css`
-  - 헤더, 본문 레이아웃, Navigator, 미리보기 배치
+  - 헤더, 본문 레이아웃, Navigator, 미리보기 배치, 전역 glass 배경/헤더 shell
 - `editor.css`
-  - 편집기 폼과 슬라이드 카드 스타일
+  - 편집기 폼과 슬라이드 카드 스타일, glass shell + readable inner content 구조
 - `modal.css`
   - 프로젝트/테마/확인 모달 스타일
 - `enhancements.css`
@@ -183,6 +183,10 @@
 
 정규화된 glass 값은 `src/styles/base.css`의 `--glass-*` CSS 변수로 연결됩니다.
 이 구조를 기준으로 이후 에디터 카드, 모달, HTML 가이드까지 같은 glass 토큰 체계를 공유합니다.
+
+현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
+`src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
+입력 필드는 완전한 glass가 아니라, shell 안에 놓이는 읽기 중심의 solid surface로 유지합니다.
 
 ## 4. 프로젝트 저장 구조
 
