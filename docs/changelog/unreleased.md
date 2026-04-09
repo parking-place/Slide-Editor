@@ -23,6 +23,8 @@
 - 입력 필드는 완전한 유리층으로 바꾸지 않고, shell 안의 읽기 중심 solid surface로 유지하도록 정리했습니다.
 - 테마 모달에 `Glass Surface` 섹션과 live sample card를 추가해 glass 값을 즉시 조정하고 미리볼 수 있게 했습니다.
 - glass 색상, alpha, blur, saturation, refraction, depth는 테마 저장 시 `.slidetheme`에 함께 기록되도록 연결했습니다.
+- HTML 가이드 export에도 glass 토큰을 연결해, 헤더·Navigator·본문 카드·이미지 wrapper가 에디터와 같은 표면 언어를 공유하도록 맞췄습니다.
+- 가이드 본문은 가독성을 우선해 shell 바깥보다 더 짙은 readable surface를 쓰도록 분리했습니다.
 
 ## Fixed
 

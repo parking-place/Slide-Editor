@@ -189,6 +189,15 @@
         const guideScrollBorder = bodyClass === 'light-mode'
             ? 'rgba(255, 255, 255, 0.92)'
             : 'rgba(15, 23, 42, 0.86)';
+        const guideGlassRgb = rootStyles.getPropertyValue('--glass-rgb').trim() || '255 255 255';
+        const guideGlassAlpha = rootStyles.getPropertyValue('--glass-alpha').trim() || (bodyClass === 'light-mode' ? '0.36' : '0.11');
+        const guideGlassBlur = rootStyles.getPropertyValue('--glass-blur').trim() || (bodyClass === 'light-mode' ? '10px' : '14px');
+        const guideGlassSaturation = rootStyles.getPropertyValue('--glass-saturation').trim() || (bodyClass === 'light-mode' ? '114%' : '126%');
+        const guideGlassRefraction = rootStyles.getPropertyValue('--glass-refraction').trim() || (bodyClass === 'light-mode' ? '0.08' : '0.12');
+        const guideGlassDepth = rootStyles.getPropertyValue('--glass-depth').trim() || (bodyClass === 'light-mode' ? '0.14' : '0.24');
+        const guideGlassBorderAlpha = rootStyles.getPropertyValue('--glass-border-alpha').trim() || (bodyClass === 'light-mode' ? '0.30' : '0.20');
+        const guideGlassShadowAlpha = rootStyles.getPropertyValue('--glass-shadow-alpha').trim() || (bodyClass === 'light-mode' ? '0.08' : '0.15');
+        const guideGlassHighlightAlpha = rootStyles.getPropertyValue('--glass-highlight-alpha').trim() || (bodyClass === 'light-mode' ? '0.30' : '0.21');
 
         const cardsHtml = sourceSlides.map((slide, index) => {
             const imageSrc = getSlideImageSrc(resolveSlideImageSource(slide) || slide.image);
@@ -248,7 +257,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
     <style>
-        :root { color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'}; }
+        :root {
+            color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'};
+            --glass-rgb: ${guideGlassRgb};
+            --glass-alpha: ${guideGlassAlpha};
+            --glass-blur: ${guideGlassBlur};
+            --glass-saturation: ${guideGlassSaturation};
+            --glass-refraction: ${guideGlassRefraction};
+            --glass-depth: ${guideGlassDepth};
+            --glass-border-alpha: ${guideGlassBorderAlpha};
+            --glass-shadow-alpha: ${guideGlassShadowAlpha};
+            --glass-highlight-alpha: ${guideGlassHighlightAlpha};
+        }
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body,
@@ -287,12 +307,50 @@
         .markdown-body pre::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(180deg, ${guideScrollThumbHover}, color-mix(in srgb, ${guideScrollThumb} 78%, ${guideScrollThumbHover} 22%));
         }
-        body { margin: 0; font-family: 'Pretendard', 'Segoe UI', sans-serif; background: ${bodyClass === 'light-mode' ? '#f3f4f6' : '#010409'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; }
-        .guide-header { background: ${headerBg}; color: #fff; padding: 48px 24px; text-align: center; }
+        body {
+            margin: 0;
+            font-family: 'Pretendard', 'Segoe UI', sans-serif;
+            color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'};
+            background:
+                radial-gradient(circle at top right, color-mix(in srgb, ${accentColor} 22%, transparent), transparent 24%),
+                radial-gradient(circle at 15% 16%, ${bodyClass === 'light-mode' ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.10)'}, transparent 24%),
+                linear-gradient(135deg, ${bodyClass === 'light-mode' ? 'color-mix(in srgb, #f3f4f6 94%, #ffffff 6%)' : 'color-mix(in srgb, #010409 92%, #09101c 8%)'}, ${bodyClass === 'light-mode' ? 'color-mix(in srgb, #f3f4f6 90%, #ecfeff 10%)' : 'color-mix(in srgb, #010409 88%, #05271f 12%)'});
+            background-attachment: fixed;
+        }
+        .guide-header {
+            background:
+                linear-gradient(180deg, color-mix(in srgb, ${headerBg} 82%, rgba(var(--glass-rgb), 0.24) 18%), color-mix(in srgb, ${headerBg} 70%, rgba(var(--glass-rgb), 0.14) 30%));
+            color: #fff;
+            padding: 48px 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255, calc(var(--glass-border-alpha) + 0.06));
+            border-radius: 0 0 20px 20px;
+            box-shadow:
+                0 calc(12px + 18px * var(--glass-depth)) calc(28px + 36px * var(--glass-depth)) rgba(0,0,0, calc(var(--glass-shadow-alpha) + 0.04)),
+                inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) + 0.08));
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.72)) saturate(var(--glass-saturation));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.72)) saturate(var(--glass-saturation));
+        }
         .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
         .guide-header p { margin: 0; font-size: 18px; opacity: 0.92; }
         .guide-layout { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 24px 20px; align-items: flex-start; }
-        .guide-aside { width: 240px; flex-shrink: 0; position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; padding: 20px 16px; border-right: 1px solid rgba(148,163,184,0.2); }
+        .guide-aside {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 24px;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            padding: 20px 16px;
+            border: 1px solid rgba(255,255,255, var(--glass-border-alpha));
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.42)));
+            box-shadow:
+                0 calc(10px + 14px * var(--glass-depth)) calc(22px + 28px * var(--glass-depth)) rgba(0,0,0, calc(var(--glass-shadow-alpha) * 0.9)),
+                inset 0 1px 0 rgba(255,255,255, var(--glass-highlight-alpha));
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.82)) saturate(var(--glass-saturation));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.82)) saturate(var(--glass-saturation));
+        }
         .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
         .guide-aside .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .guide-aside .toc-nav-chapter:first-child { margin-top: 0; }
@@ -304,14 +362,45 @@
         .guide-aside .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; padding-left: 27px; outline: none; }
         .guide-aside .toc-nav-title.active { color: ${accentColor}; background: ${accentColor}1A; border-left: 2px solid ${accentColor}; font-weight: 600; }
         .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
-        .guide-card { background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; border: 1px solid rgba(148,163,184,0.2); border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); }
-        .guide-card-header { padding: 24px 28px 18px; border-left: 6px solid ${accentColor}; background: ${bodyClass === 'light-mode' ? '#f8fafc' : '#111827'}; }
+        .guide-card {
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.4)));
+            border: 1px solid rgba(255,255,255, var(--glass-border-alpha));
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow:
+                0 calc(14px + 18px * var(--glass-depth)) calc(32px + 38px * var(--glass-depth)) rgba(15, 23, 42, calc(var(--glass-shadow-alpha) + 0.04)),
+                inset 0 1px 0 rgba(255,255,255, var(--glass-highlight-alpha));
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.9)) saturate(var(--glass-saturation));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.9)) saturate(var(--glass-saturation));
+        }
+        .guide-card-header {
+            padding: 24px 28px 18px;
+            border-left: 6px solid ${accentColor};
+            background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.08)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.32)));
+            border-bottom: 1px solid rgba(255,255,255, calc(var(--glass-border-alpha) * 0.85));
+        }
         .guide-chapter { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: ${accentColor}; }
         .guide-middle-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; }
         .guide-title { margin: 0; font-size: 28px; line-height: 1.25; color: inherit; }
         .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; }
-        .guide-text { min-width: 280px; }
-        .guide-figure { min-width: 280px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .guide-text {
+            min-width: 280px;
+            padding: 20px;
+            border-radius: 14px;
+            background: ${bodyClass === 'light-mode' ? 'rgba(255,255,255,0.78)' : 'rgba(13,17,23,0.64)'};
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        .guide-figure {
+            min-width: 280px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            border-radius: 16px;
+            background: ${bodyClass === 'light-mode' ? 'rgba(255,255,255,0.56)' : 'rgba(22,27,34,0.48)'};
+            border: 1px solid rgba(148,163,184,0.18);
+        }
         .guide-figure img { max-width: 100%; border-radius: 14px; border: 1px solid rgba(148,163,184,0.2); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16); }
         .guide-figure img[data-guide-zoomable="true"] { cursor: zoom-in; transition: transform 0.18s ease, box-shadow 0.18s ease; }
         .guide-figure img[data-guide-zoomable="true"]:hover,
@@ -330,7 +419,13 @@
         .btn-copy-code.copied { color: ${guideCodeColor}; border-color: ${guideCodeColor}; }
         .code-block-wrapper pre { margin: 0; overflow-x: auto; background: ${codeBlockBackground}; border: none; border-radius: 0; padding: 15px; }
         .code-block-wrapper pre code.hljs { display: block; overflow-x: auto; padding: 0; background: transparent; color: inherit; }
-        .guide-footer { max-width: 1440px; margin: 0 auto 32px; padding: 0 24px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; font-size: 13px; }
+        .guide-footer {
+            max-width: 1440px;
+            margin: 0 auto 32px;
+            padding: 0 24px;
+            color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'};
+            font-size: 13px;
+        }
         .guide-lightbox[hidden] { display: none; }
         .guide-lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(2, 6, 23, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(8px); }
         .guide-lightbox-figure { margin: 0; max-width: min(92vw, 1440px); max-height: 92vh; display: flex; flex-direction: column; align-items: center; gap: 12px; }

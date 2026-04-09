@@ -55,7 +55,7 @@
 - `src/features/outline.js`
   - outline 메타데이터와 HTML 가이드 동기화 보강을 담당합니다.
 - `src/features/export-enhancements.js`
-  - 가이드용 Navigator, 이미지 fallback, portable HTML 변환 보강을 담당합니다.
+  - 가이드용 Navigator, 이미지 fallback, portable HTML 변환, glass 토큰이 반영된 HTML 가이드 셸 보강을 담당합니다.
 
 ### 2.3 `src/styles/`
 
@@ -199,6 +199,10 @@
 
 이 입력값은 live preview로 즉시 반영되고,
 저장 시 `.slidetheme`의 `glass` 섹션에 함께 기록됩니다.
+
+HTML 가이드 쪽은 `src/features/export-enhancements.js`가 현재 활성 theme의 `glass` 토큰을 읽어
+body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니다.
+가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.
 
 ## 4. 프로젝트 저장 구조
 
