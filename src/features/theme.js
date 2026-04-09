@@ -81,15 +81,29 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             return Math.min(max, Math.max(min, numeric));
         }
 
+        function isLegacyDarkGlassProfile(rawGlass = {}) {
+            if (!rawGlass || typeof rawGlass !== 'object') return false;
+            return (
+                /^#ffffff$/i.test(rawGlass.backgroundColor || '')
+                && Number(rawGlass.backgroundAlpha) === 0.16
+                && Number(rawGlass.backgroundBlur) === 18
+                && Number(rawGlass.backgroundSaturation) === 142
+                && Number(rawGlass.refraction) === 0.08
+                && Number(rawGlass.depth) === 0.11
+                && !('noiseOpacity' in rawGlass)
+            );
+        }
+
         function getDefaultGlassSettings(isDarkMode = true) {
             if (isDarkMode) {
                 return {
-                    backgroundColor: '#FFFFFF',
-                    backgroundAlpha: 0.20,
-                    backgroundBlur: 22,
-                    backgroundSaturation: 150,
-                    refraction: 0.06,
-                    depth: 0.05
+                    backgroundColor: '#000000',
+                    backgroundAlpha: 0.24,
+                    backgroundBlur: 28,
+                    backgroundSaturation: 168,
+                    refraction: 0.03,
+                    depth: 0.02,
+                    noiseOpacity: 0.055
                 };
             }
 
@@ -99,7 +113,8 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 backgroundBlur: 11,
                 backgroundSaturation: 118,
                 refraction: 0.08,
-                depth: 0.12
+                depth: 0.12,
+                noiseOpacity: 0.03
             };
         }
 
@@ -139,6 +154,9 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             const isDarkMode = safeTheme.isDarkMode !== false;
             const defaultGlass = getDefaultGlassSettings(isDarkMode);
             const rawGlass = safeTheme.glass && typeof safeTheme.glass === 'object' ? safeTheme.glass : {};
+            const effectiveGlass = isDarkMode && isLegacyDarkGlassProfile(rawGlass)
+                ? Object.assign({}, defaultGlass)
+                : rawGlass;
 
             return {
                 name: safeTheme.name || baseTheme.name,
@@ -153,14 +171,15 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 webGuide: Object.assign({}, baseTheme.webGuide, safeTheme.webGuide || {}),
                 fonts: Object.assign({}, baseTheme.fonts, safeTheme.fonts || {}),
                 glass: {
-                    backgroundColor: /^#[0-9a-fA-F]{6}$/.test(rawGlass.backgroundColor || '')
-                        ? rawGlass.backgroundColor
+                    backgroundColor: /^#[0-9a-fA-F]{6}$/.test(effectiveGlass.backgroundColor || '')
+                        ? effectiveGlass.backgroundColor
                         : defaultGlass.backgroundColor,
-                    backgroundAlpha: clampGlassValue(rawGlass.backgroundAlpha, 0.04, 0.42, defaultGlass.backgroundAlpha),
-                    backgroundBlur: clampGlassValue(rawGlass.backgroundBlur, 0, 40, defaultGlass.backgroundBlur),
-                    backgroundSaturation: clampGlassValue(rawGlass.backgroundSaturation, 80, 220, defaultGlass.backgroundSaturation),
-                    refraction: clampGlassValue(rawGlass.refraction, 0, 0.4, defaultGlass.refraction),
-                    depth: clampGlassValue(rawGlass.depth, 0, 1, defaultGlass.depth)
+                    backgroundAlpha: clampGlassValue(effectiveGlass.backgroundAlpha, 0.04, 0.42, defaultGlass.backgroundAlpha),
+                    backgroundBlur: clampGlassValue(effectiveGlass.backgroundBlur, 0, 40, defaultGlass.backgroundBlur),
+                    backgroundSaturation: clampGlassValue(effectiveGlass.backgroundSaturation, 80, 220, defaultGlass.backgroundSaturation),
+                    refraction: clampGlassValue(effectiveGlass.refraction, 0, 0.4, defaultGlass.refraction),
+                    depth: clampGlassValue(effectiveGlass.depth, 0, 1, defaultGlass.depth),
+                    noiseOpacity: clampGlassValue(effectiveGlass.noiseOpacity, 0, 0.12, defaultGlass.noiseOpacity)
                 }
             };
         }
@@ -170,7 +189,8 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             { key: 'backgroundBlur', label: '배경 블러', min: 0, max: 40, step: 1, unit: 'px' },
             { key: 'backgroundSaturation', label: '배경 채도', min: 80, max: 220, step: 1, unit: '%' },
             { key: 'refraction', label: '굴절', min: 0, max: 0.4, step: 0.01 },
-            { key: 'depth', label: '깊이', min: 0, max: 1, step: 0.01 }
+            { key: 'depth', label: '깊이', min: 0, max: 1, step: 0.01 },
+            { key: 'noiseOpacity', label: '노이즈 강도', min: 0, max: 0.12, step: 0.005 }
         ];
 
         function getDefaultThemeObject() {
@@ -202,15 +222,16 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             root.setProperty('--glass-saturation', `${glass.backgroundSaturation}%`);
             root.setProperty('--glass-refraction', glass.refraction.toFixed(2));
             root.setProperty('--glass-depth', glass.depth.toFixed(2));
+            root.setProperty('--surface-noise-opacity', glass.noiseOpacity.toFixed(3));
 
             const borderAlpha = normalizedTheme.isDarkMode
-                ? 0.10 + (glass.refraction * 0.22)
+                ? 0.08 + (glass.refraction * 0.16)
                 : 0.24 + (glass.refraction * 0.72);
             const shadowAlpha = normalizedTheme.isDarkMode
-                ? 0.04 + (glass.depth * 0.06)
+                ? 0.025 + (glass.depth * 0.04)
                 : 0.05 + (glass.depth * 0.10);
             const highlightAlpha = normalizedTheme.isDarkMode
-                ? 0.07 + (glass.refraction * 0.12)
+                ? 0.04 + (glass.refraction * 0.08)
                 : 0.24 + (glass.refraction * 0.42);
 
             root.setProperty('--glass-border-alpha', borderAlpha.toFixed(2));
@@ -460,7 +481,8 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 backgroundBlur: clampGlassValue(document.getElementById('glass-backgroundBlur-number')?.value, 0, 40, currentGlass.backgroundBlur),
                 backgroundSaturation: clampGlassValue(document.getElementById('glass-backgroundSaturation-number')?.value, 80, 220, currentGlass.backgroundSaturation),
                 refraction: clampGlassValue(document.getElementById('glass-refraction-number')?.value, 0, 0.4, currentGlass.refraction),
-                depth: clampGlassValue(document.getElementById('glass-depth-number')?.value, 0, 1, currentGlass.depth)
+                depth: clampGlassValue(document.getElementById('glass-depth-number')?.value, 0, 1, currentGlass.depth),
+                noiseOpacity: clampGlassValue(document.getElementById('glass-noiseOpacity-number')?.value, 0, 0.12, currentGlass.noiseOpacity)
             };
         }
 
@@ -477,6 +499,7 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             sample.style.setProperty('--sample-glass-saturation', `${glass.backgroundSaturation}%`);
             sample.style.setProperty('--sample-glass-refraction', glass.refraction.toFixed(2));
             sample.style.setProperty('--sample-glass-depth', glass.depth.toFixed(2));
+            sample.style.setProperty('--sample-noise-opacity', glass.noiseOpacity.toFixed(3));
             sample.style.setProperty('--sample-accent', normalizedTheme.colors.accent);
             sample.style.setProperty('--sample-bg-dark', normalizedTheme.colors.bgDark);
             sample.style.setProperty('--sample-slide-bg', normalizedTheme.colors.slideBg);

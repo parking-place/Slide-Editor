@@ -197,6 +197,7 @@
 - `backgroundSaturation`
 - `refraction`
 - `depth`
+- `noiseOpacity`
 
 프런트에서는 `src/features/theme.js`가 이 구조를 정규화해
 구버전 테마에도 기본 `glass` 값을 주입합니다.
@@ -207,6 +208,7 @@
 강조색 계열의 glow를 배경과 shell 하이라이트에 재활용합니다.
 또한 `colors.secondaryAccent`를 함께 정규화해, hover/soft highlight/보조 glass tint가
 테마마다 다른 보조강조색을 사용할 수 있도록 확장했습니다.
+또한 `glass.noiseOpacity`를 함께 정규화해, 메인 배경의 필름 그레인 강도를 테마별로 저장하고 조절할 수 있습니다.
 
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
@@ -230,9 +232,12 @@
 - `backgroundSaturation`
 - `refraction`
 - `depth`
+- `noiseOpacity`
 
 이 입력값은 live preview로 즉시 반영되고,
 저장 시 `.slidetheme`의 `glass` 섹션에 함께 기록됩니다.
+구버전 다크 테마가 예전 흰색 glass 기본값을 명시적으로 저장하고 있더라도,
+로드 시에는 검정 기반의 최신 dark glass 기본값으로 자동 보정해 현재 렌더링 규칙과 맞춥니다.
 
 테마 편집기 라벨은 현재 한글 기반으로 정리되어 있으며,
 섹션 제목 `Glass Surface`는 영어를 유지하고 세부 옵션만 한글화합니다.

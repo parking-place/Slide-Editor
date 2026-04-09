@@ -407,6 +407,22 @@
             color: var(--sample-text-main, var(--text-main));
         }
 
+        .theme-glass-sample::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: var(--sample-noise-opacity, var(--surface-noise-opacity));
+            background-image:
+                radial-gradient(circle at 12% 18%, rgba(255,255,255,0.9) 0.55px, transparent 0.9px),
+                radial-gradient(circle at 74% 36%, rgba(255,255,255,0.7) 0.5px, transparent 0.85px),
+                radial-gradient(circle at 48% 72%, rgba(255,255,255,0.6) 0.45px, transparent 0.8px),
+                radial-gradient(circle at 24% 58%, rgba(255,255,255,0.75) 0.45px, transparent 0.8px);
+            background-size: 64px 64px, 88px 88px, 72px 72px, 80px 80px;
+            mix-blend-mode: soft-light;
+        }
+
         .theme-glass-sample.light-mode {
             background:
                 radial-gradient(circle at top right, color-mix(in srgb, var(--sample-accent, var(--hpe-green)) 22%, transparent), transparent 26%),
