@@ -376,15 +376,15 @@
         body {
             margin: 0;
             color: var(--guide-text-main);
-            background:
+            background-color: var(--guide-bg-dark);
+            --viewer-bg-gradient:
                 radial-gradient(circle at top right, color-mix(in srgb, ${editorAccentColor} 20%, transparent), transparent 24%),
                 radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--guide-text-main) 10%, transparent), transparent 22%),
                 linear-gradient(135deg, color-mix(in srgb, var(--guide-bg-dark) 92%, #09101c 8%), color-mix(in srgb, var(--guide-bg-dark) 90%, #05271f 10%));
-            background-attachment: fixed;
             position: relative;
         }
         body.light-mode {
-            background:
+            --viewer-bg-gradient:
                 radial-gradient(circle at top right, color-mix(in srgb, var(--secondary-accent) 18%, transparent), transparent 22%),
                 radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent-glow) 26%, transparent), transparent 26%),
                 linear-gradient(135deg, color-mix(in srgb, var(--guide-bg-dark) 94%, #ffffff 6%), color-mix(in srgb, var(--guide-bg-dark) 92%, #ecfeff 8%));
@@ -398,8 +398,19 @@
             z-index: -1;
         }
         body::before {
-            background-image: radial-gradient(circle, var(--surface-grid-dot) 0.7px, transparent 0.8px);
-            background-size: 14px 14px;
+            background-image:
+                var(--viewer-bg-gradient),
+                radial-gradient(circle, var(--surface-grid-dot) 0.7px, transparent 0.8px);
+            background-size:
+                auto,
+                auto,
+                auto,
+                14px 14px;
+            background-repeat:
+                no-repeat,
+                no-repeat,
+                no-repeat,
+                repeat;
             opacity: 1;
         }
         body::after {
