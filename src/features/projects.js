@@ -47,13 +47,41 @@ function buildProjectModalMetaLine(projectDetails, slideCountOverride) {
         ? slideCountOverride
         : (Number.isFinite(projectDetails.slideCount) ? projectDetails.slideCount : Array.isArray(projectDetails.slides) ? projectDetails.slides.length : 0);
 
-    return `${projectDetails.id} / ${slideCount} slides / ${getSavedVersionLabel(projectDetails.savedVersion)}`;
+    return `${projectDetails.id} / ${slideCount} page / ${getSavedVersionLabel(projectDetails.savedVersion)}`;
 }
 
 function buildProjectListMeta(project) {
     const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
     const versionLabel = getSavedVersionLabel(project.savedVersion);
-    return `${slideCount} slides / ${project.id} / ${versionLabel}`;
+    return `${project.id} / ${slideCount} page / ${versionLabel}`;
+}
+
+function buildProjectMetaMarkup(projectDetails, slideCountOverride) {
+    if (!projectDetails) {
+        return '<div class="project-meta-empty">No project selected</div>';
+    }
+
+    const slideCount = Number.isFinite(slideCountOverride)
+        ? slideCountOverride
+        : (Number.isFinite(projectDetails.slideCount) ? projectDetails.slideCount : Array.isArray(projectDetails.slides) ? projectDetails.slides.length : 0);
+
+    const items = [
+        { label: 'ID', value: projectDetails.id || '-' },
+        { label: 'page', value: `${slideCount} page` },
+        { label: 'Saved Version', value: getSavedVersionLabel(projectDetails.savedVersion) },
+        { label: 'Last Saved', value: 'Nodata' }
+    ];
+
+    return `
+        <div class="project-meta-grid">
+            ${items.map((item) => `
+                <div class="project-meta-item">
+                    <span class="project-meta-label">${escapeHtml(item.label)}</span>
+                    <span class="project-meta-value">${escapeHtml(item.value)}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 function getCopySourceDetails(projectId) {
@@ -179,8 +207,11 @@ function buildProjectListMarkup() {
                     <div class="project-list-item-meta">${escapeHtml(buildProjectListMeta(project))}</div>
                 </div>
                 <div class="project-list-item-actions">
-                    <span class="project-list-state ${isCurrent ? 'is-visible' : ''}" title="Current project">
-                        <i class="fa-solid fa-circle-check"></i>
+                    <span class="project-list-state project-list-state--current ${isCurrent ? 'is-visible' : ''}" title="Current project">
+                        <i class="fa-solid fa-star"></i>
+                    </span>
+                    <span class="project-list-state project-list-state--selected ${isActive ? 'is-visible' : ''}" title="Selected project">
+                        <i class="fa-solid fa-check"></i>
                     </span>
                     <button type="button" class="project-list-delete-btn" title="Delete project" onclick="window.deleteProjectFromModal(event, '${project.id}')">
                         <i class="fa-solid fa-trash"></i>
@@ -229,9 +260,9 @@ function renderProjectModal() {
     }
 
     if (currentMetaEl) {
-        currentMetaEl.textContent = currentProject
-            ? buildProjectModalMetaLine(currentProject, slidesData.length)
-            : 'Start from a new project or open an existing one.';
+        currentMetaEl.innerHTML = currentProject
+            ? buildProjectMetaMarkup(currentProject, slidesData.length)
+            : '<div class="project-meta-empty">Start from a new project or open an existing one.</div>';
     }
 
     if (currentNameInput) {
@@ -269,11 +300,11 @@ function renderProjectModal() {
 
     if (selectedMetaEl) {
         if (!selectedProject) {
-            selectedMetaEl.textContent = 'Select a project from the list.';
+            selectedMetaEl.innerHTML = '<div class="project-meta-empty">Select a project from the list.</div>';
         } else if (projectModalState.isLoadingSelection && !selectedDetails) {
-            selectedMetaEl.textContent = 'Loading selected project details...';
+            selectedMetaEl.innerHTML = '<div class="project-meta-empty">Loading selected project details...</div>';
         } else {
-            selectedMetaEl.textContent = buildProjectModalMetaLine(selectedDetails || selectedProject);
+            selectedMetaEl.innerHTML = buildProjectMetaMarkup(selectedDetails || selectedProject);
         }
     }
 

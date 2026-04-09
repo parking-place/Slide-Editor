@@ -14,6 +14,9 @@
 - 다른 프로젝트를 선택했을 때는 `Open`, `Copy`만 보이도록 정리했습니다.
 - 기존 `Save As` 흐름은 `Copy` 동작으로 대체했고, 기본 복제 이름 규칙을 `_copy` 형식으로 맞췄습니다.
 - `New`, `Import`, `Backup JSON`이 섞여 있던 하단 툴 박스를 제거하고, 역할에 맞는 별도 UI로 이동했습니다.
+- `Current Project`와 `Selected Project` 카드의 메타 정보를 `ID`, `page`, `Saved Version`, `Last Saved` 4개 항목으로 통일했습니다.
+- `Last Saved` 값은 이후 서버 메타데이터 연동 전까지 `Nodata` placeholder로 먼저 표시합니다.
+- 프로젝트 목록의 상태 표시는 별, 체크, 휴지통 아이콘 기준으로 다시 정렬했고, 카드와 다이얼로그 액션 버튼의 아이콘 스타일도 함께 맞췄습니다.
 
 ## Fixed
 

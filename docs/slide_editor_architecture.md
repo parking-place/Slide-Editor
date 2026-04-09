@@ -145,13 +145,18 @@
 
 - 현재 프로젝트를 선택한 경우
   - 이름, 부제, footer 입력 필드
+  - `ID`, `page`, `Saved Version`, `Last Saved`
   - `Save`, `Copy`, `Export`
 - 다른 프로젝트를 선택한 경우
   - 이름, 부제, footer 읽기 전용 필드
+  - `ID`, `page`, `Saved Version`, `Last Saved`
   - `Open`, `Copy`
 
 새 프로젝트 생성과 JSON Import는 메인 패널 하단에 섞어 두지 않고, 별도 `New Project` 다이얼로그에서 시작합니다.
 이 다이얼로그 안에서 새 프로젝트 생성용 입력 필드와 Import 버튼을 분리해 제공합니다.
+
+프로젝트 목록의 상태 표시는 별(Current), 체크(Selected), 휴지통(Delete) 아이콘으로 정리되어 있고,
+카드와 다이얼로그 버튼은 에디터 전반에서 쓰는 아이콘 스타일과 맞춘 `icon + label` 조합으로 통일되어 있습니다.
 
 ### 3.4 버전 표시
 
