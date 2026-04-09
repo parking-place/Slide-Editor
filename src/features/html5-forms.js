@@ -65,15 +65,29 @@
             form.appendChild(createFieldset('기본 정보', [inputGroup]));
         }
 
-        if (textArea) {
-            form.appendChild(createFieldset('본문', [textArea]));
-        }
+        if (textArea || mediaWrapper || ratioWrapper || deleteBlock) {
+            const composeGrid = document.createElement('div');
+            composeGrid.className = 'editor-compose-grid phase6-compose-grid';
 
-        if (mediaWrapper || ratioWrapper || deleteBlock) {
-            if (deleteBlock) {
-                deleteBlock.classList.add('phase6-media-delete');
+            if (textArea) {
+                const bodyPane = document.createElement('div');
+                bodyPane.className = 'editor-compose-body';
+                bodyPane.appendChild(textArea);
+                composeGrid.appendChild(bodyPane);
             }
-            form.appendChild(createFieldset('미디어', [mediaWrapper, ratioWrapper, deleteBlock]));
+
+            if (mediaWrapper || ratioWrapper || deleteBlock) {
+                if (deleteBlock) {
+                    deleteBlock.classList.add('phase6-media-delete');
+                }
+
+                const mediaPane = document.createElement('div');
+                mediaPane.className = 'editor-compose-media';
+                [mediaWrapper, ratioWrapper, deleteBlock].filter(Boolean).forEach((node) => mediaPane.appendChild(node));
+                composeGrid.appendChild(mediaPane);
+            }
+
+            form.appendChild(createFieldset('?? / ???', [composeGrid]));
         }
 
         if (button) {
