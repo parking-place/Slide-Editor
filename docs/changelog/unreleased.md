@@ -14,6 +14,7 @@
 - 미리보기 슬라이드에 `content-visibility`, 이미지 `loading="lazy"` 및 `decoding="async"`를 적용하고, 화면 밖 이미지 소스를 지연 복원하는 페이즈 3 lazy 렌더링을 추가했습니다.
 - 에디터 레이아웃에 `header`, `main`, `section`, `dialog`, `figure`, `figcaption` 기반 HTML5 시맨틱 구조를 적용하고 주요 모달을 `dialog` 중심으로 전환했습니다.
 - HTML 가이드 내보내기와 다운로드 흐름을 HTML5 시맨틱 구조 기준으로 재정의하고, WebP 우선, 실패 시 원본 fallback, portable 백업용 인라인 이미지 규칙을 정리했습니다.
+- 슬라이드 작성/수정 UI를 HTML5 `form`/`fieldset` 기반으로 재구성하고, 주요 입력 필드에 기본 검증 속성을 추가했습니다.
 
 ## Fixed
 
