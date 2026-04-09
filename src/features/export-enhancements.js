@@ -248,7 +248,7 @@
                             decoding="async"
                             tabindex="0"
                             role="button"
-                            aria-label="${imageAlt} ?대?吏 ?뺣? 蹂닿린"
+                            aria-label="${imageAlt} 이미지 확대 보기"
                             data-guide-zoomable="true">
                     </picture>
                     ${slide.imageCaption ? `<figcaption>${escapeHtml(slide.imageCaption)}</figcaption>` : ''}
@@ -865,13 +865,13 @@
 
     window.viewWebGuide = async function () {
         if (slidesData.length === 0) {
-            showModal('諛고룷???щ씪?대뱶 ?댁슜???섎굹 ?댁긽 ?묒꽦?댁＜?몄슂.');
+            showModal('뷰어를 열려면 슬라이드를 하나 이상 작성해주세요.');
             return;
         }
 
         const button = document.getElementById('dl-html-view-btn');
         if (button) {
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 泥섎━ 以?.';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중...';
             button.disabled = true;
         }
 
@@ -901,13 +901,13 @@
 
     window.exportToHTML = async function () {
         if (slidesData.length === 0) {
-            showModal('?ㅼ슫濡쒕뱶???щ씪?대뱶媛 ?놁뒿?덈떎!');
+            showModal('다운로드할 슬라이드가 없습니다!');
             return;
         }
 
         const button = document.getElementById('dl-html-btn');
         if (button) {
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 泥섎━ 以?.';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중...';
             button.disabled = true;
         }
 
@@ -915,7 +915,7 @@
             await downloadGuideHtml();
         } catch (error) {
             console.error('[Phase5] exportToHTML failed', error);
-            showModal('HTML ?ㅼ슫濡쒕뱶???대?吏瑜?以鍮꾪븯??以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.\n' + error.message);
+            showModal('HTML 다운로드를 준비하는 중 오류가 발생했습니다.\n' + error.message);
         } finally {
             if (button) {
                 button.innerHTML = '<i class="fa-solid fa-file-code"></i> HTML';
