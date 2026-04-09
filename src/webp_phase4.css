@@ -1,0 +1,53 @@
+dialog.modal-overlay,
+dialog.img-modal-overlay,
+dialog.theme-modal-overlay {
+    border: none;
+    padding: 0;
+    background: transparent;
+    max-width: none;
+    max-height: none;
+}
+
+dialog.modal-overlay::backdrop,
+dialog.img-modal-overlay::backdrop,
+dialog.theme-modal-overlay::backdrop {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+dialog.modal-overlay[open] {
+    display: flex;
+}
+
+dialog.img-modal-overlay[open] {
+    display: flex;
+}
+
+dialog.theme-modal-overlay[open] {
+    display: flex;
+}
+
+.app-shell-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.main-container {
+    min-width: 0;
+    flex: 1;
+}
+
+figure.box.image-box {
+    margin: 0;
+}
+
+figure.box.image-box figcaption,
+figcaption.image-processing-caption {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+    width: 100%;
+    word-break: break-all;
+}

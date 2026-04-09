@@ -12,6 +12,7 @@
 - 프로젝트 이미지 저장 구조에 `originals`, `converted`, `index.json` 기반 자산 메타데이터 저장소를 도입했습니다.
 - 슬라이드 추가 및 편집 시 이미지 업로드 흐름이 서버 변환 파이프라인과 연동되도록 확장했습니다.
 - 미리보기 슬라이드에 `content-visibility`, 이미지 `loading="lazy"` 및 `decoding="async"`를 적용하고, 화면 밖 이미지 소스를 지연 복원하는 페이즈 3 lazy 렌더링을 추가했습니다.
+- 에디터 레이아웃에 `header`, `main`, `section`, `dialog`, `figure`, `figcaption` 기반 HTML5 시맨틱 구조를 적용하고 주요 모달을 `dialog` 중심으로 전환했습니다.
 
 ## Fixed
 
