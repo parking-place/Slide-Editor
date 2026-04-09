@@ -11,9 +11,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
     
-    <!-- PPTX 생성 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" crossorigin="anonymous"></script>
-    
     <!-- Markdown 파서 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
@@ -26,7 +23,7 @@
 <body>
 
     <!-- 커스텀 모달 UI -->
-    <div id="custom-modal" class="modal-overlay">
+    <dialog id="custom-modal" class="modal-overlay">
         <div class="modal-content">
             <p id="modal-message">메시지</p>
             <div class="modal-buttons">
@@ -34,19 +31,20 @@
                 <button type="button" id="modal-btn-cancel" class="btn-secondary">취소</button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- 이미지 확대 모달 UI -->
-    <div id="image-modal" class="img-modal-overlay" onclick="window.closeImageModal()">
+    <dialog id="image-modal" class="img-modal-overlay" onclick="window.closeImageModal()">
         <img id="image-modal-content" class="img-modal-content" src="">
-    </div>
+    </dialog>
 
     <!-- 맨 위로 가기 플로팅 버튼 -->
     <button type="button" class="btn-top" id="btn-top-editor" onclick="window.scrollToTop()">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
-        <nav class="header-nav">
+    <header class="app-shell-header">
+        <nav class="header-nav" aria-label="주요 도구">
         <div class="logo-lockup">
             <a class="logo-link" href="https://github.com/parking-place/Slide-Editor" target="_blank" rel="noopener noreferrer" title="GitHub repository">
                 <div class="logo">Slide <span>Editor</span></div>
@@ -59,9 +57,6 @@
             <button type="button" class="btn-hdr btn-hdr--amber" title="Theme" onclick="window.openThemeModal()">
                 <i class="fa-solid fa-palette"></i> Theme
             </button>
-            <button type="button" class="btn-hdr btn-hdr--indigo" title="Branding" onclick="window.openBrandingModal()">
-                <i class="fa-solid fa-tag"></i> Branding
-            </button>
             <div class="hdr-divider"></div>
 
             <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
@@ -69,13 +64,6 @@
             </button>
             <div class="hdr-divider"></div>
 
-            <input type="file" id="import-data-input" accept=".json" style="display: none;" onchange="window.importData(event)">
-            <button type="button" class="btn-hdr btn-hdr--purple" title="Import JSON" onclick="document.getElementById('import-data-input').click()">
-                <i class="fa-solid fa-file-import"></i> Import
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--blue" title="Download JSON backup" onclick="window.downloadData()">
-                <i class="fa-solid fa-download"></i> Backup
-            </button>
             <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="Save current project" onclick="window.exportData()">
                 <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
@@ -87,33 +75,41 @@
             <button type="button" class="btn-hdr" id="dl-html-btn" title="Download guide HTML" onclick="window.exportToHTML()">
                 <i class="fa-solid fa-file-code"></i> HTML
             </button>
-            <button type="button" class="btn-hdr btn-hdr--green" id="dl-btn" title="Download PPTX" onclick="window.exportToPPTX()">
-                <i class="fa-solid fa-file-export"></i> PPTX
-            </button>
         </div>
-    </nav>
+        </nav>
+    </header>
 
-    <div class="layout-wrapper">
+    <main class="layout-wrapper" id="editor-main">
         <!-- 동적 목차 사이드바 -->
-        <aside class="toc-sidebar" id="toc-navigator">
+        <aside class="toc-sidebar" id="toc-navigator" aria-label="슬라이드 탐색">
             <!-- 자바스크립트로 목차가 렌더링 됩니다 -->
         </aside>
 
-        <div class="main-container">
+        <section class="main-container" aria-label="슬라이드 편집 영역">
             
             <div class="status-bar" id="status-text">시작하려면 아래 폼을 작성하고 생성 버튼을 눌러주세요.</div>
             
             <!-- 프리뷰 렌더링 영역 -->
-            <div id="preview-area" style="display: flex; flex-direction: column; gap: 30px;">
-            </div>
+            <section id="preview-area" aria-label="슬라이드 미리보기" style="display: flex; flex-direction: column; gap: 30px;">
+            </section>
 
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script src="src/app.js"></script>
+    <script src="src/core/state.js"></script>
+    <script src="src/features/projects.js"></script>
+    <script src="src/features/editor.js"></script>
+    <script src="src/features/export.js"></script>
+    <script src="src/features/theme.js"></script>
+    <script src="src/features/media.js"></script>
+    <script src="src/features/html5-semantics.js"></script>
+    <script src="src/features/export-enhancements.js"></script>
+    <script src="src/features/html5-forms.js"></script>
+    <script src="src/features/outline.js"></script>
 
     <!-- 테마 관리 모달 -->
-    <div id="theme-modal" class="theme-modal-overlay" style="display:none;">
+    <dialog id="theme-modal" class="theme-modal-overlay">
         <div class="theme-modal-content">
             <div class="theme-modal-header">
                 <span><i class="fa-solid fa-palette"></i> 테마 관리</span>
@@ -162,10 +158,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- 브랜딩 설정 모달 -->
-    <div id="branding-modal" class="theme-modal-overlay" style="display:none;">
+    <dialog id="branding-modal" class="theme-modal-overlay">
         <div class="theme-modal-content" style="width:480px;">
             <div class="theme-modal-header">
                 <span><i class="fa-solid fa-tag"></i> 브랜딩 설정</span>
@@ -174,21 +170,21 @@
             <div style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
                 <p style="font-size:13px; color: var(--text-dim); line-height:1.6; margin:0;">
                     브랜딩 정보는 <strong style="color:var(--text-main);">데이터 파일</strong>에 저장되며,
-                    웹 가이드 헤더·footer 및 PPTX 표지·footer에 반영됩니다.
+                    웹 가이드 헤더와 footer에 반영됩니다.
                 </p>
                 <div class="branding-field">
-                    <label class="branding-field-label">프로젝트명 <span>(헤더 제목 / PPTX 표지)</span></label>
-                    <input type="text" id="branding-project-name" class="theme-text-input"
+                    <label class="branding-field-label">프로젝트명 <span>(헤더 제목)</span></label>
+                    <input type="text" id="branding-project-name" class="theme-text-input" maxlength="120" autocomplete="organization"
                         placeholder="HPE Virtual Machine Essentials (VME)">
                 </div>
                 <div class="branding-field">
-                    <label class="branding-field-label">부제 <span>(헤더 부제 / PPTX 표지)</span></label>
-                    <input type="text" id="branding-guide-subtitle" class="theme-text-input"
+                    <label class="branding-field-label">부제 <span>(헤더 부제)</span></label>
+                    <input type="text" id="branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
                         placeholder="설치 및 구성 가이드">
                 </div>
                 <div class="branding-field">
-                    <label class="branding-field-label">Footer 문구 <span>(페이지 하단 · PPTX 슬라이드 하단)</span></label>
-                    <input type="text" id="branding-footer-copy" class="theme-text-input"
+                    <label class="branding-field-label">Footer 문구 <span>(페이지 하단)</span></label>
+                    <input type="text" id="branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
                         placeholder="My Guide">
                 </div>
                 <div style="display:flex; gap:10px; padding-top:6px; border-top:1px solid var(--border-color);">
@@ -201,9 +197,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
-    <div id="project-modal" class="theme-modal-overlay" style="display:none;">
+    <dialog id="project-modal" class="theme-modal-overlay">
         <div class="theme-modal-content project-modal-content">
             <div class="theme-modal-header">
                 <span><i class="fa-solid fa-folder-tree"></i> Project Manager</span>
@@ -246,8 +242,42 @@
 
                     <div class="project-editor-section">
                         <label id="project-modal-name-label" class="theme-section-label" for="project-modal-name-input">Project Name</label>
-                        <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" oninput="window.setProjectModalNameDraft(this.value)">
+                        <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" maxlength="120" autocomplete="off" required oninput="window.setProjectModalNameDraft(this.value)">
                         <p id="project-modal-help" class="project-help-text"></p>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <div class="theme-section-label">Branding</div>
+                        <div class="project-branding-card">
+                            <p class="project-branding-note">프로젝트명은 저장 이름과 항상 동일하게 유지됩니다.</p>
+                            <div class="branding-field">
+                                <label class="branding-field-label">프로젝트명 <span>(현재 저장 이름과 동기화됨)</span></label>
+                                <div id="project-branding-name-display" class="project-branding-name-display">-</div>
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-branding-guide-subtitle">부제 <span>(헤더 부제)</span></label>
+                                <input type="text" id="project-branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
+                                    placeholder="설치 및 구성 가이드" oninput="window.updateProjectBrandingDraft()">
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-branding-footer-copy">Footer 문구 <span>(페이지 하단)</span></label>
+                                <input type="text" id="project-branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
+                                    placeholder="My Guide" oninput="window.updateProjectBrandingDraft()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <div class="theme-section-label">Data Tools</div>
+                        <div class="project-tools-grid">
+                            <input type="file" id="project-import-data-input" accept=".json" style="display:none;" onchange="window.importData(event)">
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="document.getElementById('project-import-data-input').click()">
+                                <i class="fa-solid fa-file-import"></i> Import JSON
+                            </button>
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="window.downloadData()">
+                                <i class="fa-solid fa-download"></i> Backup JSON
+                            </button>
+                        </div>
                     </div>
 
                     <div class="project-editor-section">
@@ -268,7 +298,16 @@
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
+    <template id="phase9-toc-chapter-template">
+        <div class="toc-nav-chapter"></div>
+    </template>
+    <template id="phase9-toc-middle-template">
+        <div class="toc-nav-middle" tabindex="0"></div>
+    </template>
+    <template id="phase9-toc-title-template">
+        <div class="toc-nav-title" tabindex="0"></div>
+    </template>
 </body>
 </html>

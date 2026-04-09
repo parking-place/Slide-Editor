@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const sharp = require('sharp');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -17,6 +18,14 @@ const APP_STATE_PATH = path.join(PROJECTS_DIR, 'app_state.json');
 const LEGACY_SLIDE_DATA_PATH = path.join(DATA_DIR, 'slide_data.json');
 const LEGACY_IMAGE_DATA_DIR = path.join(DATA_DIR, 'image_data');
 const DEFAULT_PROJECT_ID = 'default';
+const IMAGE_INDEX_FILE = 'index.json';
+const IMAGE_STATUS = {
+    QUEUED: 'queued',
+    CONVERTING: 'converting',
+    READY: 'ready',
+    FAILED: 'failed'
+};
+const activeImageConversions = new Map();
 
 function ensureDir(dirPath) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -104,8 +113,28 @@ function mergeSettings(settings, fallbackProjectName = 'My Guide') {
     };
 }
 
-function createEmptyProjectPayload(projectName = 'My Guide') {
+function normalizeSavedVersion(versionValue) {
+    return typeof versionValue === 'string' && versionValue.trim()
+        ? versionValue.trim()
+        : null;
+}
+
+function extractSavedVersion(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return null;
+    }
+
+    return normalizeSavedVersion(
+        payload.savedVersion
+        || payload.version
+        || payload.meta?.savedVersion
+        || payload.settings?.savedVersion
+    );
+}
+
+function createEmptyProjectPayload(projectName = 'My Guide', savedVersion = null) {
     return {
+        savedVersion: normalizeSavedVersion(savedVersion),
         settings: createDefaultSettings(projectName),
         slides: []
     };
@@ -125,6 +154,18 @@ function getProjectMetaPath(projectId) {
 
 function getProjectImageDir(projectId) {
     return path.join(getProjectDir(projectId), 'image_data');
+}
+
+function getProjectImageOriginalsDir(projectId) {
+    return path.join(getProjectImageDir(projectId), 'originals');
+}
+
+function getProjectImageConvertedDir(projectId) {
+    return path.join(getProjectImageDir(projectId), 'converted');
+}
+
+function getProjectImageIndexPath(projectId) {
+    return path.join(getProjectImageDir(projectId), IMAGE_INDEX_FILE);
 }
 
 function getProjectImageUrl(projectId, fileName) {
@@ -152,6 +193,108 @@ function getImageExtension(mimeType) {
         'image/svg+xml': 'svg'
     };
     return extMap[normalized] || 'bin';
+}
+
+function createImageAssetId() {
+    return crypto.randomBytes(12).toString('hex');
+}
+
+function ensureProjectImageStorage(projectId) {
+    ensureDir(getProjectImageDir(projectId));
+    ensureDir(getProjectImageOriginalsDir(projectId));
+    ensureDir(getProjectImageConvertedDir(projectId));
+
+    const indexPath = getProjectImageIndexPath(projectId);
+    if (!fs.existsSync(indexPath)) {
+        writeJson(indexPath, { assets: {} });
+    }
+}
+
+function getProjectImageIndex(projectId) {
+    ensureProjectImageStorage(projectId);
+    const index = readJsonIfExists(getProjectImageIndexPath(projectId));
+    if (!index || typeof index !== 'object') {
+        return { assets: {} };
+    }
+
+    return {
+        assets: index.assets && typeof index.assets === 'object' ? index.assets : {}
+    };
+}
+
+function saveProjectImageIndex(projectId, index) {
+    ensureProjectImageStorage(projectId);
+    writeJson(getProjectImageIndexPath(projectId), index);
+}
+
+function getImageAsset(projectId, assetId) {
+    const index = getProjectImageIndex(projectId);
+    return index.assets[assetId] || null;
+}
+
+function setImageAsset(projectId, assetId, asset) {
+    const index = getProjectImageIndex(projectId);
+    index.assets[assetId] = asset;
+    saveProjectImageIndex(projectId, index);
+    return asset;
+}
+
+function updateImageAsset(projectId, assetId, updates) {
+    const asset = getImageAsset(projectId, assetId);
+    if (!asset) return null;
+
+    return setImageAsset(projectId, assetId, Object.assign({}, asset, updates, {
+        updatedAt: getTimestamp()
+    }));
+}
+
+function getProjectRelativePath(projectId, relativePath) {
+    return path.join(getProjectDir(projectId), relativePath);
+}
+
+function getImageAssetOutputUrls(projectId, assetId) {
+    return {
+        statusUrl: `/api/projects/${encodeURIComponent(projectId)}/images/${encodeURIComponent(assetId)}/status`,
+        fileUrl: `/api/projects/${encodeURIComponent(projectId)}/images/${encodeURIComponent(assetId)}/file`,
+        originalUrl: `/api/projects/${encodeURIComponent(projectId)}/images/${encodeURIComponent(assetId)}/original`
+    };
+}
+
+function serializeImageAsset(projectId, asset) {
+    if (!asset) return null;
+    return Object.assign({}, asset, getImageAssetOutputUrls(projectId, asset.assetId));
+}
+
+function parseImageUploadBody(body) {
+    const payload = body && typeof body === 'object' ? body : {};
+    const dataUrl = typeof payload.dataUrl === 'string' ? payload.dataUrl.trim() : '';
+    const base64Data = typeof payload.base64Data === 'string' ? payload.base64Data.trim() : '';
+    const fileName = String(payload.fileName || '').trim() || 'upload';
+    let mimeType = String(payload.mimeType || '').trim().toLowerCase();
+    let buffer = null;
+
+    if (dataUrl) {
+        const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+(?:\+xml)?);base64,(.+)$/);
+        if (!match) {
+            throw new Error('Invalid image data URL');
+        }
+        mimeType = mimeType || match[1].toLowerCase();
+        buffer = Buffer.from(match[2], 'base64');
+    } else if (base64Data && mimeType) {
+        buffer = Buffer.from(base64Data, 'base64');
+    } else {
+        throw new Error('Image payload is required');
+    }
+
+    if (!mimeType.startsWith('image/')) {
+        throw new Error('Unsupported mime type');
+    }
+
+    return {
+        fileName,
+        mimeType,
+        buffer
+    };
 }
 
 function isValidProjectId(projectId) {
@@ -212,7 +355,8 @@ function syncProjectIndexEntry(meta) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
-        slideCount: meta.slideCount
+        slideCount: meta.slideCount,
+        savedVersion: normalizeSavedVersion(meta.savedVersion)
     });
     projects.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     saveProjectsIndex({ projects });
@@ -234,8 +378,15 @@ function updateProjectMeta(projectId, updates = {}) {
         ...meta,
         name: String(updates.name || meta.name || projectId).trim() || projectId,
         updatedAt: getTimestamp(),
-        slideCount: getSlideCount(payload)
+        slideCount: getSlideCount(payload),
+        savedVersion: normalizeSavedVersion(meta.savedVersion || extractSavedVersion(payload))
     };
+
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        payload.settings = mergeSettings(payload.settings, nextMeta.name);
+        payload.settings.branding.projectName = nextMeta.name;
+        writeJson(getProjectDataPath(projectId), payload);
+    }
 
     writeJson(getProjectMetaPath(projectId), nextMeta);
     syncProjectIndexEntry(nextMeta);
@@ -245,7 +396,8 @@ function updateProjectMeta(projectId, updates = {}) {
         name: nextMeta.name,
         createdAt: nextMeta.createdAt,
         updatedAt: nextMeta.updatedAt,
-        slideCount: nextMeta.slideCount
+        slideCount: nextMeta.slideCount,
+        savedVersion: normalizeSavedVersion(nextMeta.savedVersion)
     };
 }
 
@@ -275,6 +427,101 @@ function deleteProject(projectId) {
         currentProjectId,
         projects: index.projects
     };
+}
+
+function buildImageAssetMeta(projectId, upload) {
+    const assetId = createImageAssetId();
+    const extension = getImageExtension(upload.mimeType);
+    const originalRelativePath = path.join('image_data', 'originals', `${assetId}.${extension}`).replace(/\\/g, '/');
+    const convertedRelativePath = path.join('image_data', 'converted', `${assetId}.webp`).replace(/\\/g, '/');
+    const now = getTimestamp();
+
+    return {
+        assetId,
+        projectId,
+        sourceFileName: upload.fileName,
+        mimeType: upload.mimeType,
+        convertedMimeType: 'image/webp',
+        originalPath: originalRelativePath,
+        convertedPath: convertedRelativePath,
+        status: IMAGE_STATUS.QUEUED,
+        error: null,
+        createdAt: now,
+        updatedAt: now
+    };
+}
+
+async function runImageConversion(projectId, assetId) {
+    const jobKey = `${projectId}:${assetId}`;
+    const currentAsset = getImageAsset(projectId, assetId);
+    if (!currentAsset) return null;
+
+    updateImageAsset(projectId, assetId, {
+        status: IMAGE_STATUS.CONVERTING,
+        error: null
+    });
+
+    try {
+        const latestAsset = getImageAsset(projectId, assetId);
+        const originalPath = getProjectRelativePath(projectId, latestAsset.originalPath);
+        const convertedPath = getProjectRelativePath(projectId, latestAsset.convertedPath);
+
+        ensureDir(path.dirname(convertedPath));
+        await sharp(originalPath)
+            .rotate()
+            .webp({ quality: 82 })
+            .toFile(convertedPath);
+
+        if (fs.existsSync(originalPath)) {
+            fs.rmSync(originalPath, { force: true });
+        }
+
+        return updateImageAsset(projectId, assetId, {
+            status: IMAGE_STATUS.READY,
+            error: null,
+            originalPath: null
+        });
+    } catch (err) {
+        return updateImageAsset(projectId, assetId, {
+            status: IMAGE_STATUS.FAILED,
+            error: err.message
+        });
+    } finally {
+        activeImageConversions.delete(jobKey);
+    }
+}
+
+function queueImageConversion(projectId, assetId) {
+    const jobKey = `${projectId}:${assetId}`;
+    if (activeImageConversions.has(jobKey)) {
+        return activeImageConversions.get(jobKey);
+    }
+
+    const job = Promise.resolve().then(() => runImageConversion(projectId, assetId));
+    activeImageConversions.set(jobKey, job);
+    return job;
+}
+
+function resumePendingImageConversions() {
+    getProjectsIndex().projects.forEach((project) => {
+        const index = getProjectImageIndex(project.id);
+        Object.values(index.assets).forEach((asset) => {
+            if (!asset || !asset.assetId) return;
+            if (![IMAGE_STATUS.QUEUED, IMAGE_STATUS.CONVERTING].includes(asset.status)) return;
+            if (!asset.originalPath) return;
+
+            const originalPath = getProjectRelativePath(project.id, asset.originalPath);
+            if (!fs.existsSync(originalPath)) {
+                updateImageAsset(project.id, asset.assetId, {
+                    status: IMAGE_STATUS.FAILED,
+                    error: 'Original upload missing before conversion resumed'
+                });
+                return;
+            }
+
+            queueImageConversion(project.id, asset.assetId);
+        });
+    });
 }
 
 function parseProjectImageReference(imageValue) {
@@ -379,6 +626,7 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
 
     if (Array.isArray(payload)) {
         return {
+            savedVersion: null,
             settings: createDefaultSettings(fallbackProjectName),
             slides: payload.map(slide => {
                 if (!slide || typeof slide !== 'object') return slide;
@@ -392,8 +640,12 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
     const safePayload = payload && typeof payload === 'object' ? payload : {};
     const slides = Array.isArray(safePayload.slides) ? safePayload.slides : [];
 
+    const settings = mergeSettings(safePayload.settings, fallbackProjectName);
+    settings.branding.projectName = String(fallbackProjectName || settings.branding.projectName || 'My Guide').trim() || 'My Guide';
+
     return {
-        settings: mergeSettings(safePayload.settings, fallbackProjectName),
+        savedVersion: extractSavedVersion(safePayload),
+        settings,
         slides: slides.map(slide => {
             if (!slide || typeof slide !== 'object') return slide;
             return Object.assign({}, slide, {
@@ -411,7 +663,8 @@ function createProjectMeta(projectId, name, payload, existingMeta = null) {
         name: safeName,
         createdAt: existingMeta?.createdAt || now,
         updatedAt: now,
-        slideCount: getSlideCount(payload)
+        slideCount: getSlideCount(payload),
+        savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || existingMeta?.savedVersion)
     };
 }
 
@@ -421,7 +674,7 @@ function saveProject(projectId, name, body) {
     const meta = createProjectMeta(projectId, name, normalizedPayload, existingMeta);
 
     ensureDir(getProjectDir(projectId));
-    ensureDir(getProjectImageDir(projectId));
+    ensureProjectImageStorage(projectId);
     writeJson(getProjectDataPath(projectId), normalizedPayload);
     writeJson(getProjectMetaPath(projectId), meta);
     syncProjectIndexEntry(meta);
@@ -431,7 +684,8 @@ function saveProject(projectId, name, body) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
-        slideCount: meta.slideCount
+        slideCount: meta.slideCount,
+        savedVersion: normalizeSavedVersion(meta.savedVersion)
     };
 }
 
@@ -443,8 +697,32 @@ function loadProjectPayload(projectId) {
     return Object.assign({
         id: meta.id,
         name: meta.name,
+        savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || meta.savedVersion),
         meta
     }, payload);
+}
+
+function listProjects() {
+    return getProjectsIndex().projects
+        .map((project) => {
+            const meta = readProjectMeta(project.id);
+            const payload = readJsonIfExists(getProjectDataPath(project.id));
+            const savedVersion = normalizeSavedVersion(
+                project.savedVersion
+                || meta?.savedVersion
+                || extractSavedVersion(payload)
+            );
+
+            return {
+                id: project.id,
+                name: meta?.name || project.name || project.id,
+                createdAt: meta?.createdAt || project.createdAt || getTimestamp(),
+                updatedAt: meta?.updatedAt || project.updatedAt || getTimestamp(),
+                slideCount: Number.isFinite(meta?.slideCount) ? meta.slideCount : getSlideCount(payload),
+                savedVersion
+            };
+        })
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 
 function createProject(projectName, body) {
@@ -496,6 +774,7 @@ function initializeProjectStorage() {
 }
 
 initializeProjectStorage();
+resumePendingImageConversions();
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -580,7 +859,7 @@ app.put('/api/app-state', (req, res) => {
 });
 
 app.get('/api/projects', (req, res) => {
-    res.json(getProjectsIndex().projects);
+    res.json(listProjects());
 });
 
 app.post('/api/projects', (req, res) => {
@@ -596,8 +875,9 @@ app.post('/api/projects', (req, res) => {
 
     try {
         const body = req.body && req.body.template === 'empty'
-            ? createEmptyProjectPayload(requestedName)
+            ? createEmptyProjectPayload(requestedName, req.body && req.body.savedVersion)
             : {
+                savedVersion: req.body && req.body.savedVersion,
                 settings: req.body && req.body.settings,
                 slides: req.body && req.body.slides
             };
@@ -682,6 +962,102 @@ app.delete('/api/projects/:projectId', (req, res) => {
         console.error('[DELETE /api/projects/:projectId]', err);
         res.status(500).json({ error: 'Failed to delete project' });
     }
+});
+
+app.post('/api/projects/:projectId/images/upload', (req, res) => {
+    const projectId = req.params.projectId;
+    if (!isValidProjectId(projectId) || !fs.existsSync(getProjectDir(projectId))) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    try {
+        const upload = parseImageUploadBody(req.body);
+        const asset = buildImageAssetMeta(projectId, upload);
+        const originalPath = getProjectRelativePath(projectId, asset.originalPath);
+
+        ensureProjectImageStorage(projectId);
+        fs.writeFileSync(originalPath, upload.buffer);
+        setImageAsset(projectId, asset.assetId, asset);
+        queueImageConversion(projectId, asset.assetId);
+
+        res.status(202).json({
+            status: 'accepted',
+            asset: serializeImageAsset(projectId, asset)
+        });
+    } catch (err) {
+        console.error('[POST /api/projects/:projectId/images/upload]', err);
+        res.status(400).json({ error: err.message || 'Failed to upload image' });
+    }
+});
+
+app.get('/api/projects/:projectId/images/:assetId/status', (req, res) => {
+    const projectId = req.params.projectId;
+    const assetId = req.params.assetId;
+
+    if (!isValidProjectId(projectId)) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    const asset = getImageAsset(projectId, assetId);
+    if (!asset) {
+        return res.status(404).json({ error: 'Image asset not found' });
+    }
+
+    res.json({
+        status: 'success',
+        asset: serializeImageAsset(projectId, asset)
+    });
+});
+
+app.get('/api/projects/:projectId/images/:assetId/file', (req, res) => {
+    const projectId = req.params.projectId;
+    const assetId = req.params.assetId;
+
+    if (!isValidProjectId(projectId)) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    const asset = getImageAsset(projectId, assetId);
+    if (!asset) {
+        return res.status(404).json({ error: 'Image asset not found' });
+    }
+
+    if (asset.status === IMAGE_STATUS.READY && asset.convertedPath) {
+        const convertedPath = getProjectRelativePath(projectId, asset.convertedPath);
+        if (fs.existsSync(convertedPath)) {
+            return res.sendFile(convertedPath);
+        }
+    }
+
+    if (asset.originalPath) {
+        const originalPath = getProjectRelativePath(projectId, asset.originalPath);
+        if (fs.existsSync(originalPath)) {
+            return res.sendFile(originalPath);
+        }
+    }
+
+    return res.status(409).json({ error: 'Converted image is not ready yet', asset: serializeImageAsset(projectId, asset) });
+});
+
+app.get('/api/projects/:projectId/images/:assetId/original', (req, res) => {
+    const projectId = req.params.projectId;
+    const assetId = req.params.assetId;
+
+    if (!isValidProjectId(projectId)) {
+        return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    const asset = getImageAsset(projectId, assetId);
+    if (!asset || !asset.originalPath) {
+        return res.status(404).json({ error: 'Original image not found' });
+    }
+
+    const originalPath = getProjectRelativePath(projectId, asset.originalPath);
+    if (!fs.existsSync(originalPath)) {
+        return res.status(404).json({ error: 'Original image not found' });
+    }
+
+    res.sendFile(originalPath);
 });
 
 app.get('/api/projects/:projectId/images/:fileName', (req, res) => {

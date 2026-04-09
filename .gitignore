@@ -1,6 +1,20 @@
+# 로컬 실행 중 생성되는 에디터 데이터
 data/slide_data.json
-data/image_data/*
-!data/image_data/.gitkeep
+data/projects/
 exports/
+
+# 프로젝트 이미지 실제 데이터는 런타임 자산이므로 커밋하지 않음
+data/image_data/*
+
+# image_data 디렉터리 구조 유지를 위해 .gitkeep만 허용
+!data/image_data/.gitkeep
+
+# 로컬 Codex 메모리/캐시 파일
 .agentmem
-plans/*.*
+
+# 계획 문서는 작업용 메모이므로 커밋하지 않음
+plans/*
+
+# 로컬 의존성 및 작업용 도구
+node_modules/
+.tools/
