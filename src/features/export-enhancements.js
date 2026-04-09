@@ -126,10 +126,20 @@
             const textFlex = hasText && hasImage ? textRatio : 100;
             const imageFlex = hasText && hasImage ? (100 - textRatio) : 100;
             const middleTitleHtml = slide.middleTitle ? `<p class="guide-middle-title">${escapeHtml(slide.middleTitle)}</p>` : '';
+            const imageAlt = escapeHtml(slide.title || `Slide ${index + 1}`);
             const imageHtml = hasImage ? `
                 <figure class="guide-figure" style="flex:${imageFlex};">
                     <picture>
-                        <img src="${imageSrc}" alt="${escapeHtml(slide.title || `Slide ${index + 1}`)}" loading="lazy" decoding="async">
+                        <img
+                            class="guide-image-zoomable"
+                            src="${imageSrc}"
+                            alt="${imageAlt}"
+                            loading="lazy"
+                            decoding="async"
+                            tabindex="0"
+                            role="button"
+                            aria-label="${imageAlt} 이미지 확대 보기"
+                            data-guide-zoomable="true">
                     </picture>
                     ${slide.imageCaption ? `<figcaption>${escapeHtml(slide.imageCaption)}</figcaption>` : ''}
                 </figure>
@@ -177,8 +187,9 @@
         .guide-aside h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: ${accentColor}; }
         .guide-aside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
         .guide-toc-chapter { margin-top: 10px; font-size: 12px; font-weight: 700; color: ${accentColor}; }
-        .guide-toc-middle, .guide-toc-item { display: block; text-decoration: none; color: inherit; border-radius: 8px; padding: 6px 8px; }
+        .guide-toc-middle, .guide-toc-item { display: block; text-decoration: none; color: inherit; border-radius: 8px; padding: 6px 8px; transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
         .guide-toc-middle:hover, .guide-toc-item:hover { background: rgba(1, 169, 130, 0.12); }
+        .guide-toc-item.active { background: rgba(1, 169, 130, 0.18); color: ${accentColor}; box-shadow: inset 3px 0 0 ${accentColor}; font-weight: 700; }
         .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
         .guide-card { background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; border: 1px solid rgba(148,163,184,0.2); border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); }
         .guide-card-header { padding: 24px 28px 18px; border-left: 6px solid ${accentColor}; background: ${bodyClass === 'light-mode' ? '#f8fafc' : '#111827'}; }
@@ -189,6 +200,9 @@
         .guide-text { min-width: 280px; }
         .guide-figure { min-width: 280px; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .guide-figure img { max-width: 100%; border-radius: 14px; border: 1px solid rgba(148,163,184,0.2); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16); }
+        .guide-figure img[data-guide-zoomable="true"] { cursor: zoom-in; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .guide-figure img[data-guide-zoomable="true"]:hover,
+        .guide-figure img[data-guide-zoomable="true"]:focus-visible { transform: scale(1.01); box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22); outline: none; }
         .guide-figure figcaption { margin-top: 10px; font-size: 13px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; text-align: center; }
         .markdown-body p { margin: 0 0 0.8em; white-space: pre-wrap; word-break: break-word; }
         .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: ${accentColor}; margin: 1em 0 0.5em; }
@@ -198,6 +212,14 @@
         .markdown-body pre { margin: 0 0 1em; overflow-x: auto; background: #0f172a; border: 1px solid rgba(148,163,184,0.2); border-left: 4px solid ${accentColor}; border-radius: 12px; padding: 16px; }
         .markdown-body pre code { background: transparent; color: inherit; padding: 0; }
         .guide-footer { max-width: 1440px; margin: 0 auto 32px; padding: 0 24px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; font-size: 13px; }
+        .guide-lightbox[hidden] { display: none; }
+        .guide-lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(2, 6, 23, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(8px); }
+        .guide-lightbox-figure { margin: 0; max-width: min(92vw, 1440px); max-height: 92vh; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .guide-lightbox-image { max-width: 100%; max-height: calc(92vh - 64px); object-fit: contain; border-radius: 18px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); background: rgba(15, 23, 42, 0.4); }
+        .guide-lightbox-caption { font-size: 14px; text-align: center; color: #e2e8f0; }
+        .guide-lightbox-close { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border: none; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; }
+        .guide-lightbox-close:hover,
+        .guide-lightbox-close:focus-visible { background: rgba(255, 255, 255, 0.24); outline: none; }
         @media (max-width: 1100px) {
             .guide-layout { flex-direction: column; }
             .guide-aside { width: 100%; position: static; }
@@ -221,6 +243,99 @@
     <footer class="guide-footer">
         ${escapeHtml(footerCopy)} · Generated by Slide Editor
     </footer>
+    <div id="guide-lightbox" class="guide-lightbox" hidden aria-hidden="true" aria-label="확대 이미지 보기">
+        <button type="button" id="guide-lightbox-close" class="guide-lightbox-close" aria-label="확대 이미지 닫기">&times;</button>
+        <figure class="guide-lightbox-figure">
+            <img id="guide-lightbox-image" class="guide-lightbox-image" alt="">
+            <figcaption id="guide-lightbox-caption" class="guide-lightbox-caption"></figcaption>
+        </figure>
+    </div>
+    <script>
+        (function () {
+            var tocItems = Array.prototype.slice.call(document.querySelectorAll('.guide-toc-item[href^="#guide-slide-"]'));
+            var guideCards = Array.prototype.slice.call(document.querySelectorAll('.guide-card[id^="guide-slide-"]'));
+            var lightbox = document.getElementById('guide-lightbox');
+            var lightboxImage = document.getElementById('guide-lightbox-image');
+            var lightboxCaption = document.getElementById('guide-lightbox-caption');
+            var lightboxClose = document.getElementById('guide-lightbox-close');
+
+            function setActiveToc(targetId) {
+                tocItems.forEach(function (item) {
+                    var isActive = item.getAttribute('href') === '#' + targetId;
+                    item.classList.toggle('active', isActive);
+                    if (isActive) {
+                        item.setAttribute('aria-current', 'location');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.removeAttribute('aria-current');
+                    }
+                });
+            }
+
+            function openLightbox(imageElement) {
+                if (!lightbox || !lightboxImage || !imageElement) return;
+                lightboxImage.src = imageElement.getAttribute('src') || '';
+                lightboxImage.alt = imageElement.getAttribute('alt') || '확대 이미지';
+                lightboxCaption.textContent = imageElement.closest('figure')?.querySelector('figcaption')?.textContent?.trim() || imageElement.getAttribute('alt') || '';
+                lightbox.hidden = false;
+                lightbox.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                if (lightboxClose) lightboxClose.focus();
+            }
+
+            function closeLightbox() {
+                if (!lightbox || lightbox.hidden) return;
+                lightbox.hidden = true;
+                lightbox.setAttribute('aria-hidden', 'true');
+                lightboxImage.src = '';
+                document.body.style.overflow = '';
+            }
+
+            tocItems.forEach(function (item) {
+                item.addEventListener('click', function () {
+                    var targetId = (item.getAttribute('href') || '').replace(/^#/, '');
+                    if (targetId) setActiveToc(targetId);
+                });
+            });
+
+            if (guideCards.length && tocItems.length) {
+                setActiveToc(guideCards[0].id);
+                if ('IntersectionObserver' in window) {
+                    var observer = new IntersectionObserver(function (entries) {
+                        var visibleCard = entries
+                            .filter(function (entry) { return entry.isIntersecting; })
+                            .sort(function (left, right) { return right.intersectionRatio - left.intersectionRatio; })[0];
+                        if (!visibleCard) return;
+                        setActiveToc(visibleCard.target.id);
+                    }, { rootMargin: '-20% 0px -55% 0px', threshold: [0.15, 0.4, 0.7] });
+
+                    guideCards.forEach(function (card) { observer.observe(card); });
+                }
+            }
+
+            Array.prototype.slice.call(document.querySelectorAll('.guide-image-zoomable')).forEach(function (imageElement) {
+                imageElement.addEventListener('click', function () { openLightbox(imageElement); });
+                imageElement.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openLightbox(imageElement);
+                    }
+                });
+            });
+
+            if (lightbox) {
+                lightbox.addEventListener('click', function (event) {
+                    if (event.target === lightbox) closeLightbox();
+                });
+            }
+            if (lightboxClose) {
+                lightboxClose.addEventListener('click', closeLightbox);
+            }
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') closeLightbox();
+            });
+        })();
+    <\/script>
 </body>
 </html>`;
     }
