@@ -25,6 +25,7 @@ function getProjectModalDetails(projectId) {
             id: currentProject.id,
             name: currentProject.name,
             savedVersion: currentProject.savedVersion,
+            lastSavedAt: currentProject.lastSavedAt || '',
             slideCount: slidesData.length,
             settings: projectSettings,
             slides: slidesData
@@ -50,6 +51,11 @@ function buildProjectModalMetaLine(projectDetails, slideCountOverride) {
     return `${projectDetails.id} / ${slideCount} page / ${getSavedVersionLabel(projectDetails.savedVersion)}`;
 }
 
+function getProjectLastSavedLabel(projectDetails) {
+    const lastSavedAt = projectDetails?.lastSavedAt || projectDetails?.meta?.lastSavedAt || projectDetails?.updatedAt || '';
+    return (typeof lastSavedAt === 'string' && lastSavedAt.trim()) ? lastSavedAt.trim() : 'NoData';
+}
+
 function buildProjectListMeta(project) {
     const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
     const versionLabel = getSavedVersionLabel(project.savedVersion);
@@ -69,7 +75,7 @@ function buildProjectMetaMarkup(projectDetails, slideCountOverride) {
         { label: 'ID', value: projectDetails.id || '-' },
         { label: 'page', value: `${slideCount} page` },
         { label: 'Saved Version', value: getSavedVersionLabel(projectDetails.savedVersion) },
-        { label: 'Last Saved', value: 'Nodata' }
+        { label: 'Last Saved', value: getProjectLastSavedLabel(projectDetails) }
     ];
 
     return `

@@ -544,8 +544,8 @@ function generateTocData(slides) {
                         let imageHtml = '';
                         if (hasImage) {
                             const imageSrc = getSlideImageSrc(slide.image);
-                            let captionHtml = slide.imageCaption ? `<div style="font-size:13px; color:var(--text-dim); text-align:center; margin-top:8px; width: 100%; word-break: break-all;">${escapeHtml(slide.imageCaption)}</div>` : '';
-                            imageHtml = `<div class="box image-box" style="flex: ${imgFlex}; flex-direction: column;"><img src="${imageSrc}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
+                            let captionHtml = slide.imageCaption ? `<div class="image-caption">${escapeHtml(slide.imageCaption)}</div>` : '';
+                            imageHtml = `<div class="box image-box${hasText ? '' : ' image-box--solo'}" style="flex: ${imgFlex};"><img src="${imageSrc}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">${captionHtml}</div>`;
                         }
 
                         const middleTitleHtml = slide.middleTitle 
@@ -569,7 +569,7 @@ function generateTocData(slides) {
                                 ${middleTitleHtml}
                                 <div class="preview-title">${escapeHtml(slide.title)}</div>
                             </div>
-                            <div class="preview-body">
+                            <div class="preview-body${!hasText && hasImage ? ' preview-body--image-only' : ''}">
                                 ${textContentHtml}
                                 ${imageHtml}
                             </div>

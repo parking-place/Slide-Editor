@@ -154,6 +154,10 @@
   - `ID`, `page`, `Saved Version`, `Last Saved`
   - `Open`, `Copy`
 
+현재 `Last Saved`는 구버전 데이터와의 호환을 위해 우선 `NoData` placeholder를 사용하며,
+저장 시각 데이터가 실제로 기록되면 같은 위치에 그대로 대체되도록 설계되어 있습니다.
+또한 이미지 전용 슬라이드는 별도 내부 스크롤을 만들지 않도록 `image-box`가 caption 포함 단일 레이아웃으로 렌더링됩니다.
+
 새 프로젝트 생성과 JSON Import는 메인 패널 하단에 섞어 두지 않고, 별도 `New Project` 다이얼로그에서 시작합니다.
 이 다이얼로그 안에서 새 프로젝트 생성용 입력 필드와 Import 버튼을 분리해 제공합니다.
 

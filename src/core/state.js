@@ -186,7 +186,8 @@
                 ? {
                     id: project.id,
                     name: project.name || project.meta?.name || project.settings?.branding?.projectName || project.id,
-                    savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion)
+                    savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion),
+                    lastSavedAt: project.lastSavedAt || project.meta?.lastSavedAt || project.updatedAt || ''
                 }
                 : null;
             syncProjectBrandingName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');
