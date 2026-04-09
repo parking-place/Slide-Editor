@@ -153,9 +153,30 @@
         const accentColor = themeGuide.accentColor || '#01a982';
         const headerBg = themeGuide.headerBg || accentColor;
         const darkAccent = themeGuide.darkAccent || '#00e676';
+        const rootStyles = getComputedStyle(document.documentElement);
+        const editorAccentColor = rootStyles.getPropertyValue('--hpe-green').trim() || activeTheme?.colors?.accent || accentColor;
+        const guideCodeColor = rootStyles.getPropertyValue('--code-color').trim() || themeGuide.codeColor || activeTheme?.colors?.codeColor || darkAccent;
         const footerCopy = branding.footerCopy || branding.projectName || 'My Guide';
         const navigatorModel = buildGuideNavigatorModel(sourceSlides);
         const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
+        const codeBlockBorder = bodyClass === 'light-mode'
+            ? 'rgba(15, 23, 42, 0.12)'
+            : 'rgba(255, 255, 255, 0.12)';
+        const codeBlockHeaderBg = bodyClass === 'light-mode'
+            ? 'rgba(0, 0, 0, 0.08)'
+            : 'rgba(0, 0, 0, 0.35)';
+        const codeBlockButtonBg = bodyClass === 'light-mode'
+            ? 'rgba(255, 255, 255, 0.82)'
+            : 'rgba(255, 255, 255, 0.04)';
+        const codeBlockButtonHoverBg = bodyClass === 'light-mode'
+            ? 'rgba(255, 255, 255, 0.96)'
+            : 'rgba(255, 255, 255, 0.08)';
+        const codeBlockButtonText = bodyClass === 'light-mode'
+            ? '#475569'
+            : '#8b949e';
+        const codeBlockBackground = bodyClass === 'light-mode'
+            ? '#1e1e1e'
+            : '#010409';
         const guideScrollTrack = bodyClass === 'light-mode'
             ? 'rgba(226, 232, 240, 0.75)'
             : 'rgba(15, 23, 42, 0.72)';
@@ -300,9 +321,15 @@
         .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: ${accentColor}; margin: 1em 0 0.5em; }
         .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
         .markdown-body ul, .markdown-body ol { padding-left: 20px; margin: 0 0 1em; }
-        .markdown-body code { background: rgba(1, 169, 130, 0.14); color: ${darkAccent}; padding: 2px 6px; border-radius: 6px; font-family: 'D2Coding', monospace; }
-        .markdown-body pre { margin: 0 0 1em; overflow-x: auto; background: #0f172a; border: 1px solid rgba(148,163,184,0.2); border-left: 4px solid ${accentColor}; border-radius: 12px; padding: 16px; }
-        .markdown-body pre code { background: transparent; color: inherit; padding: 0; }
+        .markdown-body :not(pre) > code { background: ${guideCodeColor}1A; color: ${guideCodeColor}; padding: 2px 5px; border-radius: 4px; font-family: 'D2Coding', monospace; font-size: 0.9em; }
+        .code-block-wrapper { margin-top: 10px; margin-bottom: 10px; border: 1px solid ${codeBlockBorder}; border-left: 3px solid ${editorAccentColor}; border-radius: 6px; overflow: hidden; background: ${bodyClass === 'light-mode' ? '#ffffff' : '#111827'}; }
+        .code-block-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; background: ${codeBlockHeaderBg}; border-bottom: 1px solid ${codeBlockBorder}; }
+        .code-lang-label { font-family: 'D2Coding', monospace; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: ${guideCodeColor}; }
+        .btn-copy-code { display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${codeBlockBorder}; border-radius: 999px; background: ${codeBlockButtonBg}; color: ${codeBlockButtonText}; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+        .btn-copy-code:hover, .btn-copy-code:focus-visible { background: ${codeBlockButtonHoverBg}; color: ${guideCodeColor}; border-color: ${guideCodeColor}; outline: none; }
+        .btn-copy-code.copied { color: ${guideCodeColor}; border-color: ${guideCodeColor}; }
+        .code-block-wrapper pre { margin: 0; overflow-x: auto; background: ${codeBlockBackground}; border: none; border-radius: 0; padding: 15px; }
+        .code-block-wrapper pre code.hljs { display: block; overflow-x: auto; padding: 0; background: transparent; color: inherit; }
         .guide-footer { max-width: 1440px; margin: 0 auto 32px; padding: 0 24px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; font-size: 13px; }
         .guide-lightbox[hidden] { display: none; }
         .guide-lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(2, 6, 23, 0.82); display: flex; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(8px); }
@@ -318,7 +345,7 @@
         }
     </style>
 </head>
-<body>
+<body class="${bodyClass}">
     <header class="guide-header">
         <h1>${escapeHtml(branding.projectName || 'My Guide')}</h1>
         <p>${escapeHtml(branding.guideSubtitle || '')}</p>
@@ -351,6 +378,36 @@
             var lightboxImage = document.getElementById('guide-lightbox-image');
             var lightboxCaption = document.getElementById('guide-lightbox-caption');
             var lightboxClose = document.getElementById('guide-lightbox-close');
+
+            window.copyCode = function (button) {
+                var codeElement = button && button.closest('.code-block-wrapper')
+                    ? button.closest('.code-block-wrapper').querySelector('code')
+                    : null;
+                var code = codeElement ? codeElement.innerText : '';
+                if (!code) return;
+
+                function markCopied() {
+                    button.innerHTML = '<i class="fa-solid fa-check"></i> 복사됨';
+                    button.classList.add('copied');
+                    window.setTimeout(function () {
+                        button.innerHTML = '<i class="fa-regular fa-copy"></i> 복사';
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(code).then(markCopied).catch(function () {});
+                    return;
+                }
+
+                var textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                markCopied();
+            };
 
             function scrollToTarget(targetId) {
                 var target = targetId ? document.getElementById(targetId) : null;

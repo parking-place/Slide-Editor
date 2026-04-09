@@ -267,7 +267,8 @@ function getDefaultThemeObject() {
                 webGuide: {
                     headerBg:    colors.accent,
                     accentColor: colors.accent,
-                    darkAccent:  colors.accent
+                    darkAccent:  colors.accent,
+                    codeColor:   colors.codeColor || colors.accent
                 },
                 fonts: t.fonts || getDefaultThemeObject().fonts
             };
