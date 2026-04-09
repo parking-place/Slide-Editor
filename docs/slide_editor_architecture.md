@@ -203,6 +203,8 @@
 HTML 가이드 쪽은 `src/features/export-enhancements.js`가 현재 활성 theme의 `glass` 토큰을 읽어
 body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니다.
 가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.
+모바일 폭과 `backdrop-filter` 미지원 환경에서는 Phase 5 조정 규칙에 따라
+blur 강도와 패딩을 낮추고, semi-transparent solid fallback으로 내려갑니다.
 
 ## 4. 프로젝트 저장 구조
 

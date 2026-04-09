@@ -792,6 +792,21 @@
 }
 
 @media (max-width: 900px) {
+    .theme-modal-content {
+        width: min(96vw, 860px);
+    }
+
+    .theme-modal-body {
+        flex-direction: column;
+    }
+
+    .theme-list {
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-color);
+        max-height: 220px;
+    }
+
     .project-modal-content {
         width: min(96vw, 980px);
     }
@@ -817,6 +832,19 @@
 
     .project-meta-grid {
         grid-template-columns: 1fr;
+    }
+
+    .theme-glass-color-row,
+    .theme-glass-row {
+        grid-template-columns: 1fr;
+    }
+
+    .theme-glass-unit {
+        text-align: left;
+    }
+
+    .theme-glass-sample {
+        min-height: 156px;
     }
 }
 

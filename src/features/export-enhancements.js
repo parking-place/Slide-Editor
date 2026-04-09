@@ -434,9 +434,26 @@
         .guide-lightbox-close { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border: none; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; }
         .guide-lightbox-close:hover,
         .guide-lightbox-close:focus-visible { background: rgba(255, 255, 255, 0.24); outline: none; }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .guide-header,
+            .guide-aside,
+            .guide-card {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                background: ${bodyClass === 'light-mode' ? 'rgba(255,255,255,0.92)' : 'rgba(13,17,23,0.92)'};
+            }
+        }
         @media (max-width: 1100px) {
             .guide-layout { flex-direction: column; }
             .guide-aside { width: 100%; position: static; max-height: none; border-right: none; border-bottom: 1px solid rgba(148,163,184,0.2); margin-bottom: 16px; }
+        }
+        @media (max-width: 720px) {
+            .guide-header { padding: 36px 18px; border-radius: 0 0 16px 16px; }
+            .guide-layout { padding: 18px 14px; }
+            .guide-card-header { padding: 20px 20px 16px; }
+            .guide-card-body { padding: 20px; gap: 16px; }
+            .guide-text,
+            .guide-figure { padding: 16px; }
         }
     </style>
 </head>

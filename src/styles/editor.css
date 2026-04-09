@@ -459,4 +459,28 @@
         .btn-cancel { background: transparent; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; transition: 0.2s; }
         .btn-cancel:hover { color: #ff5c5c; }
 
+        @media (max-width: 900px) {
+            .editor-section {
+                padding: 18px;
+                box-shadow:
+                    0 calc(8px + 12px * var(--glass-depth)) calc(18px + 20px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.9)),
+                    inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.9));
+            }
+
+            .slide-preview {
+                padding: 5.5% 6%;
+                box-shadow:
+                    0 calc(10px + 12px * var(--glass-depth)) calc(20px + 24px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.02)),
+                    inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.9));
+            }
+
+            .preview-body {
+                gap: 14px;
+            }
+
+            .box {
+                padding: 16px;
+            }
+        }
+
         /* 而ㅼ뒪? 紐⑤떖 */
