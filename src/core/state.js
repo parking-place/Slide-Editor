@@ -176,6 +176,7 @@
         function buildProjectDataDocument(slides = slidesData, settings = projectSettings, projectName = currentProject?.name || settings?.branding?.projectName || 'My Guide') {
             return {
                 savedVersion: getCurrentSavedVersion(),
+                lastSavedAt: currentProject?.lastSavedAt || '',
                 settings: buildProjectSettingsDocument(settings, projectName),
                 slides
             };

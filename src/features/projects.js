@@ -53,7 +53,22 @@ function buildProjectModalMetaLine(projectDetails, slideCountOverride) {
 
 function getProjectLastSavedLabel(projectDetails) {
     const lastSavedAt = projectDetails?.lastSavedAt || projectDetails?.meta?.lastSavedAt || projectDetails?.updatedAt || '';
-    return (typeof lastSavedAt === 'string' && lastSavedAt.trim()) ? lastSavedAt.trim() : 'NoData';
+    if (!(typeof lastSavedAt === 'string' && lastSavedAt.trim())) {
+        return 'NoData';
+    }
+
+    const parsed = new Date(lastSavedAt);
+    if (Number.isNaN(parsed.getTime())) {
+        return lastSavedAt.trim();
+    }
+
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    const hh = String(parsed.getHours()).padStart(2, '0');
+    const mi = String(parsed.getMinutes()).padStart(2, '0');
+    const ss = String(parsed.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
 function buildProjectListMeta(project) {
@@ -546,7 +561,8 @@ window.saveCurrentProjectFromModal = async function () {
             currentProject = {
                 id: currentProject.id,
                 name: renamed.project.name,
-                savedVersion: normalizeSavedVersion(renamed.project.savedVersion)
+                savedVersion: normalizeSavedVersion(renamed.project.savedVersion),
+                lastSavedAt: renamed.project.lastSavedAt || currentProject.lastSavedAt || ''
             };
             syncProjectBrandingName(renamed.project.name);
             updateProjectIndicator();

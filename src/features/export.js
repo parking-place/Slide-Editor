@@ -506,7 +506,8 @@
                 });
 
                 currentProject = Object.assign({}, currentProject, {
-                    savedVersion: normalizeSavedVersion(payload?.project?.savedVersion) || getCurrentSavedVersion()
+                    savedVersion: normalizeSavedVersion(payload?.project?.savedVersion) || getCurrentSavedVersion(),
+                    lastSavedAt: payload?.project?.lastSavedAt || currentProject?.lastSavedAt || ''
                 });
                 updateProjectIndicator();
                 showModal(`현재 프로젝트를 저장했습니다: ${currentProject.name}`);
