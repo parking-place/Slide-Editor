@@ -32,5 +32,13 @@
     "codeFamily": "D2Coding",
     "pptxBody": "Malgun Gothic",
     "pptxTitle": "Segoe UI"
+  },
+  "glass": {
+    "backgroundColor": "#FFFFFF",
+    "backgroundAlpha": 0.11,
+    "backgroundBlur": 14,
+    "backgroundSaturation": 126,
+    "refraction": 0.12,
+    "depth": 0.24
   }
 }

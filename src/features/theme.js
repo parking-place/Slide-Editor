@@ -1,7 +1,73 @@
 // Auto-extracted modular segment: Theme Base
 
-function getDefaultThemeObject() {
+function hexToRgbString(value, fallback = '255 255 255') {
+            const hex = typeof value === 'string' ? value.trim() : '';
+            const normalized = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.slice(1) : '';
+            if (!normalized) return fallback;
+            const r = parseInt(normalized.slice(0, 2), 16);
+            const g = parseInt(normalized.slice(2, 4), 16);
+            const b = parseInt(normalized.slice(4, 6), 16);
+            return `${r} ${g} ${b}`;
+        }
+
+        function clampGlassValue(value, min, max, fallback) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return fallback;
+            return Math.min(max, Math.max(min, numeric));
+        }
+
+        function getDefaultGlassSettings(isDarkMode = true) {
+            if (isDarkMode) {
+                return {
+                    backgroundColor: '#FFFFFF',
+                    backgroundAlpha: 0.11,
+                    backgroundBlur: 14,
+                    backgroundSaturation: 126,
+                    refraction: 0.12,
+                    depth: 0.24
+                };
+            }
+
             return {
+                backgroundColor: '#FFFFFF',
+                backgroundAlpha: 0.36,
+                backgroundBlur: 10,
+                backgroundSaturation: 114,
+                refraction: 0.08,
+                depth: 0.14
+            };
+        }
+
+        function normalizeThemeObject(theme) {
+            const baseTheme = getDefaultThemeObject();
+            const safeTheme = theme && typeof theme === 'object' ? theme : {};
+            const isDarkMode = safeTheme.isDarkMode !== false;
+            const defaultGlass = getDefaultGlassSettings(isDarkMode);
+            const rawGlass = safeTheme.glass && typeof safeTheme.glass === 'object' ? safeTheme.glass : {};
+
+            return {
+                name: safeTheme.name || baseTheme.name,
+                displayName: safeTheme.displayName || safeTheme.name || baseTheme.displayName,
+                version: safeTheme.version || baseTheme.version,
+                isDarkMode,
+                colors: Object.assign({}, baseTheme.colors, safeTheme.colors || {}),
+                webGuide: Object.assign({}, baseTheme.webGuide, safeTheme.webGuide || {}),
+                fonts: Object.assign({}, baseTheme.fonts, safeTheme.fonts || {}),
+                glass: {
+                    backgroundColor: /^#[0-9a-fA-F]{6}$/.test(rawGlass.backgroundColor || '')
+                        ? rawGlass.backgroundColor
+                        : defaultGlass.backgroundColor,
+                    backgroundAlpha: clampGlassValue(rawGlass.backgroundAlpha, 0.04, 0.42, defaultGlass.backgroundAlpha),
+                    backgroundBlur: clampGlassValue(rawGlass.backgroundBlur, 0, 40, defaultGlass.backgroundBlur),
+                    backgroundSaturation: clampGlassValue(rawGlass.backgroundSaturation, 80, 220, defaultGlass.backgroundSaturation),
+                    refraction: clampGlassValue(rawGlass.refraction, 0, 0.4, defaultGlass.refraction),
+                    depth: clampGlassValue(rawGlass.depth, 0, 1, defaultGlass.depth)
+                }
+            };
+        }
+
+        function getDefaultThemeObject() {
+            return normalizeThemeObject({
                 name: 'hpe_default',
                 displayName: 'HPE Default (Dark)',
                 version: '1.0',
@@ -26,32 +92,55 @@ function getDefaultThemeObject() {
                     uiFamily:   'Pretendard',
                     codeFamily: 'D2Coding'
                 }
-            };
+            });
         }
 
         // 에디터 CSS 변수를 테마로 교체
         function applyThemeToEditor(theme) {
-            if (!theme || !theme.colors) return;
+            const normalizedTheme = normalizeThemeObject(theme);
+            if (!normalizedTheme || !normalizedTheme.colors) return;
             const root = document.documentElement.style;
-            root.setProperty('--hpe-green',     theme.colors.accent);
-            root.setProperty('--hpe-green-alpha', theme.colors.accent + '14');
-            root.setProperty('--code-color',    theme.colors.codeColor || theme.colors.accent);
-            root.setProperty('--code-bg',       (theme.colors.codeColor || theme.colors.accent) + '1A');
-            root.setProperty('--bg-dark',        theme.colors.bgDark);
-            root.setProperty('--slide-bg',       theme.colors.slideBg);
-            root.setProperty('--box-bg',         theme.colors.boxBg);
-            root.setProperty('--border-color',   theme.colors.border);
-            root.setProperty('--text-main',      theme.colors.textMain);
-            root.setProperty('--text-dim',       theme.colors.textDim);
+            root.setProperty('--hpe-green', normalizedTheme.colors.accent);
+            root.setProperty('--hpe-green-alpha', normalizedTheme.colors.accent + '14');
+            root.setProperty('--code-color', normalizedTheme.colors.codeColor || normalizedTheme.colors.accent);
+            root.setProperty('--code-bg', (normalizedTheme.colors.codeColor || normalizedTheme.colors.accent) + '1A');
+            root.setProperty('--bg-dark', normalizedTheme.colors.bgDark);
+            root.setProperty('--slide-bg', normalizedTheme.colors.slideBg);
+            root.setProperty('--box-bg', normalizedTheme.colors.boxBg);
+            root.setProperty('--border-color', normalizedTheme.colors.border);
+            root.setProperty('--text-main', normalizedTheme.colors.textMain);
+            root.setProperty('--text-dim', normalizedTheme.colors.textDim);
 
-            if (theme.isDarkMode !== false) {
+            const glass = normalizedTheme.glass;
+            root.setProperty('--glass-rgb', hexToRgbString(glass.backgroundColor));
+            root.setProperty('--glass-alpha', glass.backgroundAlpha.toFixed(2));
+            root.setProperty('--glass-blur', `${glass.backgroundBlur}px`);
+            root.setProperty('--glass-saturation', `${glass.backgroundSaturation}%`);
+            root.setProperty('--glass-refraction', glass.refraction.toFixed(2));
+            root.setProperty('--glass-depth', glass.depth.toFixed(2));
+
+            const borderAlpha = normalizedTheme.isDarkMode
+                ? 0.14 + (glass.refraction * 0.5)
+                : 0.24 + (glass.refraction * 0.8);
+            const shadowAlpha = normalizedTheme.isDarkMode
+                ? 0.10 + (glass.depth * 0.22)
+                : 0.06 + (glass.depth * 0.12);
+            const highlightAlpha = normalizedTheme.isDarkMode
+                ? 0.16 + (glass.refraction * 0.4)
+                : 0.26 + (glass.refraction * 0.5);
+
+            root.setProperty('--glass-border-alpha', borderAlpha.toFixed(2));
+            root.setProperty('--glass-shadow-alpha', shadowAlpha.toFixed(2));
+            root.setProperty('--glass-highlight-alpha', highlightAlpha.toFixed(2));
+
+            if (normalizedTheme.isDarkMode !== false) {
                 document.body.classList.remove('light-mode');
             } else {
                 document.body.classList.add('light-mode');
             }
 
-            activeTheme = theme;
-            projectSettings.activeTheme = theme.name;
+            activeTheme = normalizedTheme;
+            projectSettings.activeTheme = normalizedTheme.name;
         }
 
         // 테마 이름으로 서버에서 불러와 적용 (실패 시 기본 테마 폴백)
@@ -60,7 +149,7 @@ function getDefaultThemeObject() {
                 const filename = name.endsWith('.slidetheme') ? name : name + '.slidetheme';
                 const res = await fetch('/api/themes/' + filename);
                 if (res.ok) {
-                    const theme = await res.json();
+                    const theme = normalizeThemeObject(await res.json());
                     applyThemeToEditor(theme);
                     return;
                 }
@@ -119,7 +208,7 @@ function getDefaultThemeObject() {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const theme = JSON.parse(e.target.result);
+                    const theme = normalizeThemeObject(JSON.parse(e.target.result));
                     applyThemeToEditor(theme);
                     renderThemeModal();
                     showModal('테마를 불러왔습니다: ' + (theme.displayName || theme.name));
@@ -258,7 +347,7 @@ function getDefaultThemeObject() {
             const name = (nameEl ? nameEl.value.trim() : '') || t.name;
             const isDarkMode = document.getElementById('theme-is-dark') ? document.getElementById('theme-is-dark').checked : true;
 
-            return {
+            return normalizeThemeObject({
                 name,
                 displayName: name,
                 version: '1.0',
@@ -270,8 +359,9 @@ function getDefaultThemeObject() {
                     darkAccent:  colors.accent,
                     codeColor:   colors.codeColor || colors.accent
                 },
-                fonts: t.fonts || getDefaultThemeObject().fonts
-            };
+                fonts: t.fonts || getDefaultThemeObject().fonts,
+                glass: t.glass || getDefaultThemeObject().glass
+            });
         }
 
         window.applyThemeFromModal = function() {

@@ -6,6 +6,7 @@
 
 - 프로젝트 목록 헤더의 `+` 버튼으로 여는 `New Project` 다이얼로그를 추가했습니다.
 - `New Project` 다이얼로그에서 새 프로젝트 생성과 JSON 데이터 Import를 분리해 시작할 수 있도록 정리했습니다.
+- 글라스모피즘 테마 확장을 위한 `glass` 테마 스키마와 CSS 토큰 기본 구조를 추가했습니다.
 
 ## Changed
 
@@ -17,6 +18,7 @@
 - `Current Project`와 `Selected Project` 카드의 메타 정보를 `ID`, `page`, `Saved Version`, `Last Saved` 4개 항목으로 통일했습니다.
 - `Last Saved` 값은 이후 서버 메타데이터 연동 전까지 `Nodata` placeholder로 먼저 표시합니다.
 - 프로젝트 목록의 상태 표시는 별, 체크, 휴지통 아이콘 기준으로 다시 정렬했고, 카드와 다이얼로그 액션 버튼의 아이콘 스타일도 함께 맞췄습니다.
+- 기본 제공 `.slidetheme` 파일에 dark/light 공용 glass 기본값을 추가하고, 구버전 테마 로드 시 자동 fallback 되도록 정리했습니다.
 
 ## Fixed
 

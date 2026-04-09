@@ -45,7 +45,7 @@
 - `src/features/export.js`
   - HTML 가이드 저장/다운로드, JSON 백업/임포트를 담당합니다.
 - `src/features/theme.js`
-  - 테마와 브랜딩 동기화를 담당합니다.
+  - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입을 담당합니다.
 - `src/features/media.js`
   - 이미지 업로드, WebP 변환 상태 polling, 구버전 이미지 backfill을 담당합니다.
 - `src/features/html5-semantics.js`
@@ -62,7 +62,7 @@
 스타일은 책임별로 분리되어 있고, `src/style.css`가 로더 역할을 합니다.
 
 - `base.css`
-  - 변수, 공통 리셋, 버튼/입력 기본 스타일
+  - 변수, 공통 리셋, 버튼/입력 기본 스타일, glass 공통 토큰
 - `layout.css`
   - 헤더, 본문 레이아웃, Navigator, 미리보기 배치
 - `editor.css`
@@ -166,6 +166,23 @@
 
 - 값이 있으면 해당 버전을 표시
 - 값이 없으면 구버전 데이터로 간주하고 `old` 표시
+
+### 3.5 테마 확장 구조
+
+테마 파일은 색상, 웹 가이드, 폰트 외에 `glass` 섹션을 가질 수 있습니다.
+
+- `backgroundColor`
+- `backgroundAlpha`
+- `backgroundBlur`
+- `backgroundSaturation`
+- `refraction`
+- `depth`
+
+프런트에서는 `src/features/theme.js`가 이 구조를 정규화해
+구버전 테마에도 기본 `glass` 값을 주입합니다.
+
+정규화된 glass 값은 `src/styles/base.css`의 `--glass-*` CSS 변수로 연결됩니다.
+이 구조를 기준으로 이후 에디터 카드, 모달, HTML 가이드까지 같은 glass 토큰 체계를 공유합니다.
 
 ## 4. 프로젝트 저장 구조
 
