@@ -690,6 +690,33 @@ window.exportToPPTX = async function() {
             return normalizeProjectName(fallbackName, 'Imported Project');
         }
 
+        function normalizeProjectNameConflictKey(projectName) {
+            return String(projectName || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '') || 'project';
+        }
+
+        function getUniqueImportedProjectName(projectName, projects = []) {
+            const baseName = normalizeProjectName(projectName, 'Imported Project');
+            const usedKeys = new Set(
+                (Array.isArray(projects) ? projects : [])
+                    .flatMap(project => [project?.name, project?.id])
+                    .filter(Boolean)
+                    .map(normalizeProjectNameConflictKey)
+            );
+
+            let candidateName = baseName;
+            let suffix = 2;
+            while (usedKeys.has(normalizeProjectNameConflictKey(candidateName))) {
+                candidateName = `${baseName}_${suffix}`;
+                suffix += 1;
+            }
+
+            return candidateName;
+        }
+
         window.exportData = async function() {
             if (!currentProject?.id) {
                 showModal('저장할 프로젝트가 없습니다.');
@@ -821,16 +848,43 @@ window.exportToPPTX = async function() {
                     }
 
                     const fallbackImportName = file.name.replace(/\.[^.]+$/, '') || 'Imported Project';
-                    const importProjectName = getImportProjectName(importedData, fallbackImportName);
+                    await refreshProjectList();
+                    const importProjectName = getUniqueImportedProjectName(
+                        getImportProjectName(importedData, fallbackImportName),
+                        availableProjects
+                    );
                     const importPayload = Array.isArray(importedData)
                         ? buildProjectDataDocument(migrateData(importedData), getDefaultProjectSettings(importProjectName), importProjectName)
                         : buildProjectDataDocument(migrateData(importedData.slides), importedData.settings, importProjectName);
 
-                    const created = await requestJson('/api/projects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(Object.assign({ name: importProjectName }, importPayload))
-                    });
+                    let created;
+                    let fallbackSuffix = 2;
+                    while (!created) {
+                        const candidateName = fallbackSuffix === 2
+                            ? importProjectName
+                            : `${importProjectName}_${fallbackSuffix}`;
+
+                        try {
+                            created = await requestJson('/api/projects', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(Object.assign({ name: candidateName }, buildProjectDataDocument(
+                                    Array.isArray(importedData)
+                                        ? migrateData(importedData)
+                                        : migrateData(importedData.slides),
+                                    Array.isArray(importedData)
+                                        ? getDefaultProjectSettings(candidateName)
+                                        : importPayload.settings,
+                                    candidateName
+                                )))
+                            });
+                        } catch (err) {
+                            if (!/Project already exists/i.test(err.message)) {
+                                throw err;
+                            }
+                            fallbackSuffix += 1;
+                        }
+                    }
 
                     await loadProjectById(created.id);
                     if (typeof window.closeProjectModal === 'function') {

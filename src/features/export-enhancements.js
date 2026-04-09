@@ -41,18 +41,44 @@
         return slide.image || null;
     }
 
-    async function toPortableImageSource(imageValue) {
-        if (!imageValue) return null;
-        if (isInlineImageData(imageValue)) return imageValue;
+    function buildPortableImageCandidates(slide, resolvedSource) {
+        const asset = slide && slide.imageAsset ? slide.imageAsset : null;
+        return Array.from(new Set(
+            [
+                resolvedSource,
+                asset?.originalUrl,
+                asset?.fileUrl,
+                slide?.image
+            ].filter((value) => typeof value === 'string' && value.trim() !== '')
+        ));
+    }
 
-        const normalized = getSlideImageSrc(imageValue);
-        if (!normalized) return null;
+    async function toPortableImageSource(slide, resolvedSource) {
+        const candidates = buildPortableImageCandidates(slide, resolvedSource);
+        if (!candidates.length) return null;
 
-        if (!isStoredImagePath(normalized) && !/^\/api\/projects\/[^/]+\/images\/[^/]+\/(?:file|original)$/.test(normalized.replace(/\\/g, '/'))) {
-            return normalized;
+        for (const candidate of candidates) {
+            if (isInlineImageData(candidate)) {
+                return candidate;
+            }
+
+            const normalized = getSlideImageSrc(candidate);
+            if (!normalized) {
+                continue;
+            }
+
+            if (!isStoredImagePath(normalized) && !/^\/api\/projects\/[^/]+\/images\/[^/]+\/(?:file|original)$/.test(normalized.replace(/\\/g, '/'))) {
+                return normalized;
+            }
+
+            try {
+                return await fetchImageAsDataUrl(normalized);
+            } catch (error) {
+                console.warn('[guide-export] image fallback failed', normalized, error);
+            }
         }
 
-        return fetchImageAsDataUrl(normalized);
+        return null;
     }
 
     async function buildExportSlides(slides, portable) {
@@ -62,10 +88,18 @@
             const resolvedSource = resolveSlideImageSource(slide);
             if (!resolvedSource) {
                 slide.image = null;
+                if (portable) {
+                    slide.imageAsset = null;
+                }
                 return;
             }
 
-            slide.image = portable ? await toPortableImageSource(resolvedSource) : getSlideImageSrc(resolvedSource);
+            slide.image = portable
+                ? await toPortableImageSource(slide, resolvedSource)
+                : getSlideImageSrc(resolvedSource);
+            if (portable) {
+                slide.imageAsset = null;
+            }
         }));
 
         return exportedSlides;
@@ -140,7 +174,7 @@
             : 'rgba(15, 23, 42, 0.86)';
 
         const cardsHtml = sourceSlides.map((slide, index) => {
-            const imageSrc = slide.image ? getSlideImageSrc(slide.image) : resolveSlideImageSource(slide);
+            const imageSrc = getSlideImageSrc(resolveSlideImageSource(slide) || slide.image);
             const parsedMarkdownText = marked.parse(slide.text || '');
             const hasText = Boolean(slide.text && slide.text.trim());
             const hasImage = Boolean(imageSrc);
