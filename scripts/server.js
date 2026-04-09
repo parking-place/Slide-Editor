@@ -667,6 +667,65 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
     };
 }
 
+function extractReferencedImageAssetIds(projectId, payload) {
+    const referencedAssetIds = new Set();
+    const slides = Array.isArray(payload?.slides) ? payload.slides : [];
+
+    slides.forEach((slide) => {
+        if (!slide || typeof slide !== 'object') return;
+
+        const assetId = typeof slide.imageAsset?.assetId === 'string' ? slide.imageAsset.assetId.trim() : '';
+        if (assetId) {
+            referencedAssetIds.add(assetId);
+        }
+
+        const imageValue = typeof slide.image === 'string' ? slide.image.trim() : '';
+        if (!imageValue) {
+            return;
+        }
+
+        const matched = imageValue.match(/^\/api\/projects\/([^/]+)\/images\/([^/]+)\/(?:file|original)$/);
+        if (matched && decodeURIComponent(matched[1]) === projectId) {
+            referencedAssetIds.add(decodeURIComponent(matched[2]));
+        }
+    });
+
+    return referencedAssetIds;
+}
+
+function removeImageAssetFiles(projectId, asset) {
+    if (!asset || typeof asset !== 'object') return;
+
+    [asset.originalPath, asset.convertedPath]
+        .filter((relativePath) => typeof relativePath === 'string' && relativePath.trim())
+        .forEach((relativePath) => {
+            const absolutePath = getProjectRelativePath(projectId, relativePath);
+            if (fs.existsSync(absolutePath)) {
+                fs.rmSync(absolutePath, { force: true });
+            }
+        });
+}
+
+function cleanupUnusedProjectImageAssets(projectId, payload) {
+    const referencedAssetIds = extractReferencedImageAssetIds(projectId, payload);
+    const index = getProjectImageIndex(projectId);
+    let mutated = false;
+
+    Object.entries(index.assets).forEach(([assetId, asset]) => {
+        if (referencedAssetIds.has(assetId)) {
+            return;
+        }
+
+        removeImageAssetFiles(projectId, asset);
+        delete index.assets[assetId];
+        mutated = true;
+    });
+
+    if (mutated) {
+        saveProjectImageIndex(projectId, index);
+    }
+}
+
 function createProjectMeta(projectId, name, payload, existingMeta = null) {
     const now = getTimestamp();
     const safeName = String(name || existingMeta?.name || projectId).trim() || projectId;
@@ -690,6 +749,7 @@ function saveProject(projectId, name, body) {
     ensureDir(getProjectDir(projectId));
     ensureProjectImageStorage(projectId);
     writeJson(getProjectDataPath(projectId), normalizedPayload);
+    cleanupUnusedProjectImageAssets(projectId, normalizedPayload);
     writeJson(getProjectMetaPath(projectId), meta);
     syncProjectIndexEntry(meta);
 
