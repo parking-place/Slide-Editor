@@ -11,6 +11,7 @@
 
 ## Changed
 
+- `style.css`를 로더 파일로 축소하고 `src/styles/base.css`, `layout.css`, `editor.css`, `modal.css`, `enhancements.css`로 분리해 CSS 책임을 모듈 단위로 정리했습니다.
 - `src`의 페이즈별 JavaScript/CSS 오버레이 파일을 메인 `app.js`, `style.css`로 통합하고, HTML 로드 경로를 단일 엔트리 기준으로 정리했습니다.
 
 - 프로젝트 이미지 저장 구조에 `originals`, `converted`, `index.json` 기반 자산 메타데이터 저장소를 도입했습니다.
