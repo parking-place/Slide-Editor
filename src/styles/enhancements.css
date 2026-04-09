@@ -95,8 +95,12 @@ dialog.theme-modal-overlay {
 }
 
 dialog.modal-overlay::backdrop,
-dialog.img-modal-overlay::backdrop,
 dialog.theme-modal-overlay::backdrop {
+    background: transparent;
+    backdrop-filter: none;
+}
+
+dialog.img-modal-overlay::backdrop {
     background: rgba(0, 0, 0, 0.72);
     backdrop-filter: blur(6px);
 }

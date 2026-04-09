@@ -189,12 +189,14 @@
 현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
 `src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
 입력 필드는 완전한 glass가 아니라, shell 안에 놓이는 읽기 중심의 solid surface로 유지합니다.
-???? ??/?? ?? `src/features/editor.js`? `src/features/html5-forms.js`? ?? ??? ??? ??? ?? ???? ??,
-??? ???? ??? glass ??? ?????. ??? ??? ?? ?? ??? ?? ???? ?? ?? ????.
+슬라이드 추가 필드는 `src/features/editor.js`와 `src/features/html5-forms.js`가 함께 구성하며,
+본문 입력과 미디어 업로드를 가로 2열 레이아웃으로 배치합니다. 미디어 업로드는 강조색 glass가 적용된
+드래그 앤 드롭 영역으로 동작하고, 이미지 설명과 비율 설정은 실제 이미지가 들어왔을 때만 노출됩니다.
 
-
-?? ?? ???? ??, ?? ??, ????/?? ????? ??, ?? ??? ?? glass ??? ????? ??????.
-??? ?? ??? ????? `src/styles/editor.css`, HTML ???? ????? `src/features/export-enhancements.js`?? ??? glass ???? ????.
+헤더 우측 프로젝트 표시, Save/Theme/Project 버튼, 슬라이드 추가/수정/삭제 계열 버튼,
+프로젝트 및 테마 dialog 내부 카드와 정보 행도 같은 glass 토큰을 공유합니다.
+코드블록 표면은 `src/styles/editor.css`, HTML 가이드 쪽 코드는 `src/features/export-enhancements.js`에서
+어두운 유리 표면을 유지하도록 별도 glass 규칙을 사용합니다.
 
 테마 모달에서는 `Glass Surface` 섹션을 통해 아래 값을 직접 조정할 수 있습니다.
 
@@ -213,7 +215,13 @@ body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니
 가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.
 모바일 폭과 `backdrop-filter` 미지원 환경에서는 Phase 5 조정 규칙에 따라
 blur 강도와 패딩을 낮추고, semi-transparent solid fallback으로 내려갑니다.
-라이트모드에서는 헤더 버튼과 가이드 헤더 텍스트, Navigator 빈 상태와 현재 위치 강조가
+또한 dialog는 백드롭 암전/블러를 제거하고 패널 그림자를 강화하는 쪽으로 조정해,
+유리 재질 자체의 투명도는 살리면서도 레이어 구분은 유지합니다.
+Navigator active 계산은 같은 제목이 이어지는 여러 슬라이드에서도 단일 항목 강조가 유지되도록
+visible area 기반 동기화 로직으로 보정되어 있습니다.
+
+## 4. 프로젝트 저장 구조
+
 유리 셸 위에서도 충분한 대비를 갖도록 별도의 밝기/강조색 조정 규칙을 함께 사용합니다.
 
 ## 4. 프로젝트 저장 구조

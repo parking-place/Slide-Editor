@@ -487,6 +487,7 @@
             const key = `${chapter}||${middleTitle}||${title}`;
             if (!firstTitleByKey[key]) {
                 const titleEl = cloneTemplate('phase9-toc-title-template');
+                titleEl.id = `toc-item-${index}`;
                 titleEl.textContent = title;
                 titleEl.dataset.slide = String(index);
                 titleEl.dataset.key = key;
@@ -511,28 +512,62 @@
             phase9Observer.disconnect();
         }
 
-        phase9Observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
+        const slideEls = Array.from(document.querySelectorAll('.slide-preview[id^="preview-slide-"]'));
+        const syncActiveToc = () => {
+            const focusBandTop = window.innerHeight * 0.24;
+            let bestSlide = null;
+            let bestVisibleHeight = -1;
+            let bestScore = Number.POSITIVE_INFINITY;
 
-                const slideIndex = entry.target.id.replace('preview-slide-', '');
-                const slide = slidesData[Number(slideIndex)];
-                if (!slide) return;
+            slideEls.forEach((slideEl) => {
+                const rect = slideEl.getBoundingClientRect();
+                if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+                    return;
+                }
 
-                const key = `${slide.chapter || 'Untitled Chapter'}||${slide.middleTitle || ''}||${slide.title || `Slide ${Number(slideIndex) + 1}`}`;
-                const activeEl = firstTitleByKey[key];
-                if (!activeEl) return;
-
-                document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
-                    item.classList.remove('active');
-                    item.dataset.active = 'false';
-                });
-                activeEl.classList.add('active');
-                activeEl.dataset.active = 'true';
+                const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                const slideMidpoint = rect.top + rect.height / 2;
+                const score = Math.abs(slideMidpoint - focusBandTop);
+                if (visibleHeight > bestVisibleHeight || (visibleHeight === bestVisibleHeight && score < bestScore)) {
+                    bestVisibleHeight = visibleHeight;
+                    bestScore = score;
+                    bestSlide = slideEl;
+                }
             });
+
+            document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
+                item.classList.remove('active');
+                item.dataset.active = 'false';
+            });
+
+            if (!bestSlide) {
+                return;
+            }
+
+            const slideIndex = bestSlide.id.replace('preview-slide-', '');
+            const slide = slidesData[Number(slideIndex)];
+            if (!slide) {
+                return;
+            }
+
+            const key = `${slide.chapter || 'Untitled Chapter'}||${slide.middleTitle || ''}||${slide.title || `Slide ${Number(slideIndex) + 1}`}`;
+            const activeEl = firstTitleByKey[key];
+            if (!activeEl) {
+                return;
+            }
+
+            activeEl.classList.add('active');
+            activeEl.dataset.active = 'true';
+        };
+
+        phase9Observer = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                syncActiveToc();
+            }
         }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
 
-        document.querySelectorAll('.slide-preview[id^="preview-slide-"]').forEach((slideEl) => phase9Observer.observe(slideEl));
+        slideEls.forEach((slideEl) => phase9Observer.observe(slideEl));
+        syncActiveToc();
     }
 
     const originalRenderPreview = window.renderPreview;

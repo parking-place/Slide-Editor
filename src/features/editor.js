@@ -680,28 +680,52 @@ function generateTocData(slides) {
             const slideEls = document.querySelectorAll('.slide-preview[id^="preview-slide-"]');
             if (slideEls.length === 0) return;
 
-            tocObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
+            const syncActiveToc = () => {
+                const focusBandTop = window.innerHeight * 0.24;
+                let bestSlideIndex = null;
+                let bestVisibleHeight = -1;
+                let bestScore = Number.POSITIVE_INFINITY;
 
-                    const idParts = entry.target.id.split('-');
-                    const idx     = parseInt(idParts[idParts.length - 1], 10);
+                slideEls.forEach((slideEl) => {
+                    const rect = slideEl.getBoundingClientRect();
+                    if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+                        return;
+                    }
 
-                    // 모든 활성 클래스 초기화
-                    document.querySelectorAll('.toc-nav-title.active').forEach(el => el.classList.remove('active'));
-
-                    // 중복 슬라이드도 첫 번째 항목 id로 하이라이트
-                    // (사이드바 자동 스크롤 없음 — 사용자 지정 위치 유지)
-                    const tocId  = slideToTocId[idx];
-                    const tocItem = tocId ? document.getElementById(tocId) : null;
-                    if (tocItem) tocItem.classList.add('active');
+                    const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                    const slideMidpoint = rect.top + rect.height / 2;
+                    const score = Math.abs(slideMidpoint - focusBandTop);
+                    if (visibleHeight > bestVisibleHeight || (visibleHeight === bestVisibleHeight && score < bestScore)) {
+                        bestVisibleHeight = visibleHeight;
+                        bestScore = score;
+                        const idParts = slideEl.id.split('-');
+                        bestSlideIndex = parseInt(idParts[idParts.length - 1], 10);
+                    }
                 });
+
+                document.querySelectorAll('.toc-nav-title.active').forEach((el) => el.classList.remove('active'));
+                if (bestSlideIndex === null) {
+                    return;
+                }
+
+                const tocId = slideToTocId[bestSlideIndex];
+                const tocItem = tocId ? document.getElementById(tocId) : null;
+                if (tocItem) {
+                    tocItem.classList.add('active');
+                }
+            };
+
+            tocObserver = new IntersectionObserver((entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    syncActiveToc();
+                }
             }, {
                 rootMargin: '-20% 0px -60% 0px',
                 threshold: 0
             });
 
             slideEls.forEach(el => tocObserver.observe(el));
+            syncActiveToc();
         }
 
 
