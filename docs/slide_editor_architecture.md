@@ -245,6 +245,8 @@
 테마 편집기 라벨은 현재 한글 기반으로 정리되어 있으며,
 섹션 제목 `Glass Surface`는 영어를 유지하고 세부 옵션만 한글화합니다.
 라이트모드의 dialog 입력 요소는 일반 텍스트와 구분되도록 별도의 밝은 field surface를 사용합니다.
+Theme, Branding, Project, New Project dialog의 닫기 버튼은 슬라이드 작성 창과 같은
+`.btn-cancel` 구조를 공유하며, 헤더용 아이콘 여백과 분리해 X 아이콘 중심이 정확히 맞도록 정리합니다.
 
 HTML 가이드 쪽은 `src/features/export-enhancements.js`가 현재 활성 theme의 `glass` 토큰을 읽어
 body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니다.

@@ -701,6 +701,16 @@
                 0 10px 18px rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.65)),
                 inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) + 0.04));
         }
+        .btn-cancel > i {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            line-height: 1;
+            transform: translateY(-0.5px);
+            pointer-events: none;
+        }
         .btn-cancel:hover { color: #ff5c5c; border-color: #ff5c5c; }
 
         @media (max-width: 900px) {
