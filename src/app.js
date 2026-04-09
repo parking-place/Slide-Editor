@@ -2656,3 +2656,1820 @@
                 '데이터 저장(저장 버튼)을 하면 다음에도 유지됩니다.'
             );
         };
+
+// === Integrated Phase Scripts ===
+// --- Integrated from src/webp_phase2.js ---
+(function () {
+    'use strict';
+
+    const IMAGE_ASSET_POLLERS = new Map();
+    const IMAGE_ASSET_WAITERS = new Map();
+    let legacyImageBackfillRunId = 0;
+
+    function isImageAssetFilePath(imageValue) {
+        return typeof imageValue === 'string' && /^\/api\/projects\/[^/]+\/images\/[^/]+\/file$/.test(imageValue.replace(/\\/g, '/'));
+    }
+
+    function isImageAssetOriginalPath(imageValue) {
+        return typeof imageValue === 'string' && /^\/api\/projects\/[^/]+\/images\/[^/]+\/original$/.test(imageValue.replace(/\\/g, '/'));
+    }
+
+    const originalIsStoredImagePath = isStoredImagePath;
+    isStoredImagePath = function (imageValue) {
+        return originalIsStoredImagePath(imageValue)
+            || isImageAssetFilePath(imageValue)
+            || isImageAssetOriginalPath(imageValue);
+    };
+
+    function setUploadStatus(statusEl, text, state) {
+        if (!statusEl) return;
+        statusEl.textContent = text;
+        statusEl.dataset.state = state || 'idle';
+    }
+
+    function mergeSlideImageAsset(slide, asset) {
+        if (!slide || !asset) return;
+        slide.imageAsset = asset;
+
+        if (asset.status === 'failed' && asset.originalUrl) {
+            slide.image = asset.originalUrl;
+            return;
+        }
+
+        if (asset.fileUrl) {
+            slide.image = asset.fileUrl;
+        }
+    }
+
+    function stopImageAssetPolling(assetId) {
+        if (!assetId || !IMAGE_ASSET_POLLERS.has(assetId)) return;
+        clearInterval(IMAGE_ASSET_POLLERS.get(assetId));
+        IMAGE_ASSET_POLLERS.delete(assetId);
+    }
+
+    function queueImageAssetWaiter(assetId, resolve) {
+        if (!assetId || typeof resolve !== 'function') return;
+        const waiters = IMAGE_ASSET_WAITERS.get(assetId) || [];
+        waiters.push(resolve);
+        IMAGE_ASSET_WAITERS.set(assetId, waiters);
+    }
+
+    function resolveImageAssetWaiters(assetId, asset) {
+        if (!assetId || !IMAGE_ASSET_WAITERS.has(assetId)) return;
+        const waiters = IMAGE_ASSET_WAITERS.get(assetId) || [];
+        IMAGE_ASSET_WAITERS.delete(assetId);
+        waiters.forEach((resolve) => resolve(asset));
+    }
+
+    window.cancelLegacyImageBackfill = function () {
+        legacyImageBackfillRunId += 1;
+    };
+
+    async function uploadImageFile(file, statusEl) {
+        if (!currentProject || !currentProject.id) {
+            throw new Error('현재 프로젝트가 없습니다.');
+        }
+
+        setUploadStatus(statusEl, '업로드 중...', 'uploading');
+        const dataUrl = await blobToDataUrl(file);
+        const payload = await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}/images/upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fileName: file.name,
+                mimeType: file.type,
+                dataUrl
+            })
+        });
+
+        setUploadStatus(statusEl, 'WebP 변환 대기 중...', 'processing');
+        return payload.asset;
+    }
+
+    function createLegacyPlaceholderAsset(runId, slideIndex) {
+        return {
+            assetId: `legacy-backfill-${runId}-${slideIndex}`,
+            status: 'queued',
+            error: null,
+            fileUrl: null,
+            originalUrl: null,
+            isPlaceholder: true
+        };
+    }
+
+    function isLegacyConvertibleSlide(slide) {
+        if (!slide || typeof slide !== 'object') return false;
+        if (slide.imageAsset && slide.imageAsset.assetId) return false;
+        if (typeof slide.image !== 'string' || slide.image.trim() === '') return false;
+        return isInlineImageData(slide.image) || originalIsStoredImagePath(slide.image);
+    }
+
+    function getLegacyImageMimeType(imageValue, blob) {
+        if (blob && blob.type) {
+            return blob.type;
+        }
+
+        if (typeof imageValue === 'string') {
+            const matched = imageValue.match(/^data:(image\/[a-zA-Z0-9.+-]+(?:\+xml)?);base64,/);
+            if (matched) {
+                return matched[1];
+            }
+        }
+
+        return 'image/png';
+    }
+
+    function sanitizeLegacyFileName(value, fallback) {
+        const safeValue = String(value || '').trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        return safeValue || fallback;
+    }
+
+    function getMimeExtension(mimeType) {
+        if (!mimeType || typeof mimeType !== 'string') {
+            return 'png';
+        }
+
+        const normalized = mimeType.toLowerCase();
+        if (normalized === 'image/jpeg') return 'jpg';
+        if (normalized === 'image/svg+xml') return 'svg';
+
+        const parts = normalized.split('/');
+        return (parts[1] || 'png').replace('+xml', '');
+    }
+
+    async function buildLegacyImageFile(candidate) {
+        const sourceValue = candidate.sourceImage;
+        const imageSrc = isInlineImageData(sourceValue) ? sourceValue : getSlideImageSrc(sourceValue);
+        if (!imageSrc) {
+            throw new Error('변환할 이미지를 찾을 수 없습니다.');
+        }
+
+        const response = await fetch(imageSrc, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`이미지를 불러오지 못했습니다. (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        const mimeType = getLegacyImageMimeType(sourceValue, blob);
+        const extension = getMimeExtension(mimeType);
+        const baseName = sanitizeLegacyFileName(candidate.slide.title, `slide-${candidate.index + 1}`);
+        return new File([blob], `${baseName}.${extension}`, { type: mimeType });
+    }
+
+    function waitForImageAssetSettlement(slide, asset) {
+        if (!slide || !asset || !asset.assetId) {
+            return Promise.resolve(asset);
+        }
+
+        if (asset.status === 'ready' || asset.status === 'failed') {
+            return Promise.resolve(asset);
+        }
+
+        beginImageAssetPolling(slide, asset);
+        return new Promise((resolve) => {
+            queueImageAssetWaiter(asset.assetId, resolve);
+        });
+    }
+
+    async function silentlyPersistCurrentProject() {
+        if (!currentProject || !currentProject.id) return false;
+
+        await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                settings: projectSettings,
+                slides: slidesData
+            })
+        });
+
+        return true;
+    }
+
+    function isLegacyBackfillRunActive(runId, projectId) {
+        return legacyImageBackfillRunId === runId && currentProject && currentProject.id === projectId;
+    }
+
+    window.startLegacyImageBackfill = async function (options = {}) {
+        if (!currentProject || !currentProject.id) {
+            return { started: false, convertedCount: 0, failedCount: 0 };
+        }
+
+        const projectId = currentProject.id;
+        const candidates = slidesData
+            .map((slide, index) => ({
+                slide,
+                index,
+                sourceImage: slide && slide.image
+            }))
+            .filter(({ slide }) => isLegacyConvertibleSlide(slide));
+
+        if (candidates.length === 0) {
+            return { started: false, convertedCount: 0, failedCount: 0 };
+        }
+
+        legacyImageBackfillRunId += 1;
+        const runId = legacyImageBackfillRunId;
+
+        candidates.forEach((candidate) => {
+            candidate.slide.imageAsset = createLegacyPlaceholderAsset(runId, candidate.index);
+        });
+        window.renderPreview();
+
+        let convertedCount = 0;
+        let failedCount = 0;
+
+        for (const candidate of candidates) {
+            if (!isLegacyBackfillRunActive(runId, projectId)) {
+                return { started: true, convertedCount, failedCount, cancelled: true };
+            }
+
+            try {
+                const file = await buildLegacyImageFile(candidate);
+                if (!isLegacyBackfillRunActive(runId, projectId)) {
+                    return { started: true, convertedCount, failedCount, cancelled: true };
+                }
+
+                const asset = await uploadImageFile(file, null);
+                mergeSlideImageAsset(candidate.slide, asset);
+                window.renderPreview();
+
+                const settledAsset = await waitForImageAssetSettlement(candidate.slide, asset);
+                if (!isLegacyBackfillRunActive(runId, projectId)) {
+                    return { started: true, convertedCount, failedCount, cancelled: true };
+                }
+
+                if (settledAsset && settledAsset.status === 'ready') {
+                    convertedCount += 1;
+                } else {
+                    failedCount += 1;
+                }
+            } catch (error) {
+                candidate.slide.imageAsset = Object.assign({}, candidate.slide.imageAsset || {}, {
+                    status: 'failed',
+                    error: error.message,
+                    originalUrl: getSlideImageSrc(candidate.sourceImage)
+                });
+                failedCount += 1;
+                window.renderPreview();
+            }
+        }
+
+        if (!isLegacyBackfillRunActive(runId, projectId)) {
+            return { started: true, convertedCount, failedCount, cancelled: true };
+        }
+
+        if (options.persistAfterConversion) {
+            try {
+                await silentlyPersistCurrentProject();
+            } catch (persistError) {
+                console.warn('[legacy-backfill] 자동 저장에 실패했습니다.', persistError);
+            }
+        }
+
+        const totalCount = convertedCount + failedCount;
+        if (options.notify !== false && totalCount > 0) {
+            const message = failedCount > 0
+                ? `구버전 이미지 WebP 변환이 완료되었습니다.\n성공 ${convertedCount}개 / 실패 ${failedCount}개`
+                : `구버전 이미지 ${convertedCount}개의 WebP 변환이 완료되었습니다.`;
+            showModal(options.completionMessage || message);
+        }
+
+        return { started: true, convertedCount, failedCount };
+    };
+
+    function getSlideVisualImageState(slide) {
+        const asset = slide && slide.imageAsset;
+
+        if (asset && (asset.status === 'queued' || asset.status === 'converting')) {
+            return {
+                state: 'converting',
+                src: null,
+                message: 'WebP로 변환 중...'
+            };
+        }
+
+        if (asset && asset.status === 'failed') {
+            return {
+                state: 'failed',
+                src: asset.originalUrl || asset.fileUrl || getSlideImageSrc(slide.image),
+                message: '변환 실패 - 원본 사용'
+            };
+        }
+
+        return {
+            state: 'ready',
+            src: (asset && asset.fileUrl) || getSlideImageSrc(slide && slide.image),
+            message: ''
+        };
+    }
+
+    function renderImageStateBox(imageBox, slide, state) {
+        if (!imageBox || !state || state.state === 'ready') return;
+
+        const captionHtml = slide && slide.imageCaption
+            ? `<div class="image-processing-caption">${escapeHtml(slide.imageCaption)}</div>`
+            : '';
+
+        if (state.state === 'converting') {
+            imageBox.innerHTML = `
+                <div class="image-processing-state">
+                    <i class="fa-solid fa-arrows-rotate fa-spin"></i>
+                    <strong>변환 중</strong>
+                    <span>${state.message}</span>
+                </div>
+                ${captionHtml}
+            `;
+            imageBox.classList.add('image-processing-box');
+            return;
+        }
+
+        if (state.state === 'failed') {
+            imageBox.innerHTML = `
+                ${state.src ? `<img src="${state.src}" alt="Slide Image" onclick="window.openImageModal(this.src)" title="클릭하여 원본 보기">` : ''}
+                <div class="image-processing-state image-processing-failed">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <strong>${state.message}</strong>
+                </div>
+                ${captionHtml}
+            `;
+            imageBox.classList.add('image-processing-box');
+        }
+    }
+
+    function decorateRenderedSlides() {
+        slidesData.forEach((slide, index) => {
+            const previewSlide = document.getElementById(`preview-slide-${index}`);
+            if (!previewSlide) return;
+
+            const imageBox = previewSlide.querySelector('.image-box');
+            if (!imageBox) return;
+
+            imageBox.classList.remove('image-processing-box');
+            const state = getSlideVisualImageState(slide);
+            renderImageStateBox(imageBox, slide, state);
+        });
+    }
+
+    function beginImageAssetPolling(slide, asset) {
+        if (!slide || !asset || !asset.assetId || !currentProject || !currentProject.id) return;
+        if (asset.isPlaceholder) return;
+        if (!['queued', 'converting'].includes(asset.status)) return;
+
+        stopImageAssetPolling(asset.assetId);
+
+        const intervalId = window.setInterval(async () => {
+            try {
+                const payload = await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}/images/${encodeURIComponent(asset.assetId)}/status`);
+                const nextAsset = payload.asset;
+                mergeSlideImageAsset(slide, nextAsset);
+
+                if (nextAsset.status === 'ready' || nextAsset.status === 'failed') {
+                    stopImageAssetPolling(asset.assetId);
+                    resolveImageAssetWaiters(nextAsset.assetId, nextAsset);
+                    window.renderPreview();
+                }
+            } catch (error) {
+                stopImageAssetPolling(asset.assetId);
+                const failedAsset = Object.assign({}, slide.imageAsset || asset, {
+                    status: 'failed',
+                    error: error.message
+                });
+                slide.imageAsset = failedAsset;
+                resolveImageAssetWaiters(asset.assetId, failedAsset);
+                window.renderPreview();
+            }
+        }, 1200);
+
+        IMAGE_ASSET_POLLERS.set(asset.assetId, intervalId);
+    }
+
+    function resumePendingImageAssets() {
+        slidesData.forEach((slide) => {
+            if (!slide || !slide.imageAsset || !slide.imageAsset.assetId) return;
+            beginImageAssetPolling(slide, slide.imageAsset);
+        });
+    }
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        decorateRenderedSlides();
+        resumePendingImageAssets();
+    };
+
+    window.insertNewSlide = async function (insertIndex) {
+        const chapter = document.getElementById('input-chapter').value.trim() || '대제목 미지정';
+        const middleTitle = document.getElementById('input-middle-title').value.trim();
+        const title = document.getElementById('input-title').value.trim() || '제목 없음';
+        const text = document.getElementById('input-text').value.trim();
+        const imageInput = document.getElementById('input-image');
+        const imageStatus = document.getElementById('input-image-status');
+        const imageCaption = document.getElementById('input-image-caption').value.trim();
+        const textRatioInput = document.getElementById('input-text-ratio');
+        const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
+
+        try {
+            const nextSlide = { chapter, middleTitle, title, text, imageCaption, image: null, textRatio };
+
+            if (imageInput.files && imageInput.files[0]) {
+                const asset = await uploadImageFile(imageInput.files[0], imageStatus);
+                mergeSlideImageAsset(nextSlide, asset);
+            }
+
+            slidesData.splice(insertIndex, 0, nextSlide);
+            if (nextSlide.imageAsset) {
+                beginImageAssetPolling(nextSlide, nextSlide.imageAsset);
+            }
+
+            activeEditorIndex = null;
+            window.renderPreview();
+        } catch (error) {
+            setUploadStatus(imageStatus, error.message || '이미지 업로드 실패', 'error');
+            showModal('이미지 업로드 중 오류가 발생했습니다.\n' + error.message);
+        }
+    };
+
+    window.saveEditSlide = async function (index) {
+        const chapter = document.getElementById('edit-chapter').value.trim() || '대제목 미지정';
+        const middleTitle = document.getElementById('edit-middle-title').value.trim();
+        const title = document.getElementById('edit-title').value.trim() || '제목 없음';
+        const text = document.getElementById('edit-text').value.trim();
+        const imageInput = document.getElementById('edit-image');
+        const imageStatus = document.getElementById('edit-image-status');
+        const imageCaption = document.getElementById('edit-image-caption').value.trim();
+        const deleteImageChecked = document.getElementById('edit-delete-image') && document.getElementById('edit-delete-image').checked;
+        const textRatioInput = document.getElementById('edit-text-ratio');
+        const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
+        const previousSlide = slidesData[index];
+
+        try {
+            if (previousSlide && previousSlide.imageAsset && previousSlide.imageAsset.assetId) {
+                stopImageAssetPolling(previousSlide.imageAsset.assetId);
+            }
+
+            const nextSlide = {
+                chapter,
+                middleTitle,
+                title,
+                text,
+                imageCaption,
+                image: deleteImageChecked ? null : previousSlide.image,
+                imageAsset: deleteImageChecked ? null : (previousSlide.imageAsset || null),
+                textRatio
+            };
+
+            if (imageInput.files && imageInput.files[0]) {
+                const asset = await uploadImageFile(imageInput.files[0], imageStatus);
+                mergeSlideImageAsset(nextSlide, asset);
+            }
+
+            slidesData[index] = nextSlide;
+            if (nextSlide.imageAsset) {
+                beginImageAssetPolling(nextSlide, nextSlide.imageAsset);
+            }
+
+            editingSlideIndex = null;
+            window.renderPreview();
+        } catch (error) {
+            setUploadStatus(imageStatus, error.message || '이미지 업로드 실패', 'error');
+            showModal('이미지 업로드 중 오류가 발생했습니다.\n' + error.message);
+        }
+    };
+})();
+
+// --- Integrated from src/webp_phase3.js ---
+(function () {
+    'use strict';
+
+    const PHASE3_IMAGE_OBSERVERS = new WeakMap();
+    const PHASE3_SLIDE_OBSERVER = createSlideObserver();
+    const PHASE3_PLACEHOLDER_SRC = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="#111827"/></svg>'
+    );
+
+    function createSlideObserver() {
+        if (!('IntersectionObserver' in window)) {
+            return null;
+        }
+
+        return new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                entry.target.classList.toggle('is-near-viewport', entry.isIntersecting);
+                entry.target.classList.toggle('is-virtualized', !entry.isIntersecting);
+            });
+        }, {
+            rootMargin: '160% 0px 160% 0px',
+            threshold: 0.01
+        });
+    }
+
+    function applyPreviewSlideVirtualization() {
+        document.querySelectorAll('.slide-preview').forEach((slideEl) => {
+            const isContentSlide = slideEl.id && slideEl.id.startsWith('preview-slide-');
+            const isTocSlide = !slideEl.id && slideEl.querySelector('.toc-container');
+
+            if (isContentSlide) {
+                slideEl.classList.add('phase3-virtual-slide');
+                slideEl.classList.add('is-near-viewport');
+                if (PHASE3_SLIDE_OBSERVER) {
+                    PHASE3_SLIDE_OBSERVER.observe(slideEl);
+                }
+            } else if (isTocSlide) {
+                slideEl.classList.add('phase3-virtual-toc');
+            }
+        });
+    }
+
+    function observeLazyImage(img) {
+        if (!('IntersectionObserver' in window)) {
+            restoreImage(img);
+            return;
+        }
+
+        if (PHASE3_IMAGE_OBSERVERS.has(img)) {
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    restoreImage(img);
+                } else if (!img.closest('.is-near-viewport')) {
+                    suspendImage(img);
+                }
+            });
+        }, {
+            rootMargin: '180% 0px 180% 0px',
+            threshold: 0.01
+        });
+
+        observer.observe(img);
+        PHASE3_IMAGE_OBSERVERS.set(img, observer);
+    }
+
+    function restoreImage(img) {
+        if (!img || !img.dataset.phase3Src) return;
+        if (img.getAttribute('src') !== img.dataset.phase3Src) {
+            img.setAttribute('src', img.dataset.phase3Src);
+        }
+        img.dataset.phase3Pending = 'false';
+    }
+
+    function suspendImage(img) {
+        if (!img || !img.dataset.phase3Src) return;
+        if (img.getAttribute('src') === PHASE3_PLACEHOLDER_SRC) return;
+        img.setAttribute('src', PHASE3_PLACEHOLDER_SRC);
+        img.dataset.phase3Pending = 'true';
+    }
+
+    function applyLazyImages() {
+        document.querySelectorAll('.slide-preview .box.image-box img').forEach((img, index) => {
+            const src = img.getAttribute('src');
+            if (!src || src.startsWith('data:image/svg+xml')) return;
+
+            img.classList.add('phase3-lazy-image');
+            img.setAttribute('loading', 'lazy');
+            img.setAttribute('decoding', 'async');
+            img.setAttribute('fetchpriority', index < 2 ? 'high' : 'low');
+
+            if (!img.dataset.phase3Src) {
+                img.dataset.phase3Src = src;
+            }
+
+            if (index >= 2) {
+                suspendImage(img);
+            } else {
+                restoreImage(img);
+            }
+
+            observeLazyImage(img);
+        });
+    }
+
+    function applyPhase3Enhancements() {
+        applyPreviewSlideVirtualization();
+        applyLazyImages();
+    }
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        applyPhase3Enhancements();
+    };
+})();
+
+// --- Integrated from src/webp_phase4.js ---
+(function () {
+    'use strict';
+
+    function openDialog(modal) {
+        if (!modal) return;
+        if (typeof modal.showModal === 'function') {
+            if (!modal.open) {
+                modal.showModal();
+            }
+            return;
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeDialog(modal) {
+        if (!modal) return;
+        if (typeof modal.close === 'function') {
+            if (modal.open) {
+                modal.close();
+            }
+            return;
+        }
+        modal.style.display = 'none';
+    }
+
+    function setupDialogDismiss(modalId, closeHandler) {
+        const modal = document.getElementById(modalId);
+        if (!modal || modal.dataset.phase4Bound === 'true') return;
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeHandler();
+            }
+        });
+        modal.dataset.phase4Bound = 'true';
+    }
+
+    function updateDynamicFormAttributes() {
+        const selectorMap = [
+            ['#input-chapter', { maxlength: '120', autocomplete: 'off' }],
+            ['#input-middle-title', { maxlength: '160', autocomplete: 'off' }],
+            ['#input-title', { maxlength: '160', required: 'required', autocomplete: 'off' }],
+            ['#input-image-caption', { maxlength: '160', autocomplete: 'off' }],
+            ['#edit-chapter', { maxlength: '120', autocomplete: 'off' }],
+            ['#edit-middle-title', { maxlength: '160', autocomplete: 'off' }],
+            ['#edit-title', { maxlength: '160', required: 'required', autocomplete: 'off' }],
+            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off' }]
+        ];
+
+        selectorMap.forEach(([selector, attrs]) => {
+            const field = document.querySelector(selector);
+            if (!field) return;
+            Object.entries(attrs).forEach(([key, value]) => field.setAttribute(key, value));
+        });
+
+        document.querySelectorAll('.file-upload-status').forEach((statusEl) => {
+            statusEl.setAttribute('role', 'status');
+            statusEl.setAttribute('aria-live', 'polite');
+        });
+
+        const statusBar = document.getElementById('status-text');
+        if (statusBar) {
+            statusBar.setAttribute('role', 'status');
+            statusBar.setAttribute('aria-live', 'polite');
+        }
+    }
+
+    function convertImageBoxToFigure(imageBox) {
+        if (!imageBox || imageBox.tagName === 'FIGURE') return imageBox;
+
+        const figure = document.createElement('figure');
+        figure.className = imageBox.className;
+        figure.style.cssText = imageBox.style.cssText;
+        Array.from(imageBox.attributes).forEach((attr) => {
+            if (attr.name === 'class' || attr.name === 'style') return;
+            figure.setAttribute(attr.name, attr.value);
+        });
+
+        while (imageBox.firstChild) {
+            figure.appendChild(imageBox.firstChild);
+        }
+
+        Array.from(figure.children).forEach((child) => {
+            const isProcessingState = child.classList && child.classList.contains('image-processing-state');
+            const isExistingCaption = child.classList && child.classList.contains('image-processing-caption');
+            const isCaptionCandidate = child.tagName === 'DIV' && !isProcessingState && (isExistingCaption || child.textContent.trim().length > 0);
+
+            if (isCaptionCandidate) {
+                const caption = document.createElement('figcaption');
+                caption.className = child.className || 'image-processing-caption';
+                caption.innerHTML = child.innerHTML;
+                child.replaceWith(caption);
+            }
+        });
+
+        imageBox.replaceWith(figure);
+        return figure;
+    }
+
+    function applySemanticPreview() {
+        const previewArea = document.getElementById('preview-area');
+        if (previewArea) {
+            previewArea.setAttribute('role', 'list');
+        }
+
+        document.querySelectorAll('.slide-preview[id^="preview-slide-"]').forEach((slideEl, index) => {
+            slideEl.setAttribute('role', 'article');
+            slideEl.setAttribute('aria-posinset', String(index + 1));
+            slideEl.setAttribute('aria-setsize', String(slidesData.length));
+
+            const titleEl = slideEl.querySelector('.preview-title');
+            if (titleEl) {
+                if (!titleEl.id) {
+                    titleEl.id = `phase4-preview-title-${index}`;
+                }
+                slideEl.setAttribute('aria-labelledby', titleEl.id);
+            }
+
+            const imageBox = slideEl.querySelector('.image-box');
+            if (imageBox) {
+                convertImageBoxToFigure(imageBox);
+            }
+        });
+    }
+
+    setupDialogDismiss('custom-modal', () => closeDialog(document.getElementById('custom-modal')));
+    setupDialogDismiss('image-modal', () => window.closeImageModal());
+    setupDialogDismiss('theme-modal', () => window.closeThemeModal());
+    setupDialogDismiss('branding-modal', () => window.closeBrandingModal());
+    setupDialogDismiss('project-modal', () => window.closeProjectModal());
+
+    showModal = function (message, isConfirm = false, onConfirm = null) {
+        const modal = document.getElementById('custom-modal');
+        const msgEl = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        msgEl.innerText = message;
+
+        if (isConfirm) {
+            btnCancel.style.display = 'inline-block';
+            btnConfirm.innerText = '삭제';
+            btnConfirm.onclick = function () {
+                if (onConfirm) onConfirm();
+                closeDialog(modal);
+            };
+        } else {
+            btnCancel.style.display = 'none';
+            btnConfirm.innerText = '확인';
+            btnConfirm.onclick = function () {
+                closeDialog(modal);
+            };
+        }
+
+        btnCancel.onclick = function () {
+            closeDialog(modal);
+        };
+
+        openDialog(modal);
+    };
+
+    window.openImageModal = function (src) {
+        const modal = document.getElementById('image-modal');
+        const img = document.getElementById('image-modal-content');
+        img.src = src;
+        openDialog(modal);
+    };
+
+    window.closeImageModal = function () {
+        closeDialog(document.getElementById('image-modal'));
+    };
+
+    window.openThemeModal = function () {
+        const modal = document.getElementById('theme-modal');
+        if (!modal) return;
+        renderThemeModal();
+        openDialog(modal);
+    };
+
+    window.closeThemeModal = function () {
+        closeDialog(document.getElementById('theme-modal'));
+    };
+
+    window.openBrandingModal = function () {
+        const modal = document.getElementById('branding-modal');
+        if (!modal) return;
+        syncBrandingUI();
+        openDialog(modal);
+    };
+
+    window.closeBrandingModal = function () {
+        closeDialog(document.getElementById('branding-modal'));
+    };
+
+    window.openProjectModal = async function (mode = 'open') {
+        const modal = document.getElementById('project-modal');
+        if (!modal) return;
+
+        projectModalState.mode = mode;
+        projectModalState.isSubmitting = false;
+
+        try {
+            await refreshProjectList();
+            projectModalState.selectedProjectId = currentProject?.id || availableProjects[0]?.id || null;
+            projectModalState.nameDraft = mode === 'rename'
+                ? (getSelectedProjectFromModal()?.name || '')
+                : getProjectModalDefaultName(mode);
+            renderProjectModal();
+            openDialog(modal);
+        } catch (err) {
+            showModal('Failed to load project list.\n' + err.message);
+        }
+    };
+
+    window.closeProjectModal = function () {
+        closeDialog(document.getElementById('project-modal'));
+    };
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        updateDynamicFormAttributes();
+        applySemanticPreview();
+    };
+
+    updateDynamicFormAttributes();
+})();
+
+// --- Integrated from src/webp_phase5.js ---
+(function () {
+    'use strict';
+
+    function cloneSlidesForExport(slides) {
+        return Array.isArray(slides)
+            ? slides.map((slide) => Object.assign({}, slide, slide?.imageAsset ? { imageAsset: Object.assign({}, slide.imageAsset) } : {}))
+            : [];
+    }
+
+    function resolveSlideImageSource(slide) {
+        if (!slide) return null;
+        const asset = slide.imageAsset || null;
+
+        if (asset) {
+            if (asset.status === 'ready') {
+                return asset.fileUrl || slide.image || asset.originalUrl || null;
+            }
+
+            if (asset.status === 'failed') {
+                return asset.originalUrl || slide.image || asset.fileUrl || null;
+            }
+
+            if (asset.status === 'queued' || asset.status === 'converting') {
+                return asset.originalUrl || slide.image || asset.fileUrl || null;
+            }
+        }
+
+        return slide.image || null;
+    }
+
+    async function toPortableImageSource(imageValue) {
+        if (!imageValue) return null;
+        if (isInlineImageData(imageValue)) return imageValue;
+
+        const normalized = getSlideImageSrc(imageValue);
+        if (!normalized) return null;
+
+        if (!isStoredImagePath(normalized) && !/^\/api\/projects\/[^/]+\/images\/[^/]+\/(?:file|original)$/.test(normalized.replace(/\\/g, '/'))) {
+            return normalized;
+        }
+
+        return fetchImageAsDataUrl(normalized);
+    }
+
+    async function buildExportSlides(slides, portable) {
+        const exportedSlides = cloneSlidesForExport(slides);
+
+        await Promise.all(exportedSlides.map(async (slide) => {
+            const resolvedSource = resolveSlideImageSource(slide);
+            if (!resolvedSource) {
+                slide.image = null;
+                return;
+            }
+
+            slide.image = portable ? await toPortableImageSource(resolvedSource) : getSlideImageSrc(resolvedSource);
+        }));
+
+        return exportedSlides;
+    }
+
+    buildPortableSlides = async function (slides) {
+        return buildExportSlides(slides, true);
+    };
+
+    buildPptxSlides = async function (slides) {
+        return buildExportSlides(slides, true);
+    };
+
+    function buildTocLines(sourceSlides) {
+        const lines = [];
+        let previousChapter = null;
+        let previousMiddleTitle = null;
+
+        sourceSlides.forEach((slide, index) => {
+            const chapter = slide.chapter || 'Untitled Chapter';
+            const middleTitle = slide.middleTitle || '';
+            const title = slide.title || `Slide ${index + 1}`;
+
+            if (chapter !== previousChapter) {
+                lines.push({ type: 'chapter', text: chapter, index });
+                previousChapter = chapter;
+                previousMiddleTitle = null;
+            }
+
+            if (middleTitle && middleTitle !== previousMiddleTitle) {
+                lines.push({ type: 'middle', text: middleTitle, index });
+                previousMiddleTitle = middleTitle;
+            }
+
+            lines.push({ type: 'title', text: title, index });
+        });
+
+        return lines;
+    }
+
+    function generateGuideHtml(sourceSlides = slidesData) {
+        const themeGuide = (activeTheme && activeTheme.webGuide) || {};
+        const branding = projectSettings.branding || {};
+        const accentColor = themeGuide.accentColor || '#01a982';
+        const headerBg = themeGuide.headerBg || accentColor;
+        const darkAccent = themeGuide.darkAccent || '#00e676';
+        const footerCopy = branding.footerCopy || branding.projectName || 'My Guide';
+        const tocLines = buildTocLines(sourceSlides);
+        const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
+
+        const tocHtml = tocLines.map((line) => {
+            if (line.type === 'chapter') {
+                return `<li class="guide-toc-chapter">${escapeHtml(line.text)}</li>`;
+            }
+            if (line.type === 'middle') {
+                return `<li><a class="guide-toc-middle" href="#guide-slide-${line.index}">${escapeHtml(line.text)}</a></li>`;
+            }
+            return `<li><a class="guide-toc-item" href="#guide-slide-${line.index}">${escapeHtml(line.text)}</a></li>`;
+        }).join('');
+
+        const cardsHtml = sourceSlides.map((slide, index) => {
+            const imageSrc = slide.image ? getSlideImageSrc(slide.image) : resolveSlideImageSource(slide);
+            const parsedMarkdownText = marked.parse(slide.text || '');
+            const hasText = Boolean(slide.text && slide.text.trim());
+            const hasImage = Boolean(imageSrc);
+            const textRatio = slide.textRatio || 50;
+            const textFlex = hasText && hasImage ? textRatio : 100;
+            const imageFlex = hasText && hasImage ? (100 - textRatio) : 100;
+            const middleTitleHtml = slide.middleTitle ? `<p class="guide-middle-title">${escapeHtml(slide.middleTitle)}</p>` : '';
+            const imageHtml = hasImage ? `
+                <figure class="guide-figure" style="flex:${imageFlex};">
+                    <picture>
+                        <img src="${imageSrc}" alt="${escapeHtml(slide.title || `Slide ${index + 1}`)}" loading="lazy" decoding="async">
+                    </picture>
+                    ${slide.imageCaption ? `<figcaption>${escapeHtml(slide.imageCaption)}</figcaption>` : ''}
+                </figure>
+            ` : '';
+
+            const textHtml = hasText ? `
+                <section class="guide-text" style="flex:${textFlex};">
+                    <div class="markdown-body">${parsedMarkdownText}</div>
+                </section>
+            ` : '';
+
+            return `
+                <article class="guide-card" id="guide-slide-${index}">
+                    <header class="guide-card-header">
+                        <p class="guide-chapter">${escapeHtml(slide.chapter || 'Untitled Chapter')}</p>
+                        ${middleTitleHtml}
+                        <h2 class="guide-title">${escapeHtml(slide.title || `Slide ${index + 1}`)}</h2>
+                    </header>
+                    <section class="guide-card-body">
+                        ${textHtml}
+                        ${imageHtml}
+                    </section>
+                </article>
+            `;
+        }).join('');
+
+        return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(branding.projectName || 'Slide Editor Guide')}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
+    <style>
+        :root { color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'}; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { margin: 0; font-family: 'Pretendard', 'Segoe UI', sans-serif; background: ${bodyClass === 'light-mode' ? '#f3f4f6' : '#010409'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; }
+        .guide-header { background: ${headerBg}; color: #fff; padding: 48px 24px; text-align: center; }
+        .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
+        .guide-header p { margin: 0; font-size: 18px; opacity: 0.92; }
+        .guide-layout { max-width: 1440px; margin: 0 auto; display: flex; gap: 24px; padding: 24px; align-items: flex-start; }
+        .guide-aside { width: 260px; position: sticky; top: 24px; border: 1px solid rgba(148,163,184,0.2); border-radius: 16px; padding: 18px 16px; background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; }
+        .guide-aside h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: ${accentColor}; }
+        .guide-aside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .guide-toc-chapter { margin-top: 10px; font-size: 12px; font-weight: 700; color: ${accentColor}; }
+        .guide-toc-middle, .guide-toc-item { display: block; text-decoration: none; color: inherit; border-radius: 8px; padding: 6px 8px; }
+        .guide-toc-middle:hover, .guide-toc-item:hover { background: rgba(1, 169, 130, 0.12); }
+        .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+        .guide-card { background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; border: 1px solid rgba(148,163,184,0.2); border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); }
+        .guide-card-header { padding: 24px 28px 18px; border-left: 6px solid ${accentColor}; background: ${bodyClass === 'light-mode' ? '#f8fafc' : '#111827'}; }
+        .guide-chapter { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: ${accentColor}; }
+        .guide-middle-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; }
+        .guide-title { margin: 0; font-size: 28px; line-height: 1.25; color: inherit; }
+        .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; }
+        .guide-text { min-width: 280px; }
+        .guide-figure { min-width: 280px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .guide-figure img { max-width: 100%; border-radius: 14px; border: 1px solid rgba(148,163,184,0.2); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16); }
+        .guide-figure figcaption { margin-top: 10px; font-size: 13px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; text-align: center; }
+        .markdown-body p { margin: 0 0 0.8em; white-space: pre-wrap; word-break: break-word; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: ${accentColor}; margin: 1em 0 0.5em; }
+        .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child { margin-top: 0; }
+        .markdown-body ul, .markdown-body ol { padding-left: 20px; margin: 0 0 1em; }
+        .markdown-body code { background: rgba(1, 169, 130, 0.14); color: ${darkAccent}; padding: 2px 6px; border-radius: 6px; font-family: 'D2Coding', monospace; }
+        .markdown-body pre { margin: 0 0 1em; overflow-x: auto; background: #0f172a; border: 1px solid rgba(148,163,184,0.2); border-left: 4px solid ${accentColor}; border-radius: 12px; padding: 16px; }
+        .markdown-body pre code { background: transparent; color: inherit; padding: 0; }
+        .guide-footer { max-width: 1440px; margin: 0 auto 32px; padding: 0 24px; color: ${bodyClass === 'light-mode' ? '#475569' : '#cbd5e1'}; font-size: 13px; }
+        @media (max-width: 1100px) {
+            .guide-layout { flex-direction: column; }
+            .guide-aside { width: 100%; position: static; }
+        }
+    </style>
+</head>
+<body>
+    <header class="guide-header">
+        <h1>${escapeHtml(branding.projectName || 'My Guide')}</h1>
+        <p>${escapeHtml(branding.guideSubtitle || '')}</p>
+    </header>
+    <div class="guide-layout">
+        <aside class="guide-aside" aria-label="문서 목차">
+            <h2>Navigator</h2>
+            <ul>${tocHtml}</ul>
+        </aside>
+        <main class="guide-main">
+            ${cardsHtml}
+        </main>
+    </div>
+    <footer class="guide-footer">
+        ${escapeHtml(footerCopy)} · Generated by Slide Editor
+    </footer>
+</body>
+</html>`;
+    }
+
+    async function downloadGuideHtml() {
+        const portableSlides = await buildPortableSlides(slidesData);
+        const htmlContent = generateGuideHtml(portableSlides);
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'SlideEditor_Web_Guide.html';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+    }
+
+    window.viewWebGuide = async function () {
+        if (slidesData.length === 0) {
+            showModal('배포할 슬라이드 내용을 하나 이상 작성해주세요.');
+            return;
+        }
+
+        const button = document.getElementById('dl-html-view-btn');
+        if (button) {
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.disabled = true;
+        }
+
+        try {
+            const htmlContent = generateGuideHtml(slidesData);
+            const response = await fetch('/api/saveHtml', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/html' },
+                body: htmlContent
+            });
+
+            if (!response.ok) {
+                throw new Error('Server save failed');
+            }
+
+            window.open('/exports/SlideEditor_Web_Guide.html?t=' + Date.now(), '_blank');
+        } catch (error) {
+            console.warn('[Phase5] viewWebGuide fallback', error);
+            await downloadGuideHtml();
+        } finally {
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-book-open"></i> Guide';
+                button.disabled = false;
+            }
+        }
+    };
+
+    window.exportToHTML = async function () {
+        if (slidesData.length === 0) {
+            showModal('다운로드할 슬라이드가 없습니다!');
+            return;
+        }
+
+        const button = document.getElementById('dl-html-btn');
+        if (button) {
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.disabled = true;
+        }
+
+        try {
+            await downloadGuideHtml();
+        } catch (error) {
+            console.error('[Phase5] exportToHTML failed', error);
+            showModal('HTML 다운로드용 이미지를 준비하는 중 오류가 발생했습니다.\n' + error.message);
+        } finally {
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-file-code"></i> HTML';
+                button.disabled = false;
+            }
+        }
+    };
+
+    window.__phase5ResolveImageSource = resolveSlideImageSource;
+    window.__phase5GenerateGuideHtml = generateGuideHtml;
+})();
+
+// --- Integrated from src/html5_phase6.js ---
+(function () {
+    'use strict';
+
+    function setFieldAttributes() {
+        const attributes = [
+            ['#input-chapter', { maxlength: '120', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#input-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#input-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#input-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
+            ['#input-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#edit-chapter', { maxlength: '120', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#edit-middle-title', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#edit-title', { required: 'required', maxlength: '160', autocomplete: 'off', enterkeyhint: 'next' }],
+            ['#edit-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
+            ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#theme-name-input', { maxlength: '80', autocomplete: 'off', enterkeyhint: 'done' }],
+            ['#branding-project-name', { minlength: '1', maxlength: '120' }],
+            ['#branding-guide-subtitle', { maxlength: '160' }],
+            ['#branding-footer-copy', { maxlength: '80' }],
+            ['#project-modal-name-input', { required: 'required', minlength: '1', maxlength: '120', enterkeyhint: 'done' }]
+        ];
+
+        attributes.forEach(([selector, attrs]) => {
+            const field = document.querySelector(selector);
+            if (!field) return;
+            Object.entries(attrs).forEach(([key, value]) => field.setAttribute(key, value));
+        });
+    }
+
+    function createFieldset(title, nodes) {
+        const fieldset = document.createElement('fieldset');
+        fieldset.className = 'phase6-fieldset';
+        const legend = document.createElement('legend');
+        legend.textContent = title;
+        fieldset.appendChild(legend);
+        nodes.filter(Boolean).forEach((node) => fieldset.appendChild(node));
+        return fieldset;
+    }
+
+    function ensureEditorForm(section) {
+        if (!section || section.querySelector(':scope > form.phase6-editor-form')) return;
+
+        const header = section.firstElementChild;
+        const button = section.querySelector('.btn-add');
+        const inputGroup = section.querySelector('.input-group');
+        const textArea = section.querySelector('textarea');
+        const mediaWrapper = section.querySelector('.file-upload-wrapper.file-drop-zone');
+        const ratioWrapper = section.querySelector('.file-upload-wrapper[id$="layout-ratio-container"]');
+        const deleteBlock = section.querySelector('#edit-delete-image')?.parentElement;
+
+        const form = document.createElement('form');
+        form.className = 'phase6-editor-form';
+        form.autocomplete = 'off';
+        form.addEventListener('submit', (event) => event.preventDefault());
+
+        if (header) {
+            header.remove();
+            section.appendChild(header);
+        }
+
+        if (inputGroup) {
+            form.appendChild(createFieldset('기본 정보', [inputGroup]));
+        }
+
+        if (textArea) {
+            form.appendChild(createFieldset('본문', [textArea]));
+        }
+
+        if (mediaWrapper || ratioWrapper || deleteBlock) {
+            if (deleteBlock) {
+                deleteBlock.classList.add('phase6-media-delete');
+            }
+            form.appendChild(createFieldset('미디어', [mediaWrapper, ratioWrapper, deleteBlock]));
+        }
+
+        if (button) {
+            const footer = document.createElement('div');
+            footer.className = 'phase6-form-footer';
+            button.remove();
+            footer.appendChild(button);
+            form.appendChild(footer);
+        }
+
+        section.appendChild(form);
+    }
+
+    function enhanceEditorForms() {
+        document.querySelectorAll('.editor-section').forEach((section) => ensureEditorForm(section));
+    }
+
+    function reportEditorValidity(formSelector) {
+        const form = document.querySelector(formSelector);
+        if (!form) return true;
+        return form.reportValidity();
+    }
+
+    const originalInsertNewSlide = window.insertNewSlide;
+    window.insertNewSlide = async function (insertIndex) {
+        if (!reportEditorValidity('.editor-section:not(.edit-mode) form.phase6-editor-form')) {
+            return;
+        }
+        return originalInsertNewSlide.call(this, insertIndex);
+    };
+
+    const originalSaveEditSlide = window.saveEditSlide;
+    window.saveEditSlide = async function (index) {
+        if (!reportEditorValidity('.editor-section.edit-mode form.phase6-editor-form')) {
+            return;
+        }
+        return originalSaveEditSlide.call(this, index);
+    };
+
+    const originalSubmitProjectModalAction = window.submitProjectModalAction;
+    window.submitProjectModalAction = async function () {
+        const input = document.getElementById('project-modal-name-input');
+        const mode = projectModalState?.mode;
+        const needsName = ['new', 'saveAs', 'rename'].includes(mode);
+        if (needsName && input && !input.reportValidity()) {
+            return;
+        }
+        return originalSubmitProjectModalAction.call(this);
+    };
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        setFieldAttributes();
+        enhanceEditorForms();
+    };
+
+    setFieldAttributes();
+})();
+
+// --- Integrated from src/html5_phase7.js ---
+(function () {
+    'use strict';
+
+    const STATUS_OBSERVERS = new WeakMap();
+
+    function enhanceRatioOutput(outputId, rangeId) {
+        const output = document.getElementById(outputId);
+        const range = document.getElementById(rangeId);
+        if (!output || !range) return;
+
+        if (output.tagName !== 'OUTPUT') {
+            const outputEl = document.createElement('output');
+            outputEl.id = output.id;
+            outputEl.className = output.className;
+            outputEl.htmlFor = rangeId;
+            outputEl.textContent = output.textContent;
+            output.replaceWith(outputEl);
+        }
+
+        const liveOutput = document.getElementById(outputId);
+        if (!liveOutput) return;
+        liveOutput.htmlFor = rangeId;
+
+        if (range.dataset.phase7Bound === 'true') return;
+        range.addEventListener('input', () => {
+            liveOutput.value = `${range.value}% : ${100 - Number(range.value)}%`;
+            liveOutput.textContent = liveOutput.value;
+        });
+        range.dispatchEvent(new Event('input', { bubbles: true }));
+        range.dataset.phase7Bound = 'true';
+    }
+
+    function enhanceMediaDisclosure(fieldset) {
+        if (!fieldset || fieldset.dataset.phase7Disclosure === 'true') return;
+        const legend = fieldset.querySelector('legend');
+        if (!legend || legend.textContent.trim() !== '미디어') return;
+
+        const disclosure = document.createElement('details');
+        disclosure.className = 'phase7-disclosure';
+        disclosure.open = true;
+
+        const summary = document.createElement('summary');
+        summary.innerHTML = '<span>미디어 설정</span><span>열기/닫기</span>';
+
+        const body = document.createElement('div');
+        body.className = 'phase7-disclosure-body';
+
+        Array.from(fieldset.children).forEach((child) => {
+            if (child === legend) return;
+            body.appendChild(child);
+        });
+
+        disclosure.appendChild(summary);
+        disclosure.appendChild(body);
+        legend.replaceWith(disclosure);
+        fieldset.dataset.phase7Disclosure = 'true';
+    }
+
+    function ensureStatusProgress(statusEl) {
+        if (!statusEl || statusEl.dataset.phase7Progress === 'true') return;
+
+        const row = document.createElement('div');
+        row.className = 'phase7-progress-row';
+
+        const progress = document.createElement('progress');
+        progress.className = 'phase7-status-progress';
+        progress.max = 100;
+        progress.removeAttribute('value');
+
+        const output = document.createElement('output');
+        output.className = 'phase7-status-output';
+        output.textContent = statusEl.textContent.trim();
+
+        row.appendChild(progress);
+        row.appendChild(output);
+        statusEl.before(row);
+        statusEl.dataset.phase7Progress = 'true';
+
+        const sync = () => {
+            const state = statusEl.dataset.state || 'idle';
+            const active = state === 'uploading' || state === 'processing';
+            row.classList.toggle('is-active', active);
+            output.value = statusEl.textContent.trim();
+            output.textContent = output.value;
+            progress.toggleAttribute('value', !active);
+        };
+
+        sync();
+
+        const observer = new MutationObserver(sync);
+        observer.observe(statusEl, { attributes: true, attributeFilter: ['data-state'], childList: true, characterData: true, subtree: true });
+        STATUS_OBSERVERS.set(statusEl, observer);
+    }
+
+    function applyPhase7Enhancements() {
+        document.querySelectorAll('.phase6-fieldset').forEach((fieldset) => enhanceMediaDisclosure(fieldset));
+        enhanceRatioOutput('input-ratio-text', 'input-text-ratio');
+        enhanceRatioOutput('edit-ratio-text', 'edit-text-ratio');
+        document.querySelectorAll('.file-upload-status').forEach((statusEl) => ensureStatusProgress(statusEl));
+    }
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        applyPhase7Enhancements();
+    };
+
+    applyPhase7Enhancements();
+})();
+
+// --- Integrated from src/html5_phase8.js ---
+(function () {
+    'use strict';
+
+    const DIALOG_RETURN_FOCUS = new Map();
+
+    function rememberTrigger(dialogId, trigger) {
+        if (!dialogId || !trigger) return;
+        DIALOG_RETURN_FOCUS.set(dialogId, trigger);
+    }
+
+    function restoreFocus(dialogId) {
+        const trigger = DIALOG_RETURN_FOCUS.get(dialogId);
+        if (trigger && typeof trigger.focus === 'function') {
+            trigger.focus();
+        }
+        DIALOG_RETURN_FOCUS.delete(dialogId);
+    }
+
+    function focusDialog(dialogId) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        const focusable = dialog.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        (focusable || dialog).focus();
+    }
+
+    function setupDialogAccessibility(dialogId, labelSelector, descriptionSelector) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+
+        dialog.setAttribute('aria-modal', 'true');
+
+        const labelEl = labelSelector ? dialog.querySelector(labelSelector) : null;
+        if (labelEl) {
+            if (!labelEl.id) {
+                labelEl.id = `${dialogId}-label`;
+            }
+            dialog.setAttribute('aria-labelledby', labelEl.id);
+        }
+
+        const descEl = descriptionSelector ? dialog.querySelector(descriptionSelector) : null;
+        if (descEl) {
+            if (!descEl.id) {
+                descEl.id = `${dialogId}-description`;
+            }
+            dialog.setAttribute('aria-describedby', descEl.id);
+        }
+
+        if (dialog.dataset.phase8Bound === 'true') return;
+
+        dialog.addEventListener('close', () => restoreFocus(dialogId));
+        dialog.addEventListener('cancel', () => restoreFocus(dialogId));
+        dialog.dataset.phase8Bound = 'true';
+    }
+
+    function makeTocItemsKeyboardNavigable() {
+        document.querySelectorAll('.toc-nav-title, .toc-nav-middle').forEach((item) => {
+            item.tabIndex = 0;
+            if (item.dataset.phase8Keybound === 'true') return;
+            item.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    item.click();
+                }
+            });
+            item.dataset.phase8Keybound = 'true';
+        });
+    }
+
+    function addButtonLabels() {
+        document.querySelectorAll('button[title]').forEach((button) => {
+            button.setAttribute('aria-label', button.getAttribute('title'));
+        });
+    }
+
+    const originalOpenProjectModal = window.openProjectModal;
+    window.openProjectModal = async function (mode = 'open') {
+        rememberTrigger('project-modal', document.activeElement);
+        await originalOpenProjectModal.call(this, mode);
+        focusDialog('project-modal');
+    };
+
+    const originalCloseProjectModal = window.closeProjectModal;
+    window.closeProjectModal = function () {
+        originalCloseProjectModal.call(this);
+        restoreFocus('project-modal');
+    };
+
+    const originalOpenThemeModal = window.openThemeModal;
+    window.openThemeModal = function () {
+        rememberTrigger('theme-modal', document.activeElement);
+        originalOpenThemeModal.call(this);
+        focusDialog('theme-modal');
+    };
+
+    const originalCloseThemeModal = window.closeThemeModal;
+    window.closeThemeModal = function () {
+        originalCloseThemeModal.call(this);
+        restoreFocus('theme-modal');
+    };
+
+    const originalOpenBrandingModal = window.openBrandingModal;
+    window.openBrandingModal = function () {
+        rememberTrigger('branding-modal', document.activeElement);
+        originalOpenBrandingModal.call(this);
+        focusDialog('branding-modal');
+    };
+
+    const originalCloseBrandingModal = window.closeBrandingModal;
+    window.closeBrandingModal = function () {
+        originalCloseBrandingModal.call(this);
+        restoreFocus('branding-modal');
+    };
+
+    const originalOpenImageModal = window.openImageModal;
+    window.openImageModal = function (src) {
+        rememberTrigger('image-modal', document.activeElement);
+        originalOpenImageModal.call(this, src);
+        focusDialog('image-modal');
+    };
+
+    const originalCloseImageModal = window.closeImageModal;
+    window.closeImageModal = function () {
+        originalCloseImageModal.call(this);
+        restoreFocus('image-modal');
+    };
+
+    const originalShowModal = showModal;
+    showModal = function (message, isConfirm = false, onConfirm = null) {
+        rememberTrigger('custom-modal', document.activeElement);
+        originalShowModal.call(this, message, isConfirm, onConfirm);
+        focusDialog('custom-modal');
+    };
+
+    function applyDialogAccessibility() {
+        setupDialogAccessibility('custom-modal', '#modal-message', '#modal-message');
+        setupDialogAccessibility('image-modal', '#image-modal-content', '#image-modal-content');
+        setupDialogAccessibility('theme-modal', '.theme-modal-header span', '.theme-list-title');
+        setupDialogAccessibility('branding-modal', '.theme-modal-header span', '.branding-field');
+        setupDialogAccessibility('project-modal', '.theme-modal-header span', '#project-modal-current-meta');
+    }
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        applyDialogAccessibility();
+        makeTocItemsKeyboardNavigable();
+        addButtonLabels();
+    };
+
+    window.addEventListener('load', applyDialogAccessibility);
+    applyDialogAccessibility();
+    makeTocItemsKeyboardNavigable();
+    addButtonLabels();
+})();
+
+// --- Integrated from src/html5_phase9.js ---
+(function () {
+    'use strict';
+
+    let phase9Observer = null;
+
+    function cloneTemplate(templateId) {
+        const template = document.getElementById(templateId);
+        if (!template) return null;
+        return document.importNode(template.content.firstElementChild, true);
+    }
+
+    function scrollToSlide(index) {
+        const target = document.getElementById(`preview-slide-${index}`);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function buildTemplateToc() {
+        const nav = document.getElementById('toc-navigator');
+        if (!nav) return;
+
+        nav.innerHTML = '<div class="toc-sidebar-title"><i class="fa-solid fa-list"></i> Navigator</div>';
+
+        if (!slidesData.length) {
+            const empty = document.createElement('div');
+            empty.className = 'toc-sidebar-empty';
+            empty.innerHTML = '<i class="fa-solid fa-file-circle-plus" style="font-size:22px; margin-bottom:8px; display:block;"></i>슬라이드를 추가하면<br>목차가 여기에 표시됩니다.';
+            nav.appendChild(empty);
+            return;
+        }
+
+        let prevChapter = null;
+        let prevMiddleTitle = null;
+        const firstTitleByKey = {};
+
+        slidesData.forEach((slide, index) => {
+            const chapter = slide.chapter || 'Untitled Chapter';
+            const middleTitle = slide.middleTitle || '';
+            const title = slide.title || `Slide ${index + 1}`;
+
+            if (chapter !== prevChapter) {
+                const chapterEl = cloneTemplate('phase9-toc-chapter-template');
+                chapterEl.textContent = chapter;
+                chapterEl.classList.add('phase9-template-item');
+                nav.appendChild(chapterEl);
+                prevChapter = chapter;
+                prevMiddleTitle = null;
+            }
+
+            if (middleTitle && middleTitle !== prevMiddleTitle) {
+                const middleEl = cloneTemplate('phase9-toc-middle-template');
+                middleEl.textContent = middleTitle;
+                middleEl.classList.add('phase9-template-item');
+                middleEl.addEventListener('click', () => scrollToSlide(index));
+                middleEl.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        scrollToSlide(index);
+                    }
+                });
+                nav.appendChild(middleEl);
+                prevMiddleTitle = middleTitle;
+            }
+
+            const key = `${chapter}||${middleTitle}||${title}`;
+            if (!firstTitleByKey[key]) {
+                const titleEl = cloneTemplate('phase9-toc-title-template');
+                titleEl.textContent = title;
+                titleEl.dataset.slide = String(index);
+                titleEl.dataset.key = key;
+                titleEl.classList.add('phase9-template-item');
+                titleEl.addEventListener('click', () => scrollToSlide(index));
+                titleEl.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        scrollToSlide(index);
+                    }
+                });
+                nav.appendChild(titleEl);
+                firstTitleByKey[key] = titleEl;
+            }
+        });
+
+        bindActiveSlideObserver(firstTitleByKey);
+    }
+
+    function bindActiveSlideObserver(firstTitleByKey) {
+        if (phase9Observer) {
+            phase9Observer.disconnect();
+        }
+
+        phase9Observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+
+                const slideIndex = entry.target.id.replace('preview-slide-', '');
+                const slide = slidesData[Number(slideIndex)];
+                if (!slide) return;
+
+                const key = `${slide.chapter || 'Untitled Chapter'}||${slide.middleTitle || ''}||${slide.title || `Slide ${Number(slideIndex) + 1}`}`;
+                const activeEl = firstTitleByKey[key];
+                if (!activeEl) return;
+
+                document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
+                    item.classList.remove('active');
+                    item.dataset.active = 'false';
+                });
+                activeEl.classList.add('active');
+                activeEl.dataset.active = 'true';
+            });
+        }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+
+        document.querySelectorAll('.slide-preview[id^="preview-slide-"]').forEach((slideEl) => phase9Observer.observe(slideEl));
+    }
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        buildTemplateToc();
+    };
+
+    buildTemplateToc();
+})();
+
+// --- Integrated from src/html5_phase10.js ---
+(function () {
+    'use strict';
+
+    function buildOutline(slides) {
+        return (slides || []).map((slide, index) => ({
+            index,
+            chapter: slide.chapter || 'Untitled Chapter',
+            middleTitle: slide.middleTitle || '',
+            title: slide.title || `Slide ${index + 1}`
+        }));
+    }
+
+    function applyEditorOutlineMetadata() {
+        const outline = buildOutline(slidesData);
+
+        outline.forEach((entry) => {
+            const slideEl = document.getElementById(`preview-slide-${entry.index}`);
+            if (!slideEl) return;
+            slideEl.dataset.slideIndex = String(entry.index);
+            slideEl.dataset.outlineChapter = entry.chapter;
+            slideEl.dataset.outlineMiddle = entry.middleTitle;
+            slideEl.dataset.outlineTitle = entry.title;
+
+            const figure = slideEl.querySelector('figure, .image-box');
+            if (figure) {
+                figure.dataset.mediaRole = 'slide-figure';
+            }
+        });
+
+        document.querySelectorAll('.toc-nav-title.phase9-template-item').forEach((item) => {
+            const slideIndex = Number(item.dataset.slide);
+            const entry = outline[slideIndex];
+            if (!entry) return;
+            item.dataset.outlineChapter = entry.chapter;
+            item.dataset.outlineMiddle = entry.middleTitle;
+            item.dataset.outlineTitle = entry.title;
+        });
+    }
+
+    function synchronizeGuideHtml(html, sourceSlides) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const outline = buildOutline(sourceSlides);
+
+        outline.forEach((entry) => {
+            const article = doc.getElementById(`guide-slide-${entry.index}`);
+            if (article) {
+                article.dataset.slideIndex = String(entry.index);
+                article.dataset.outlineChapter = entry.chapter;
+                article.dataset.outlineMiddle = entry.middleTitle;
+                article.dataset.outlineTitle = entry.title;
+            }
+
+            const tocLinks = doc.querySelectorAll(`a[href="#guide-slide-${entry.index}"]`);
+            tocLinks.forEach((link) => {
+                link.dataset.slideIndex = String(entry.index);
+                link.dataset.outlineChapter = entry.chapter;
+                link.dataset.outlineMiddle = entry.middleTitle;
+                link.dataset.outlineTitle = entry.title;
+            });
+        });
+
+        return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    }
+
+    async function downloadHtml(htmlContent) {
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'SlideEditor_Web_Guide.html';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+    }
+
+    const originalViewWebGuide = window.viewWebGuide;
+    window.viewWebGuide = async function () {
+        if (slidesData.length === 0) {
+            return originalViewWebGuide.call(this);
+        }
+
+        const button = document.getElementById('dl-html-view-btn');
+        if (button) {
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.disabled = true;
+        }
+
+        try {
+            const html = window.__phase5GenerateGuideHtml(slidesData);
+            const syncedHtml = synchronizeGuideHtml(html, slidesData);
+            const response = await fetch('/api/saveHtml', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/html' },
+                body: syncedHtml
+            });
+
+            if (!response.ok) {
+                throw new Error('Server save failed');
+            }
+
+            window.open('/exports/SlideEditor_Web_Guide.html?t=' + Date.now(), '_blank');
+        } catch (error) {
+            console.warn('[Phase10] viewWebGuide fallback', error);
+            const portableSlides = await buildPortableSlides(slidesData);
+            const html = window.__phase5GenerateGuideHtml(portableSlides);
+            await downloadHtml(synchronizeGuideHtml(html, portableSlides));
+        } finally {
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-book-open"></i> Guide';
+                button.disabled = false;
+            }
+        }
+    };
+
+    const originalExportToHTML = window.exportToHTML;
+    window.exportToHTML = async function () {
+        if (slidesData.length === 0) {
+            return originalExportToHTML.call(this);
+        }
+
+        const button = document.getElementById('dl-html-btn');
+        if (button) {
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중..';
+            button.disabled = true;
+        }
+
+        try {
+            const portableSlides = await buildPortableSlides(slidesData);
+            const html = window.__phase5GenerateGuideHtml(portableSlides);
+            await downloadHtml(synchronizeGuideHtml(html, portableSlides));
+        } catch (error) {
+            console.error('[Phase10] exportToHTML failed', error);
+            showModal('HTML 다운로드용 이미지를 준비하는 중 오류가 발생했습니다.\n' + error.message);
+        } finally {
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-file-code"></i> HTML';
+                button.disabled = false;
+            }
+        }
+    };
+
+    const originalRenderPreview = window.renderPreview;
+    window.renderPreview = function () {
+        originalRenderPreview.apply(this, arguments);
+        applyEditorOutlineMetadata();
+    };
+
+    window.__phase10BuildOutline = buildOutline;
+    window.__phase10SynchronizeGuideHtml = synchronizeGuideHtml;
+
+    applyEditorOutlineMetadata();
+})();

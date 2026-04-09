@@ -11,6 +11,8 @@
 
 ## Changed
 
+- `src`의 페이즈별 JavaScript/CSS 오버레이 파일을 메인 `app.js`, `style.css`로 통합하고, HTML 로드 경로를 단일 엔트리 기준으로 정리했습니다.
+
 - 프로젝트 이미지 저장 구조에 `originals`, `converted`, `index.json` 기반 자산 메타데이터 저장소를 도입했습니다.
 - 슬라이드 추가 및 편집 시 이미지 업로드 흐름이 서버 변환 파이프라인과 연동되도록 확장했습니다.
 - 미리보기 슬라이드에 `content-visibility`, 이미지 `loading="lazy"` 및 `decoding="async"`를 적용하고, 화면 밖 이미지 소스를 지연 복원하는 페이즈 3 lazy 렌더링을 추가했습니다.

@@ -1,7 +1,0 @@
-.phase9-template-item {
-    user-select: none;
-}
-
-.phase9-template-item[data-active="true"] {
-    color: var(--hpe-green);
-}
