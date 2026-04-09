@@ -70,10 +70,12 @@
         return buildExportSlides(slides, true);
     };
 
-    function buildTocLines(sourceSlides) {
-        const lines = [];
+    function buildGuideNavigatorModel(sourceSlides) {
+        let html = '';
         let previousChapter = null;
         let previousMiddleTitle = null;
+        const titleKeyToTocId = {};
+        const slideToTocId = {};
 
         sourceSlides.forEach((slide, index) => {
             const chapter = slide.chapter || 'Untitled Chapter';
@@ -81,20 +83,29 @@
             const title = slide.title || `Slide ${index + 1}`;
 
             if (chapter !== previousChapter) {
-                lines.push({ type: 'chapter', text: chapter, index });
+                html += `<div class="toc-nav-chapter" title="${escapeHtml(chapter)}">${escapeHtml(chapter)}</div>`;
                 previousChapter = chapter;
                 previousMiddleTitle = null;
             }
 
             if (middleTitle && middleTitle !== previousMiddleTitle) {
-                lines.push({ type: 'middle', text: middleTitle, index });
+                html += `<div class="toc-nav-middle" data-target="guide-slide-${index}" tabindex="0" role="button" title="${escapeHtml(middleTitle)}">${escapeHtml(middleTitle)}</div>`;
                 previousMiddleTitle = middleTitle;
             }
 
-            lines.push({ type: 'title', text: title, index });
+            const titleKey = `${chapter}||${middleTitle}||${title}`;
+            if (titleKeyToTocId[titleKey]) {
+                slideToTocId[index] = titleKeyToTocId[titleKey];
+                return;
+            }
+
+            const tocId = `guide-toc-item-${index}`;
+            titleKeyToTocId[titleKey] = tocId;
+            slideToTocId[index] = tocId;
+            html += `<div class="toc-nav-title" id="${tocId}" data-slide="${index}" data-target="guide-slide-${index}" tabindex="0" role="button" title="${escapeHtml(title)}">${escapeHtml(title)}</div>`;
         });
 
-        return lines;
+        return { html, slideToTocId };
     }
 
     function generateGuideHtml(sourceSlides = slidesData) {
@@ -104,18 +115,8 @@
         const headerBg = themeGuide.headerBg || accentColor;
         const darkAccent = themeGuide.darkAccent || '#00e676';
         const footerCopy = branding.footerCopy || branding.projectName || 'My Guide';
-        const tocLines = buildTocLines(sourceSlides);
+        const navigatorModel = buildGuideNavigatorModel(sourceSlides);
         const bodyClass = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
-
-        const tocHtml = tocLines.map((line) => {
-            if (line.type === 'chapter') {
-                return `<li class="guide-toc-chapter">${escapeHtml(line.text)}</li>`;
-            }
-            if (line.type === 'middle') {
-                return `<li><a class="guide-toc-middle" href="#guide-slide-${line.index}">${escapeHtml(line.text)}</a></li>`;
-            }
-            return `<li><a class="guide-toc-item" href="#guide-slide-${line.index}">${escapeHtml(line.text)}</a></li>`;
-        }).join('');
 
         const cardsHtml = sourceSlides.map((slide, index) => {
             const imageSrc = slide.image ? getSlideImageSrc(slide.image) : resolveSlideImageSource(slide);
@@ -152,7 +153,7 @@
             ` : '';
 
             return `
-                <article class="guide-card" id="guide-slide-${index}">
+                <article class="guide-card" id="guide-slide-${index}" data-guide-toc-id="${navigatorModel.slideToTocId[index] || ''}">
                     <header class="guide-card-header">
                         <p class="guide-chapter">${escapeHtml(slide.chapter || 'Untitled Chapter')}</p>
                         ${middleTitleHtml}
@@ -182,14 +183,22 @@
         .guide-header { background: ${headerBg}; color: #fff; padding: 48px 24px; text-align: center; }
         .guide-header h1 { margin: 0 0 8px; font-size: 34px; }
         .guide-header p { margin: 0; font-size: 18px; opacity: 0.92; }
-        .guide-layout { max-width: 1440px; margin: 0 auto; display: flex; gap: 24px; padding: 24px; align-items: flex-start; }
-        .guide-aside { width: 260px; position: sticky; top: 24px; border: 1px solid rgba(148,163,184,0.2); border-radius: 16px; padding: 18px 16px; background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; }
-        .guide-aside h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: ${accentColor}; }
-        .guide-aside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-        .guide-toc-chapter { margin-top: 10px; font-size: 12px; font-weight: 700; color: ${accentColor}; }
-        .guide-toc-middle, .guide-toc-item { display: block; text-decoration: none; color: inherit; border-radius: 8px; padding: 6px 8px; transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
-        .guide-toc-middle:hover, .guide-toc-item:hover { background: rgba(1, 169, 130, 0.12); }
-        .guide-toc-item.active { background: rgba(1, 169, 130, 0.18); color: ${accentColor}; box-shadow: inset 3px 0 0 ${accentColor}; font-weight: 700; }
+        .guide-layout { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 24px 20px; align-items: flex-start; }
+        .guide-aside { width: 240px; flex-shrink: 0; position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; padding: 20px 16px; border-right: 1px solid rgba(148,163,184,0.2); }
+        .guide-aside::-webkit-scrollbar { width: 4px; }
+        .guide-aside::-webkit-scrollbar-track { background: transparent; }
+        .guide-aside::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.4); border-radius: 4px; }
+        .guide-aside::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.7); }
+        .guide-aside .toc-sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.2); }
+        .guide-aside .toc-nav-chapter { font-size: 12px; font-weight: 700; color: ${accentColor}; margin-top: 14px; margin-bottom: 4px; padding: 0 6px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-aside .toc-nav-chapter:first-child { margin-top: 0; }
+        .guide-aside .toc-nav-middle { font-size: 12px; font-weight: 600; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; padding: 3px 6px 3px 14px; margin-bottom: 2px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .guide-aside .toc-nav-middle:hover,
+        .guide-aside .toc-nav-middle:focus-visible { background: ${accentColor}1A; color: ${accentColor}; padding-left: 18px; outline: none; }
+        .guide-aside .toc-nav-title { font-size: 12px; color: ${bodyClass === 'light-mode' ? '#64748b' : '#8b949e'}; padding: 4px 6px 4px 24px; border-radius: 5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent; }
+        .guide-aside .toc-nav-title:hover,
+        .guide-aside .toc-nav-title:focus-visible { background: ${bodyClass === 'light-mode' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}; color: ${bodyClass === 'light-mode' ? '#111827' : '#f8fafc'}; padding-left: 27px; outline: none; }
+        .guide-aside .toc-nav-title.active { color: ${accentColor}; background: ${accentColor}1A; border-left: 2px solid ${accentColor}; font-weight: 600; }
         .guide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
         .guide-card { background: ${bodyClass === 'light-mode' ? '#ffffff' : '#0f172a'}; border: 1px solid rgba(148,163,184,0.2); border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); }
         .guide-card-header { padding: 24px 28px 18px; border-left: 6px solid ${accentColor}; background: ${bodyClass === 'light-mode' ? '#f8fafc' : '#111827'}; }
@@ -222,7 +231,7 @@
         .guide-lightbox-close:focus-visible { background: rgba(255, 255, 255, 0.24); outline: none; }
         @media (max-width: 1100px) {
             .guide-layout { flex-direction: column; }
-            .guide-aside { width: 100%; position: static; }
+            .guide-aside { width: 100%; position: static; max-height: none; border-right: none; border-bottom: 1px solid rgba(148,163,184,0.2); margin-bottom: 16px; }
         }
     </style>
 </head>
@@ -233,8 +242,8 @@
     </header>
     <div class="guide-layout">
         <aside class="guide-aside" aria-label="문서 목차">
-            <h2>Navigator</h2>
-            <ul>${tocHtml}</ul>
+            <div class="toc-sidebar-title">Navigator</div>
+            ${navigatorModel.html}
         </aside>
         <main class="guide-main">
             ${cardsHtml}
@@ -252,17 +261,26 @@
     </div>
     <script>
         (function () {
-            var tocItems = Array.prototype.slice.call(document.querySelectorAll('.guide-toc-item[href^="#guide-slide-"]'));
+            var tocItems = Array.prototype.slice.call(document.querySelectorAll('.guide-aside .toc-nav-title'));
+            var tocMiddleItems = Array.prototype.slice.call(document.querySelectorAll('.guide-aside .toc-nav-middle'));
             var guideCards = Array.prototype.slice.call(document.querySelectorAll('.guide-card[id^="guide-slide-"]'));
             var lightbox = document.getElementById('guide-lightbox');
             var lightboxImage = document.getElementById('guide-lightbox-image');
             var lightboxCaption = document.getElementById('guide-lightbox-caption');
             var lightboxClose = document.getElementById('guide-lightbox-close');
 
-            function setActiveToc(targetId) {
+            function scrollToTarget(targetId) {
+                var target = targetId ? document.getElementById(targetId) : null;
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            function setActiveToc(tocId) {
                 tocItems.forEach(function (item) {
-                    var isActive = item.getAttribute('href') === '#' + targetId;
+                    var isActive = item.id === tocId;
                     item.classList.toggle('active', isActive);
+                    item.dataset.active = isActive ? 'true' : 'false';
                     if (isActive) {
                         item.setAttribute('aria-current', 'location');
                         item.scrollIntoView({ block: 'nearest' });
@@ -292,21 +310,49 @@
             }
 
             tocItems.forEach(function (item) {
-                item.addEventListener('click', function () {
-                    var targetId = (item.getAttribute('href') || '').replace(/^#/, '');
-                    if (targetId) setActiveToc(targetId);
+                function handleNavigate() {
+                    var targetId = item.dataset.target || '';
+                    if (targetId) {
+                        scrollToTarget(targetId);
+                        setActiveToc(item.id);
+                    }
+                }
+
+                item.addEventListener('click', handleNavigate);
+                item.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleNavigate();
+                    }
+                });
+            });
+
+            tocMiddleItems.forEach(function (item) {
+                function handleNavigate() {
+                    var targetId = item.dataset.target || '';
+                    if (targetId) {
+                        scrollToTarget(targetId);
+                    }
+                }
+
+                item.addEventListener('click', handleNavigate);
+                item.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleNavigate();
+                    }
                 });
             });
 
             if (guideCards.length && tocItems.length) {
-                setActiveToc(guideCards[0].id);
+                setActiveToc(guideCards[0].dataset.guideTocId || tocItems[0].id);
                 if ('IntersectionObserver' in window) {
                     var observer = new IntersectionObserver(function (entries) {
                         var visibleCard = entries
                             .filter(function (entry) { return entry.isIntersecting; })
                             .sort(function (left, right) { return right.intersectionRatio - left.intersectionRatio; })[0];
                         if (!visibleCard) return;
-                        setActiveToc(visibleCard.target.id);
+                        setActiveToc(visibleCard.target.dataset.guideTocId || '');
                     }, { rootMargin: '-20% 0px -55% 0px', threshold: [0.15, 0.4, 0.7] });
 
                     guideCards.forEach(function (card) { observer.observe(card); });
