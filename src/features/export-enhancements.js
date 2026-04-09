@@ -276,12 +276,21 @@
             `;
         }).join('');
 
+        const portableFontLinks = portable ? `
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
+` : '';
+
         return `<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(portable ? `${viewerTitle}.html` : `${viewerTitle} - Slide Viewer`)}</title>
+    ${portableFontLinks}
     <style>
         :root {
             color-scheme: ${bodyClass === 'light-mode' ? 'light' : 'dark'};
@@ -308,10 +317,14 @@
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body, button, input, textarea {
-            font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            font-family: 'Pretendard', 'Urbanist', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
         }
         code, pre, kbd, samp {
             font-family: 'D2Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        .viewer-brand,
+        .viewer-heading h1 {
+            font-family: 'Urbanist', 'Pretendard', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
         }
         body,
         .guide-aside,
