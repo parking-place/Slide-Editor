@@ -1,6 +1,6 @@
 # Slide Editor
 
-[![Version](https://img.shields.io/badge/version-v0.10.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.10.0a-blue?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 [![Powered by Codex](https://img.shields.io/badge/powered%20by-Codex-111827?style=for-the-badge)](#)
@@ -118,7 +118,7 @@ parkingplace/slide-editor:latest
 버전 고정이 필요하면 릴리즈 태그를 사용합니다.
 
 ```text
-parkingplace/slide-editor:v0.10.0
+parkingplace/slide-editor:v0.10.0a
 ```
 
 ## 프로젝트 구조
