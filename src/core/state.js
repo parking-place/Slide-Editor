@@ -188,7 +188,7 @@
             const indicator = document.getElementById('project-indicator');
             if (!indicator) return;
             indicator.textContent = currentProject
-                ? `${currentProject.name} (${currentProject.id})`
+                ? `${currentProject.name}`
                 : '프로젝트 없음';
         }
 
