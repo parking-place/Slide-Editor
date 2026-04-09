@@ -508,7 +508,6 @@
     function applyPreviewSlideVirtualization() {
         document.querySelectorAll('.slide-preview').forEach((slideEl) => {
             const isContentSlide = slideEl.id && slideEl.id.startsWith('preview-slide-');
-            const isTocSlide = !slideEl.id && slideEl.querySelector('.toc-container');
 
             if (isContentSlide) {
                 slideEl.classList.add('phase3-virtual-slide');
@@ -516,8 +515,6 @@
                 if (PHASE3_SLIDE_OBSERVER) {
                     PHASE3_SLIDE_OBSERVER.observe(slideEl);
                 }
-            } else if (isTocSlide) {
-                slideEl.classList.add('phase3-virtual-toc');
             }
         });
     }

@@ -57,8 +57,7 @@
 }
 
 /* --- Integrated from src/webp_phase3.css --- */
-.slide-preview.phase3-virtual-slide,
-.slide-preview.phase3-virtual-toc {
+.slide-preview.phase3-virtual-slide {
     content-visibility: auto;
     contain-intrinsic-size: 960px 540px;
 }

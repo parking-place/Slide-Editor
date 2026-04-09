@@ -353,20 +353,6 @@
             line-height: 1.6;
         }
 
-        /* TOC Styles for Preview */
-        .toc-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-        }
-        .toc-chapter { font-size: 18px; color: var(--hpe-green); font-weight: 700; margin-top: 12px; }
-        .toc-chapter:first-child { margin-top: 0; }
-        .toc-middle { font-size: 15px; color: var(--text-dim); font-weight: 600; padding-left: 15px; margin-top: 6px; }
-        .toc-title { font-size: 14px; color: var(--text-main); padding-left: 30px; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px; margin-top: 6px; cursor: pointer; transition: 0.2s; border-radius: 4px; padding-right: 5px;}
-        .toc-title:hover { background-color: rgba(255, 255, 255, 0.05); padding-left: 35px; }
-        .toc-page { color: var(--hpe-green); font-weight: bold; }
-
         .box.image-box { 
             justify-content: center; 
             align-items: center; 

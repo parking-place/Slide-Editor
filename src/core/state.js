@@ -402,17 +402,6 @@
             return portableSlides;
         }
 
-        async function buildPptxSlides(slides) {
-            const pptxSlides = cloneSlides(slides);
-            await Promise.all(pptxSlides.map(async (slide) => {
-                if (!slide || !slide.image || isInlineImageData(slide.image)) {
-                    return;
-                }
-                slide.image = await fetchImageAsDataUrl(slide.image);
-            }));
-            return pptxSlides;
-        }
-
         function showModal(message, isConfirm = false, onConfirm = null) {
             const modal = document.getElementById('custom-modal');
             const msgEl = document.getElementById('modal-message');

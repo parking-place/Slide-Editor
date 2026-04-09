@@ -11,9 +11,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.5/D2Coding.css">
     
-    <!-- PPTX 생성 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" crossorigin="anonymous"></script>
-    
     <!-- Markdown 파서 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
@@ -77,9 +74,6 @@
             </button>
             <button type="button" class="btn-hdr" id="dl-html-btn" title="Download guide HTML" onclick="window.exportToHTML()">
                 <i class="fa-solid fa-file-code"></i> HTML
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--green" id="dl-btn" title="Download PPTX" onclick="window.exportToPPTX()">
-                <i class="fa-solid fa-file-export"></i> PPTX
             </button>
         </div>
         </nav>
@@ -176,20 +170,20 @@
             <div style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
                 <p style="font-size:13px; color: var(--text-dim); line-height:1.6; margin:0;">
                     브랜딩 정보는 <strong style="color:var(--text-main);">데이터 파일</strong>에 저장되며,
-                    웹 가이드 헤더·footer 및 PPTX 표지·footer에 반영됩니다.
+                    웹 가이드 헤더와 footer에 반영됩니다.
                 </p>
                 <div class="branding-field">
-                    <label class="branding-field-label">프로젝트명 <span>(헤더 제목 / PPTX 표지)</span></label>
+                    <label class="branding-field-label">프로젝트명 <span>(헤더 제목)</span></label>
                     <input type="text" id="branding-project-name" class="theme-text-input" maxlength="120" autocomplete="organization"
                         placeholder="HPE Virtual Machine Essentials (VME)">
                 </div>
                 <div class="branding-field">
-                    <label class="branding-field-label">부제 <span>(헤더 부제 / PPTX 표지)</span></label>
+                    <label class="branding-field-label">부제 <span>(헤더 부제)</span></label>
                     <input type="text" id="branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
                         placeholder="설치 및 구성 가이드">
                 </div>
                 <div class="branding-field">
-                    <label class="branding-field-label">Footer 문구 <span>(페이지 하단 · PPTX 슬라이드 하단)</span></label>
+                    <label class="branding-field-label">Footer 문구 <span>(페이지 하단)</span></label>
                     <input type="text" id="branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
                         placeholder="My Guide">
                 </div>
@@ -261,12 +255,12 @@
                                 <div id="project-branding-name-display" class="project-branding-name-display">-</div>
                             </div>
                             <div class="branding-field">
-                                <label class="branding-field-label" for="project-branding-guide-subtitle">부제 <span>(헤더 부제 / PPTX 표지)</span></label>
+                                <label class="branding-field-label" for="project-branding-guide-subtitle">부제 <span>(헤더 부제)</span></label>
                                 <input type="text" id="project-branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
                                     placeholder="설치 및 구성 가이드" oninput="window.updateProjectBrandingDraft()">
                             </div>
                             <div class="branding-field">
-                                <label class="branding-field-label" for="project-branding-footer-copy">Footer 문구 <span>(페이지 하단 · PPTX 슬라이드 하단)</span></label>
+                                <label class="branding-field-label" for="project-branding-footer-copy">Footer 문구 <span>(페이지 하단)</span></label>
                                 <input type="text" id="project-branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
                                     placeholder="My Guide" oninput="window.updateProjectBrandingDraft()">
                             </div>

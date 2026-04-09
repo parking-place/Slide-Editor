@@ -69,6 +69,31 @@ function generateTocData(slides) {
             return pages;
         }
 
+        function countPreviewBodyPages(slides) {
+            let totalPages = 0;
+            let prevChapter = null;
+            let prevMiddleTitle = null;
+
+            slides.forEach((slide) => {
+                const chapter = slide.chapter || '대제목 미지정';
+                const middleTitle = slide.middleTitle || '';
+
+                if (chapter !== prevChapter) {
+                    prevChapter = chapter;
+                    prevMiddleTitle = null;
+                }
+
+                if (middleTitle && middleTitle !== prevMiddleTitle) {
+                    totalPages += 1;
+                    prevMiddleTitle = middleTitle;
+                }
+
+                totalPages += 1;
+            });
+
+            return totalPages;
+        }
+
         function getImageUploadContext(element) {
             const wrapper = element?.closest ? element.closest('.file-drop-zone') : null;
             if (!wrapper) {
@@ -264,9 +289,6 @@ function generateTocData(slides) {
             area.innerHTML = '';
 
             // TOC 라인 및 페이지 수 계산
-            const tocLines = generateTocData(slidesData);
-            const tocPagesData = slidesData.length > 0 ? paginateTocData(tocLines) : [];
-            const tocPages = tocPagesData.length;
 
             // 1. 표지 고정 노출
             const coverDiv = document.createElement('div');
@@ -277,48 +299,7 @@ function generateTocData(slides) {
             `;
             area.appendChild(coverDiv);
 
-            // 2. 목차 (TOC) 렌더링
-            for (let p = 0; p < tocPages; p++) {
-                let chunk = tocPagesData[p];
-                
-                let tocHtml = `<div class="toc-container">`;
-                chunk.forEach(line => {
-                    if (line.type === 'chapter') {
-                        tocHtml += `<div class="toc-chapter">${escapeHtml(line.text)}</div>`;
-                    } else if (line.type === 'middle') {
-                        let anchor = line.slideIndex !== undefined ? `preview-slide-${line.slideIndex}` : `preview-cover-${line.renderableIndex}`;
-                        let pageNum = 1 + tocPages + line.renderableIndex + 1;
-                        tocHtml += `<div class="toc-middle" onclick="document.getElementById('${anchor}').scrollIntoView({behavior: 'smooth', block: 'start'})" style="cursor:pointer;" title="Page ${pageNum}">${escapeHtml(line.text)}</div>`;
-                    } else if (line.type === 'title') {
-                        let pageNum = 1 + tocPages + line.renderableIndex + 1; 
-                        tocHtml += `<div class="toc-title" onclick="document.getElementById('preview-slide-${line.slideIndex}').scrollIntoView({behavior: 'smooth', block: 'start'})">
-                            <span>${escapeHtml(line.text)}</span> 
-                            <span class="toc-page">Page ${pageNum}</span>
-                        </div>`;
-                    }
-                });
-                tocHtml += `</div>`;
-
-                const tocDiv = document.createElement('div');
-                tocDiv.className = 'slide-preview';
-                tocDiv.innerHTML = `
-                    <div class="preview-header" style="border-left: 4px solid var(--text-main);">
-                        <div class="preview-title" style="color: var(--hpe-green);">목차 (Table of Contents) ${tocPages > 1 ? `(${p+1}/${tocPages})` : ''}</div>
-                    </div>
-                    <div class="preview-body" style="flex-direction: column;">
-                        <div class="box" style="background: transparent; border: none; padding: 0;">
-                            ${tocHtml}
-                        </div>
-                    </div>
-                    <div class="preview-footer">
-                        <span>${escapeHtml(projectSettings.branding.footerCopy || 'My Guide')}</span>
-                        <span>PAGE ${p + 2}</span>
-                    </div>
-                `;
-                area.appendChild(tocDiv);
-            }
-
-            // 3. 본문 슬라이드 루프
+            // 2. 본문 슬라이드 루프
             let rIndex = 0;
             let prevCh = null;
             let prevMid = null;
@@ -471,7 +452,7 @@ function generateTocData(slides) {
 
                     } else {
                         // ==== 일반 프리뷰 모드 ====
-                        const contentPageNumber = 1 + tocPages + rIndex + 1; // 표지(1) + TOC페이지들 + 실 페이지 수 + 1
+                        const contentPageNumber = rIndex + 2; // 표지(1) + 본문/구분 페이지 누적 + 현재 페이지
                         
                         // 텍스트/이미지 유무 판별
                         const hasText = slide.text && slide.text.trim() !== '';
@@ -544,7 +525,7 @@ function generateTocData(slides) {
                 : '현재 프로젝트';
 
             if(slidesData.length > 0) {
-                status.innerHTML = `${projectLabel}에서 <strong>표지 1장 + 목차 ${tocPages}장 + 본문 ${slidesData.length}장</strong>이 준비되었습니다.`;
+                status.innerHTML = `${projectLabel}에서 <strong>표지 1장 + 본문 ${countPreviewBodyPages(slidesData)}장</strong>이 준비되었습니다.`;
             } else {
                 status.innerHTML = `${projectLabel}는 비어 있습니다. 아래 폼에서 첫 슬라이드를 작성해보세요.`;
             }
@@ -645,4 +626,3 @@ function generateTocData(slides) {
         }
 
 
-        // PPTX 파일 생성 다운로드

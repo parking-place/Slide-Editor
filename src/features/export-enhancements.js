@@ -109,10 +109,6 @@
         return buildExportSlides(slides, true);
     };
 
-    buildPptxSlides = async function (slides) {
-        return buildExportSlides(slides, true);
-    };
-
     function buildGuideNavigatorModel(sourceSlides) {
         let html = '';
         let previousChapter = null;

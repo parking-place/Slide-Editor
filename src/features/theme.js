@@ -16,15 +16,6 @@ function getDefaultThemeObject() {
                     textMain: '#FFFFFF',
                     textDim:  '#8B949E'
                 },
-                pptx: {
-                    masterBg:      '0D1117',
-                    coverBg:       '010409',
-                    middleCoverBg: '111827',
-                    accentColor:   '00E676',
-                    codeColor:     '00E676',
-                    textColor:     'C9D1D9',
-                    dimColor:      '8B949E'
-                },
                 webGuide: {
                     headerBg:    '#01a982',
                     accentColor: '#01a982',
@@ -33,9 +24,7 @@ function getDefaultThemeObject() {
                 },
                 fonts: {
                     uiFamily:   'Pretendard',
-                    codeFamily: 'D2Coding',
-                    pptxBody:   'Malgun Gothic',
-                    pptxTitle:  'Arial'
+                    codeFamily: 'D2Coding'
                 }
             };
         }
@@ -275,15 +264,6 @@ function getDefaultThemeObject() {
                 version: '1.0',
                 isDarkMode,
                 colors,
-                pptx: {
-                    masterBg:      strip(colors.slideBg),
-                    coverBg:       strip(colors.bgDark),
-                    middleCoverBg: '111827',
-                    accentColor:   strip(colors.accent),
-                    codeColor:     strip(colors.codeColor || colors.accent),
-                    textColor:     strip(colors.textMain),
-                    dimColor:      strip(colors.textDim)
-                },
                 webGuide: {
                     headerBg:    colors.accent,
                     accentColor: colors.accent,
