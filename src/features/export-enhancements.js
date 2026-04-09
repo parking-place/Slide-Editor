@@ -485,21 +485,26 @@
             margin-top: 10px;
             margin-bottom: 10px;
             border: 1px solid ${codeBlockBorder};
-            border-left: 3px solid ${editorAccentColor};
+            border-left: 3px solid ${guideCodeColor};
             border-radius: 10px;
             overflow: hidden;
             background: ${codeBlockBackground};
+            color: ${guideCodeColor};
             box-shadow: 0 14px 28px rgba(2, 6, 23, 0.24), inset 0 1px 0 rgba(255,255,255,0.06);
             backdrop-filter: blur(calc(var(--glass-blur) * 0.55)) saturate(calc(var(--glass-saturation) - 6%));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.55)) saturate(calc(var(--glass-saturation) - 6%));
         }
         .code-block-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; background: ${codeBlockHeaderBg}; border-bottom: 1px solid ${codeBlockBorder}; }
         .code-lang-label { font-family: 'D2Coding', monospace; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: ${guideCodeColor}; }
-        .btn-copy-code { display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${codeBlockBorder}; border-radius: 999px; background: ${codeBlockButtonBg}; color: ${codeBlockButtonText}; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+        .btn-copy-code { display: inline-flex; align-items: center; gap: 6px; border: 1px solid ${codeBlockBorder}; border-radius: 999px; background: ${codeBlockButtonBg}; color: ${guideCodeColor}; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
         .btn-copy-code:hover, .btn-copy-code:focus-visible { background: ${codeBlockButtonHoverBg}; color: ${guideCodeColor}; border-color: ${guideCodeColor}; outline: none; }
         .btn-copy-code.copied { color: ${guideCodeColor}; border-color: ${guideCodeColor}; }
         .code-block-wrapper pre { margin: 0; overflow-x: auto; background: transparent; border: none; border-radius: 0; padding: 15px; }
-        .code-block-wrapper pre code.hljs { display: block; overflow-x: auto; padding: 0; background: transparent; color: inherit; }
+        .code-block-wrapper pre,
+        .code-block-wrapper pre code,
+        .code-block-wrapper pre code.hljs,
+        .code-block-wrapper pre code.hljs * { color: ${guideCodeColor} !important; }
+        .code-block-wrapper pre code.hljs { display: block; overflow-x: auto; padding: 0; background: transparent; }
         .guide-footer {
             max-width: 1440px;
             margin: 0 auto 32px;

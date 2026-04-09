@@ -48,6 +48,8 @@
   - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입, 테마 모달의 glass 편집 UI를 담당합니다.
 - `src/features/media.js`
   - 이미지 업로드, WebP 변환 상태 polling, 구버전 이미지 backfill을 담당합니다.
+  - import/backfill 시 소스가 이미 WebP(`data:image/webp`, `.webp`)인 이미지는 변환 후보에서 제외합니다.
+  - 실제 변환 대상이 0건이면 WebP 변환 완료 알림을 띄우지 않습니다.
 - `src/features/html5-semantics.js`
   - `dialog`, `figure`, `section` 등 HTML5 시맨틱 보강을 담당합니다.
 - `src/features/html5-forms.js`
@@ -56,6 +58,7 @@
   - outline 메타데이터와 HTML 가이드 동기화 보강을 담당합니다.
 - `src/features/export-enhancements.js`
   - 가이드용 Navigator, 이미지 fallback, portable HTML 변환, glass 토큰이 반영된 HTML 가이드 셸 보강을 담당합니다.
+  - 코드 블록 본문, 코드 헤더, 언어 라벨, 복사 버튼 텍스트는 테마의 `codeColor`를 우선 사용하도록 맞춥니다.
 
 ### 2.3 `src/styles/`
 

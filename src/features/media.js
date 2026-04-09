@@ -100,10 +100,26 @@
         };
     }
 
+    function isWebpImageSource(imageValue) {
+        if (typeof imageValue !== 'string') return false;
+        const trimmed = imageValue.trim();
+        if (!trimmed) return false;
+
+        if (/^data:image\/webp(?:;base64)?,/i.test(trimmed)) {
+            return true;
+        }
+
+        const normalized = getSlideImageSrc(trimmed) || trimmed;
+        const withoutHash = normalized.split('#')[0];
+        const withoutQuery = withoutHash.split('?')[0];
+        return /\.webp$/i.test(withoutQuery);
+    }
+
     function isLegacyConvertibleSlide(slide) {
         if (!slide || typeof slide !== 'object') return false;
         if (slide.imageAsset && slide.imageAsset.assetId) return false;
         if (typeof slide.image !== 'string' || slide.image.trim() === '') return false;
+        if (isWebpImageSource(slide.image)) return false;
         return isInlineImageData(slide.image) || originalIsStoredImagePath(slide.image);
     }
 
