@@ -98,10 +98,10 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             if (isDarkMode) {
                 return {
                     backgroundColor: '#000000',
-                    backgroundAlpha: 0.24,
-                    backgroundBlur: 28,
-                    backgroundSaturation: 168,
-                    refraction: 0.03,
+                    backgroundAlpha: 0,
+                    backgroundBlur: 40,
+                    backgroundSaturation: 151,
+                    refraction: 0.01,
                     depth: 0.02,
                     noiseOpacity: 0.055
                 };
@@ -174,23 +174,23 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                     backgroundColor: /^#[0-9a-fA-F]{6}$/.test(effectiveGlass.backgroundColor || '')
                         ? effectiveGlass.backgroundColor
                         : defaultGlass.backgroundColor,
-                    backgroundAlpha: clampGlassValue(effectiveGlass.backgroundAlpha, 0.04, 0.42, defaultGlass.backgroundAlpha),
+                    backgroundAlpha: clampGlassValue(effectiveGlass.backgroundAlpha, 0, 0.42, defaultGlass.backgroundAlpha),
                     backgroundBlur: clampGlassValue(effectiveGlass.backgroundBlur, 0, 40, defaultGlass.backgroundBlur),
                     backgroundSaturation: clampGlassValue(effectiveGlass.backgroundSaturation, 80, 220, defaultGlass.backgroundSaturation),
                     refraction: clampGlassValue(effectiveGlass.refraction, 0, 0.4, defaultGlass.refraction),
                     depth: clampGlassValue(effectiveGlass.depth, 0, 1, defaultGlass.depth),
-                    noiseOpacity: clampGlassValue(effectiveGlass.noiseOpacity, 0, 0.12, defaultGlass.noiseOpacity)
+                    noiseOpacity: clampGlassValue(effectiveGlass.noiseOpacity, 0, 1, defaultGlass.noiseOpacity)
                 }
             };
         }
 
         const GLASS_FIELD_DEFINITIONS = [
-            { key: 'backgroundAlpha', label: '배경 투명도', min: 0.04, max: 0.42, step: 0.01 },
+            { key: 'backgroundAlpha', label: '배경 투명도', min: 0, max: 0.42, step: 0.01 },
             { key: 'backgroundBlur', label: '배경 블러', min: 0, max: 40, step: 1, unit: 'px' },
             { key: 'backgroundSaturation', label: '배경 채도', min: 80, max: 220, step: 1, unit: '%' },
             { key: 'refraction', label: '굴절', min: 0, max: 0.4, step: 0.01 },
             { key: 'depth', label: '깊이', min: 0, max: 1, step: 0.01 },
-            { key: 'noiseOpacity', label: '노이즈 강도', min: 0, max: 0.12, step: 0.005 }
+            { key: 'noiseOpacity', label: '노이즈 강도', min: 0, max: 1, step: 0.01 }
         ];
 
         function getDefaultThemeObject() {
@@ -477,12 +477,12 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
                 backgroundColor: /^#[0-9a-fA-F]{6}$/.test(colorValue || '')
                     ? colorValue
                     : currentGlass.backgroundColor,
-                backgroundAlpha: clampGlassValue(document.getElementById('glass-backgroundAlpha-number')?.value, 0.04, 0.42, currentGlass.backgroundAlpha),
+                backgroundAlpha: clampGlassValue(document.getElementById('glass-backgroundAlpha-number')?.value, 0, 0.42, currentGlass.backgroundAlpha),
                 backgroundBlur: clampGlassValue(document.getElementById('glass-backgroundBlur-number')?.value, 0, 40, currentGlass.backgroundBlur),
                 backgroundSaturation: clampGlassValue(document.getElementById('glass-backgroundSaturation-number')?.value, 80, 220, currentGlass.backgroundSaturation),
                 refraction: clampGlassValue(document.getElementById('glass-refraction-number')?.value, 0, 0.4, currentGlass.refraction),
                 depth: clampGlassValue(document.getElementById('glass-depth-number')?.value, 0, 1, currentGlass.depth),
-                noiseOpacity: clampGlassValue(document.getElementById('glass-noiseOpacity-number')?.value, 0, 0.12, currentGlass.noiseOpacity)
+                noiseOpacity: clampGlassValue(document.getElementById('glass-noiseOpacity-number')?.value, 0, 1, currentGlass.noiseOpacity)
             };
         }
 

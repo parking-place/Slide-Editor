@@ -189,6 +189,12 @@
 
 ### 3.5 테마 확장 구조
 
+- `glass.noiseOpacity`는 테마별 메인 배경 필름 그레인 강도를 저장하는 값입니다.
+- 현재 기본 다크 glass 값은 `backgroundColor: #000000`, `backgroundAlpha: 0`, `backgroundBlur: 40`, `backgroundSaturation: 151`, `refraction: 0.01` 기준으로 평평한 shell을 만들도록 맞춰져 있습니다.
+- 노이즈 강도 입력 범위는 `0 ~ 1`이며, 테마 모달 `Glass Surface`에서 바로 저장됩니다.
+- 새 슬라이드/수정 패널의 미디어 드롭존은 이미지가 없을 때 `+`와 안내 문구만, 이미지가 있을 때는 `x`와 파일명만 표시합니다.
+- 드롭존 클릭으로 이미지가 해제되는 동작은 폼 내부 상태만 바꾸며, 실제 이미지 삭제/교체는 슬라이드 생성 또는 저장 시점에만 반영됩니다.
+
 테마 파일은 색상, 웹 가이드, 폰트 외에 `glass` 섹션을 가질 수 있습니다.
 
 - `backgroundColor`
@@ -355,6 +361,9 @@ data/projects/<projectId>/
 - 필요 시 이미지를 인라인 데이터로 포함합니다.
 
 ### 6.3 HTML 가이드
+
+- HTML 가이드는 `src/features/export-enhancements.js`에서 editor가 사용하는 glass 토큰과 동일한 값을 읽어 body 배경, 헤더, Navigator, 카드, 코드 블록 표면에 반영합니다.
+- guide의 배경도 editor처럼 그리드와 노이즈 레이어를 포함하며, active navigator 상태는 `accent`/`secondaryAccent` 기반 glass 강조를 사용합니다.
 
 HTML 가이드는 다음 두 경로를 지원합니다.
 

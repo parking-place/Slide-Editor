@@ -10,10 +10,10 @@
             --text-dim: #8B949E;
             --box-bg: #161B22;
             --glass-rgb: 0, 0, 0;
-            --glass-alpha: 0.24;
-            --glass-blur: 28px;
-            --glass-saturation: 168%;
-            --glass-refraction: 0.03;
+            --glass-alpha: 0;
+            --glass-blur: 40px;
+            --glass-saturation: 151%;
+            --glass-refraction: 0.01;
             --glass-depth: 0.02;
             --glass-border-alpha: 0.08;
             --glass-shadow-alpha: 0.03;
