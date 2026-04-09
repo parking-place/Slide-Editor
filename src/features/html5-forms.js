@@ -76,18 +76,22 @@
                 composeGrid.appendChild(bodyPane);
             }
 
-            if (mediaWrapper || ratioWrapper || deleteBlock) {
+            if (mediaWrapper || deleteBlock) {
                 if (deleteBlock) {
                     deleteBlock.classList.add('phase6-media-delete');
                 }
 
                 const mediaPane = document.createElement('div');
                 mediaPane.className = 'editor-compose-media';
-                [mediaWrapper, ratioWrapper, deleteBlock].filter(Boolean).forEach((node) => mediaPane.appendChild(node));
+                [mediaWrapper, deleteBlock].filter(Boolean).forEach((node) => mediaPane.appendChild(node));
                 composeGrid.appendChild(mediaPane);
             }
 
-            form.appendChild(createFieldset('?? / ???', [composeGrid]));
+            const composeFieldset = createFieldset('본문 및 미디어', [composeGrid]);
+            if (ratioWrapper) {
+                composeFieldset.appendChild(ratioWrapper);
+            }
+            form.appendChild(composeFieldset);
         }
 
         if (button) {

@@ -125,7 +125,7 @@ function generateTocData(slides) {
                 context.deleteCheckbox.checked = false;
             }
             if (selectedFile) {
-                context.status.textContent = `선택된 파일: ${selectedFile.name}`;
+                context.status.textContent = selectedFile.name;
                 context.status.dataset.state = 'selected';
             } else if (hasExistingImage) {
                 context.status.textContent = context.existingText;
@@ -359,20 +359,20 @@ function generateTocData(slides) {
                     
                     const editorDiv = document.createElement('div');
                     editorDiv.className = 'editor-section';
-                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그앤드롭';
+                    const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
                                         editorDiv.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '??? ???? ????' : '? ???? ??'}</h3>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 슬라이드 작성' : '새 슬라이드 추가'}</h3>
                             <button type="button" class="btn-cancel" onclick="window.cancelEditor()"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="input-group">
-                            <input type="text" id="input-chapter" value="${defaultChapter}" placeholder="??? (?: 1. ??? ??)">
-                            <input type="text" id="input-middle-title" value="${defaultMiddleTitle}" placeholder="??? (?: 1.1 ???? ??) - ??">
-                            <input type="text" id="input-title" value="${defaultTitle}" placeholder="??? (?: 1.1.1 ?? IP ??)">
+                            <input type="text" id="input-chapter" value="${defaultChapter}" placeholder="대제목 예: 1. 설치 준비">
+                            <input type="text" id="input-middle-title" value="${defaultMiddleTitle}" placeholder="중제목 예: 1.1 네트워크 구성">
+                            <input type="text" id="input-title" value="${defaultTitle}" placeholder="소제목 예: 1.1.1 관리 IP 확인">
                         </div>
                         <div class="editor-compose-grid">
                             <div class="editor-compose-body">
-                                <textarea id="input-text" placeholder="??? ?? ??? ?????. (Markdown ?? ??)&#10;## ??&#10;* ??&#10;&#10;\`\`\`bash&#10;?? ?? ??? ?????.&#10;\`\`\`"></textarea>
+                                <textarea id="input-text" placeholder="슬라이드 본문을 입력하세요. (Markdown 지원)&#10;## 단계&#10;* 체크 항목&#10;&#10;\`\`\`bash&#10;명령어 예시를 입력하세요.&#10;\`\`\`"></textarea>
                             </div>
                             <div class="editor-compose-media">
                                 <div class="file-upload-wrapper file-drop-zone media-drop-panel"
@@ -381,7 +381,7 @@ function generateTocData(slides) {
                                     data-status-id="input-image-status"
                                     data-caption-id="input-image-caption-wrap"
                                     data-default-text="${escapeHtml(newImageUploadDefaultText)}"
-                                    data-existing-text="??? ???? ????."
+                                    data-existing-text="업로드된 이미지 사용 중"
                                     data-has-image="false"
                                     onclick="window.handleImageZoneClick(event)"
                                     ondragenter="window.handleImageDragEnter(event)"
@@ -390,32 +390,25 @@ function generateTocData(slides) {
                                     ondrop="window.handleImageDrop(event)">
                                     <input type="file" id="input-image" accept="image/*" class="visually-hidden-file-input" onchange="window.handleImageInputChange(this)">
                                     <div class="media-drop-icon"><i class="fa-solid fa-plus"></i></div>
-                                    <div class="media-drop-copy">
-                                        <strong>??? ??</strong>
-                                        <span>???? ???? ???????</span>
-                                    </div>
-                                    <button type="button" class="media-drop-browse" onclick="document.getElementById('input-image').click(); event.stopPropagation();">
-                                        <i class="fa-regular fa-folder-open"></i> ?? ??
-                                    </button>
                                     <span id="input-image-status" class="file-upload-status">${escapeHtml(newImageUploadDefaultText)}</span>
                                 </div>
                                 <div class="media-caption-wrap" id="input-image-caption-wrap" style="display: none;">
-                                    <label for="input-image-caption">??? ??</label>
-                                    <input type="text" id="input-image-caption" placeholder="??? ?? (????)">
-                                </div>
-                                <div class="file-upload-wrapper media-ratio-panel" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
-                                    <div class="media-ratio-labels">
-                                        <span><i class="fa-solid fa-align-left"></i> ??? ??</span>
-                                        <span id="input-ratio-text">50% : 50%</span>
-                                        <span>??? ?? <i class="fa-regular fa-image"></i></span>
-                                    </div>
-                                    <input type="range" id="input-text-ratio" min="20" max="80" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('input-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
-                                    <div class="media-ratio-help">???? ???? ?? ?? ? ??? ?????.</div>
+                                    <label for="input-image-caption">이미지 설명</label>
+                                    <input type="text" id="input-image-caption" placeholder="이미지 설명 (선택사항)">
                                 </div>
                             </div>
                         </div>
+                        <div class="file-upload-wrapper media-ratio-panel" id="input-layout-ratio-container" style="display: none; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                            <div class="media-ratio-labels">
+                                <span><i class="fa-solid fa-align-left"></i> 본문 비중</span>
+                                <span id="input-ratio-text">50% : 50%</span>
+                                <span>이미지 비중 <i class="fa-regular fa-image"></i></span>
+                            </div>
+                            <input type="range" id="input-text-ratio" min="20" max="80" value="50" style="width: 100%; cursor: pointer;" oninput="document.getElementById('input-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                            <div class="media-ratio-help">본문과 이미지의 좌우 비율을 조정합니다.</div>
+                        </div>
                         <button type="button" class="btn-add" onclick="window.insertNewSlide(${i})">
-                            <i class="fa-solid fa-plus"></i> ???? ??
+                            <i class="fa-solid fa-plus"></i> 슬라이드 생성
                         </button>
                     `;
                     area.appendChild(editorDiv);
@@ -456,8 +449,8 @@ function generateTocData(slides) {
                         const editDiv = document.createElement('div');
                         editDiv.className = 'editor-section edit-mode';
                         const editImageUploadDefaultText = slide.image
-                            ? '새 이미지 업로드 또는 드래그앤드롭 시 기존 이미지 교체'
-                            : '스크린샷 이미지 업로드 또는 드래그앤드롭';
+                            ? '새 이미지 업로드 또는 드래그 앤 드롭 시 기존 이미지 교체'
+                            : '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
                         
                         const existingImageDeleteCheck = slide.image ? `
                             <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
@@ -468,17 +461,17 @@ function generateTocData(slides) {
 
                                                 editDiv.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> ???? ?? ?</h3>
+                                <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> 슬라이드 수정</h3>
                                 <button type="button" class="btn-cancel" onclick="window.cancelEditSlide()"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                             <div class="input-group">
-                                <input type="text" id="edit-chapter" value="${escapeHtml(slide.chapter)}" placeholder="???">
-                                <input type="text" id="edit-middle-title" value="${escapeHtml(slide.middleTitle || '')}" placeholder="???(??)">
-                                <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="???">
+                                <input type="text" id="edit-chapter" value="${escapeHtml(slide.chapter)}" placeholder="대제목">
+                                <input type="text" id="edit-middle-title" value="${escapeHtml(slide.middleTitle || '')}" placeholder="중제목(선택사항)">
+                                <input type="text" id="edit-title" value="${escapeHtml(slide.title)}" placeholder="소제목">
                             </div>
                             <div class="editor-compose-grid">
                                 <div class="editor-compose-body">
-                                    <textarea id="edit-text" placeholder="??? ?? ??? ?????. (Markdown ?? ??)">${escapeHtml(slide.text)}</textarea>
+                                    <textarea id="edit-text" placeholder="슬라이드 본문을 입력하세요. (Markdown 지원)">${escapeHtml(slide.text)}</textarea>
                                 </div>
                                 <div class="editor-compose-media">
                                     <div class="file-upload-wrapper file-drop-zone media-drop-panel"
@@ -488,7 +481,7 @@ function generateTocData(slides) {
                                         data-caption-id="edit-image-caption-wrap"
                                         data-delete-id="edit-delete-image"
                                         data-default-text="${escapeHtml(editImageUploadDefaultText)}"
-                                        data-existing-text="??? ???? ????. ? ??? ???? ?????."
+                                        data-existing-text="업로드된 이미지 사용 중"
                                         data-has-image="${slide.image ? 'true' : 'false'}"
                                         onclick="window.handleImageZoneClick(event)"
                                         ondragenter="window.handleImageDragEnter(event)"
@@ -497,33 +490,26 @@ function generateTocData(slides) {
                                         ondrop="window.handleImageDrop(event)">
                                         <input type="file" id="edit-image" accept="image/*" class="visually-hidden-file-input" onchange="window.handleImageInputChange(this)">
                                         <div class="media-drop-icon"><i class="fa-solid fa-plus"></i></div>
-                                        <div class="media-drop-copy">
-                                            <strong>??? ??</strong>
-                                            <span>???? ???? ???????</span>
-                                        </div>
-                                        <button type="button" class="media-drop-browse" onclick="document.getElementById('edit-image').click(); event.stopPropagation();">
-                                            <i class="fa-regular fa-folder-open"></i> ?? ??
-                                        </button>
                                         <span id="edit-image-status" class="file-upload-status">${escapeHtml(editImageUploadDefaultText)}</span>
                                     </div>
                                     <div class="media-caption-wrap" id="edit-image-caption-wrap" style="display: ${slide.image ? 'flex' : 'none'};">
-                                        <label for="edit-image-caption">??? ??</label>
-                                        <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="??? ?? (????)">
-                                    </div>
-                                    <div class="file-upload-wrapper media-ratio-panel" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
-                                        <div class="media-ratio-labels">
-                                            <span><i class="fa-solid fa-align-left"></i> ??? ??</span>
-                                            <span id="edit-ratio-text">${slide.textRatio || 50}% : ${100 - (slide.textRatio || 50)}%</span>
-                                            <span>??? ?? <i class="fa-regular fa-image"></i></span>
-                                        </div>
-                                        <input type="range" id="edit-text-ratio" min="20" max="80" value="${slide.textRatio || 50}" style="width: 100%; cursor: pointer;" oninput="document.getElementById('edit-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
-                                        <div class="media-ratio-help">???? ???? ?? ?? ? ??? ?????.</div>
+                                        <label for="edit-image-caption">이미지 설명</label>
+                                        <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)">
                                     </div>
                                     ${existingImageDeleteCheck}
                                 </div>
                             </div>
+                            <div class="file-upload-wrapper media-ratio-panel" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
+                                <div class="media-ratio-labels">
+                                    <span><i class="fa-solid fa-align-left"></i> 본문 비중</span>
+                                    <span id="edit-ratio-text">${slide.textRatio || 50}% : ${100 - (slide.textRatio || 50)}%</span>
+                                    <span>이미지 비중 <i class="fa-regular fa-image"></i></span>
+                                </div>
+                                <input type="range" id="edit-text-ratio" min="20" max="80" value="${slide.textRatio || 50}" style="width: 100%; cursor: pointer;" oninput="document.getElementById('edit-ratio-text').innerText = this.value + '% : ' + (100 - this.value) + '%'">
+                                <div class="media-ratio-help">본문과 이미지의 좌우 비율을 조정합니다.</div>
+                            </div>
                             <button type="button" class="btn-add" onclick="window.saveEditSlide(${i})">
-                                <i class="fa-solid fa-check"></i> ???? ??
+                                <i class="fa-solid fa-check"></i> 슬라이드 저장
                             </button>
                         `;
                         area.appendChild(editDiv);
