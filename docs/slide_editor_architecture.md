@@ -2,7 +2,7 @@
 
 이 문서는 현재 `Slide Editor` 코드 구조, 저장 방식, 이미지 파이프라인, HTML 가이드 출력 흐름, 배포 구조를 빠르게 파악하기 위한 최신 구조 문서입니다.
 
-문서 기준 버전은 `version.json` 기준 `v0.10.0a`입니다.
+문서 기준 버전은 `version.json` 기준 `v0.11.0`입니다.
 
 ## 1. 현재 프로젝트 개요
 
@@ -59,7 +59,7 @@
   - outline 메타데이터와 HTML 가이드 동기화 보강을 담당합니다.
 - `src/features/export-enhancements.js`
   - 가이드용 Navigator, 이미지 fallback, portable HTML 변환, glass 토큰이 반영된 HTML 가이드 셸 보강을 담당합니다.
-  - `Guide` 미리보기와 `HTML` 다운로드가 공통으로 사용하는 최신 HTML 가이드 생성 경로입니다.
+  - `Viewer` 미리보기와 `HTML` 다운로드가 공통으로 사용하는 최신 HTML 가이드 생성 경로입니다.
   - 코드 블록 본문, 코드 헤더, 언어 라벨, 복사 버튼 텍스트는 테마의 `codeColor`를 우선 사용하도록 맞춥니다.
 
 ### 2.3 `src/styles/`
@@ -118,7 +118,7 @@
   - Theme
   - Project
   - Save
-  - Guide
+  - Viewer
   - HTML
 - 헤더는 좌측 로고/버전, 중앙 프로젝트명 정보 패널, 우측 액션 버튼으로 분리되어 있습니다.
 - 프로젝트/테마/확인 모달 제공
@@ -376,9 +376,9 @@ data/projects/<projectId>/
 - HTML 가이드는 `src/features/export-enhancements.js`에서 editor가 사용하는 glass 토큰과 동일한 값을 읽어 body 배경, 헤더, Navigator, 카드, 코드 블록 표면에 반영합니다.
 - guide의 배경도 editor처럼 그리드와 노이즈 레이어를 포함하며, active navigator 상태는 `accent`/`secondaryAccent` 기반 glass 강조를 사용합니다.
 
-HTML 가이드는 다음 두 UI 경로를 지원하지만, 실제 HTML 생성은 하나의 최신 가이드 생성 경로로 통합되어 있습니다.
+HTML 가이드는 다음 두 UI 경로를 지원하지만, 실제 HTML 생성은 하나의 최신 Viewer 생성 경로로 통합되어 있습니다.
 
-- `Guide`
+- `Viewer`
   - 서버에 저장한 HTML을 새 창에서 미리보기
 - `HTML`
   - 현재 프로젝트명 기준 파일명으로 다운로드
@@ -477,9 +477,9 @@ HTML 가이드는 다음 두 UI 경로를 지원하지만, 실제 HTML 생성은
 ## 11. Slide Viewer Guide Refresh
 
 - HTML 가이드는 이제 에디터 셸을 기반으로 한 읽기 전용 `Slide Viewer` 레이아웃으로 생성됩니다.
-- Guide 미리보기와 HTML 다운로드는 같은 최신 가이드 생성기를 공유하고, 레이아웃 결과도 동일한 방향으로 유지합니다.
-- Guide 미리보기는 서버 저장 기반 미리보기 경로를 유지합니다.
-- HTML 다운로드는 외부 CSS, JS, 폰트, 데이터 파일에 의존하지 않는 단일 self-contained HTML 파일로 생성됩니다.
+- Viewer 미리보기와 HTML 다운로드는 같은 최신 가이드 생성기를 공유하고, 레이아웃 결과도 동일한 방향으로 유지합니다.
+- Viewer 미리보기는 서버 저장 기반 미리보기 경로를 유지합니다.
+- HTML 다운로드는 외부 CSS, JS, 데이터 파일에 의존하지 않는 단일 self-contained HTML 파일로 생성됩니다.
 - portable HTML 경로에서는 이미지가 모두 data URL로 인라인되며, 가이드 렌더링에 필요한 CSS와 JS도 문서 내부에 포함됩니다.
 - 가이드 헤더는 `Slide Viewer`, 제목, 부제, 생성 시각만 표시하는 읽기 전용 구조로 단순화되었습니다.
 - 뷰어 배경의 그라디언트, 격자, 노이즈는 editor와 같은 고정 레이어 방식으로 렌더링되어, 긴 문서에서도 배경이 스크롤 길이를 따라 늘어나지 않습니다.

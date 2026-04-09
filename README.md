@@ -1,13 +1,13 @@
 # Slide Editor
 
-[![Version](https://img.shields.io/badge/version-v0.10.0a-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.11.0-blue?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 [![Powered by Codex](https://img.shields.io/badge/powered%20by-Codex-111827?style=for-the-badge)](#)
 
 브라우저에서 슬라이드를 편집하고, 프로젝트 단위로 저장하며, 같은 데이터로 HTML 가이드를 미리보기와 다운로드까지 처리하는 경량 문서 제작 도구입니다.
 
-현재 버전은 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, HTML5 기반 편집 UI, 가이드 전용 네비게이터, 서버 저장/백업/임포트 흐름을 중심으로 동작합니다.
+현재 버전은 `nvidia_light` 기본 테마, 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, Viewer 기반 HTML 출력, glass theme 편집 UI를 중심으로 동작합니다.
 
 ## 주요 기능
 
@@ -17,8 +17,9 @@
 - 이미지 업로드 후 비동기 WebP 변환
 - 구버전 데이터 로드 시 순차 WebP 백필 변환
 - 좌측 Navigator 기반 슬라이드 탐색
-- HTML 가이드 새 창 보기 및 다운로드
+- Viewer 새 창 보기 및 HTML 다운로드
 - 테마 파일(`.slidetheme`) 불러오기/저장
+- `Glass Surface`와 `noiseOpacity`를 포함한 glass 테마 편집
 - Docker 기반 배포 및 Node 로컬 서버 실행
 
 ## 빠른 시작
@@ -95,17 +96,20 @@ data/projects/<projectId>/
 
 현재 출력 경로는 HTML 가이드 중심입니다.
 
-- `Guide`: 서버에 저장한 HTML 가이드를 새 창에서 미리보기
+- `Viewer`: 서버에 저장한 Slide Viewer HTML을 새 창에서 미리보기
 - `HTML`: 현재 프로젝트명 기준 파일명으로 가이드 다운로드
 - `Backup JSON`: 현재 프로젝트 데이터를 portable JSON으로 다운로드
 
 가이드 HTML은 다음 특성을 가집니다.
 
 - HTML5 시맨틱 구조 사용
-- 가이드 전용 Navigator 제공
+- Viewer 전용 Navigator 제공
 - 현재 위치 하이라이트
 - 이미지 클릭 확대
 - WebP 우선 사용, 필요 시 fallback 적용
+- 단일 HTML 다운로드 시 이미지, CSS, JS를 한 파일 안에 포함
+- 단일 HTML 다운로드 시 외부 폰트 링크는 유지하고, 오프라인에서는 시스템 폰트로 fallback
+- 단일 HTML 다운로드 시 마크다운/신텍스 파서 라이브러리는 포함하지 않고 결과 HTML만 저장
 
 ## Docker 이미지
 
@@ -118,7 +122,7 @@ parkingplace/slide-editor:latest
 버전 고정이 필요하면 릴리즈 태그를 사용합니다.
 
 ```text
-parkingplace/slide-editor:v0.10.0a
+parkingplace/slide-editor:v0.11.0
 ```
 
 ## 프로젝트 구조

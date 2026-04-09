@@ -2,7 +2,7 @@
 
 이 문서는 Slide Editor의 changelog 진입점입니다.
 
-현재 버전: `v0.10.0a`
+현재 버전: `v0.11.0`
 
 ## Working Files
 
@@ -12,6 +12,7 @@
 
 ## Latest Releases
 
+- [v0.11.0](docs/changelog/releases/v0.11.0.md) - 2026-04-10
 - [v0.10.0a](docs/changelog/releases/v0.10.0a.md) - 2026-04-09
 - [v0.10.0](docs/changelog/releases/v0.10.0.md) - 2026-04-09
 - [v0.9.1](docs/changelog/releases/v0.9.1.md) - 2026-04-08
