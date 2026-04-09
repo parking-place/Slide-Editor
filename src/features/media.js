@@ -180,10 +180,7 @@
         await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                settings: projectSettings,
-                slides: slidesData
-            })
+            body: JSON.stringify(buildProjectDataDocument())
         });
 
         return true;

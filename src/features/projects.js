@@ -36,10 +36,11 @@ function getProjectModalDefaultName(mode) {
                 const isActive = project.id === projectModalState.selectedProjectId;
                 const isCurrent = project.id === currentProject?.id;
                 const slideCount = Number.isFinite(project.slideCount) ? project.slideCount : 0;
+                const versionLabel = getSavedVersionLabel(project.savedVersion);
                 return `
                     <div class="project-list-item ${isActive ? 'active' : ''}" onclick="window.selectProjectModalProject('${project.id}')">
                         <div class="project-list-item-name">${escapeHtml(project.name || project.id)}</div>
-                        <div class="project-list-item-meta">${slideCount} slides / ${escapeHtml(project.id)}</div>
+                        <div class="project-list-item-meta">${slideCount} slides / ${escapeHtml(project.id)} / ${escapeHtml(versionLabel)}</div>
                         ${isCurrent ? '<span class="project-badge"><i class="fa-solid fa-circle-check"></i> Current</span>' : ''}
                     </div>
                 `;
@@ -69,7 +70,7 @@ function getProjectModalDefaultName(mode) {
 
             if (currentMetaEl) {
                 currentMetaEl.textContent = currentProject
-                    ? `${currentProject.id} / ${slidesData.length} slides currently loaded`
+                    ? `${currentProject.id} / ${slidesData.length} slides currently loaded / ${getSavedVersionLabel(currentProject.savedVersion)}`
                     : 'Start from a new project or open an existing one.';
             }
 
@@ -126,21 +127,21 @@ function getProjectModalDefaultName(mode) {
                     selectionEl.innerHTML = `
                         <span class="project-badge"><i class="fa-solid ${selectedProject.id === currentProject?.id ? 'fa-circle-check' : 'fa-folder-open'}"></i> ${selectedProject.id === currentProject?.id ? 'Already open' : 'Ready to open'}</span>
                         <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
                     `;
                 } else if (mode === 'rename') {
                     selectionEl.classList.remove('is-empty');
                     selectionEl.innerHTML = `
                         <span class="project-badge"><i class="fa-solid fa-pen"></i> Rename target</span>
                         <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
                     `;
                 } else if (mode === 'delete') {
                     selectionEl.classList.remove('is-empty');
                     selectionEl.innerHTML = `
                         <span class="project-badge"><i class="fa-solid fa-trash"></i> Delete target</span>
                         <strong>${escapeHtml(selectedProject.name || selectedProject.id)}</strong>
-                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides</span>
+                        <span>${escapeHtml(selectedProject.id)} / ${selectedProject.slideCount || 0} slides / ${escapeHtml(getSavedVersionLabel(selectedProject.savedVersion))}</span>
                     `;
                 } else {
                     selectionEl.classList.remove('is-empty');
@@ -286,7 +287,7 @@ function getProjectModalDefaultName(mode) {
                     const created = await requestJson('/api/projects', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, template: 'empty' })
+                        body: JSON.stringify({ name, template: 'empty', savedVersion: getCurrentSavedVersion() })
                     });
                     await loadProjectById(created.id);
                     window.closeProjectModal();
@@ -298,11 +299,7 @@ function getProjectModalDefaultName(mode) {
                     const created = await requestJson('/api/projects', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name,
-                            settings: projectSettings,
-                            slides: slidesData
-                        })
+                        body: JSON.stringify(Object.assign({ name }, buildProjectDataDocument()))
                     });
                     await loadProjectById(created.id);
                     window.closeProjectModal();
@@ -320,7 +317,8 @@ function getProjectModalDefaultName(mode) {
                     if (selectedProject.id === currentProject?.id) {
                         currentProject = {
                             id: selectedProject.id,
-                            name: renamed.project.name
+                            name: renamed.project.name,
+                            savedVersion: normalizeSavedVersion(renamed.project.savedVersion)
                         };
                         updateProjectIndicator();
                     }

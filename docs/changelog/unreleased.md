@@ -11,6 +11,7 @@
 
 ## Changed
 
+- 데이터 저장 및 백업 JSON에 `savedVersion`을 함께 기록하고, 프로젝트 매니저에서 프로젝트별 저장 버전을 표시하도록 개선했습니다. 버전 정보가 없는 구버전 프로젝트는 `old`로 표시됩니다.
 - `src/features` 하위 기본 기능 파일 이름을 `projects.js`, `editor.js`, `export.js`, `theme.js` 중심으로 정리하고, 후행 보강 레이어는 `export-enhancements.js`, `html5-semantics.js`, `html5-forms.js`처럼 역할이 드러나도록 재정렬했습니다.
 - 기본 `app.js`를 `src/core/state.js`, `src/features/projects-base.js`, `editor-base.js`, `export-base.js`, `theme-base.js`로 나눠 전역 상태와 기능 흐름을 역할별 파일로 재배치했습니다.
 - `app.js` 끝에 통합돼 있던 미디어 처리, HTML5 보강, export 후행 레이어를 `src/features` 하위 기능 파일로 분리해 로드 순서와 책임 범위를 명확히 정리했습니다.

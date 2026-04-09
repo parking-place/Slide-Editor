@@ -666,20 +666,22 @@ window.exportToPPTX = async function() {
                 return;
             }
 
-            const dataStr = JSON.stringify({ settings: projectSettings, slides: slidesData }, null, 2);
+            const dataStr = JSON.stringify(buildProjectDataDocument(), null, 2);
 
             try {
-                const response = await fetch(`/api/projects/${encodeURIComponent(currentProject.id)}`, {
+                const payload = await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: dataStr
                 });
 
-                if (response.ok) {
-                    showModal(`현재 프로젝트를 저장했습니다: ${currentProject.name}`);
-                    await refreshProjectList();
-                    return;
-                }
+                currentProject = Object.assign({}, currentProject, {
+                    savedVersion: normalizeSavedVersion(payload?.project?.savedVersion) || getCurrentSavedVersion()
+                });
+                updateProjectIndicator();
+                showModal(`현재 프로젝트를 저장했습니다: ${currentProject.name}`);
+                await refreshProjectList();
+                return;
             } catch (err) {
                 console.warn('프로젝트 저장 실패, JSON 백업 다운로드로 전환합니다.', err);
             }
@@ -697,7 +699,7 @@ window.exportToPPTX = async function() {
             let fallbackDataStr = dataStr;
             try {
                 const portableSlides = await buildPortableSlides(slidesData);
-                fallbackDataStr = JSON.stringify({ settings: projectSettings, slides: portableSlides }, null, 2);
+                fallbackDataStr = JSON.stringify(buildProjectDataDocument(portableSlides), null, 2);
             } catch (portableErr) {
                 console.warn('이식형 백업 생성 실패, 현재 메모리 데이터를 그대로 다운로드합니다.', portableErr);
             }
@@ -730,7 +732,7 @@ window.exportToPPTX = async function() {
                 return;
             }
 
-            const dataStr = JSON.stringify({ settings: projectSettings, slides: portableSlides }, null, 2);
+            const dataStr = JSON.stringify(buildProjectDataDocument(portableSlides), null, 2);
             
             const now = new Date();
             const year = now.getFullYear().toString().slice(-2);

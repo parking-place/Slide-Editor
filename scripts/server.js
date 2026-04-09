@@ -113,8 +113,28 @@ function mergeSettings(settings, fallbackProjectName = 'My Guide') {
     };
 }
 
-function createEmptyProjectPayload(projectName = 'My Guide') {
+function normalizeSavedVersion(versionValue) {
+    return typeof versionValue === 'string' && versionValue.trim()
+        ? versionValue.trim()
+        : null;
+}
+
+function extractSavedVersion(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return null;
+    }
+
+    return normalizeSavedVersion(
+        payload.savedVersion
+        || payload.version
+        || payload.meta?.savedVersion
+        || payload.settings?.savedVersion
+    );
+}
+
+function createEmptyProjectPayload(projectName = 'My Guide', savedVersion = null) {
     return {
+        savedVersion: normalizeSavedVersion(savedVersion),
         settings: createDefaultSettings(projectName),
         slides: []
     };
@@ -335,7 +355,8 @@ function syncProjectIndexEntry(meta) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
-        slideCount: meta.slideCount
+        slideCount: meta.slideCount,
+        savedVersion: normalizeSavedVersion(meta.savedVersion)
     });
     projects.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     saveProjectsIndex({ projects });
@@ -357,7 +378,8 @@ function updateProjectMeta(projectId, updates = {}) {
         ...meta,
         name: String(updates.name || meta.name || projectId).trim() || projectId,
         updatedAt: getTimestamp(),
-        slideCount: getSlideCount(payload)
+        slideCount: getSlideCount(payload),
+        savedVersion: normalizeSavedVersion(meta.savedVersion || extractSavedVersion(payload))
     };
 
     writeJson(getProjectMetaPath(projectId), nextMeta);
@@ -368,7 +390,8 @@ function updateProjectMeta(projectId, updates = {}) {
         name: nextMeta.name,
         createdAt: nextMeta.createdAt,
         updatedAt: nextMeta.updatedAt,
-        slideCount: nextMeta.slideCount
+        slideCount: nextMeta.slideCount,
+        savedVersion: normalizeSavedVersion(nextMeta.savedVersion)
     };
 }
 
@@ -597,6 +620,7 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
 
     if (Array.isArray(payload)) {
         return {
+            savedVersion: null,
             settings: createDefaultSettings(fallbackProjectName),
             slides: payload.map(slide => {
                 if (!slide || typeof slide !== 'object') return slide;
@@ -611,6 +635,7 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
     const slides = Array.isArray(safePayload.slides) ? safePayload.slides : [];
 
     return {
+        savedVersion: extractSavedVersion(safePayload),
         settings: mergeSettings(safePayload.settings, fallbackProjectName),
         slides: slides.map(slide => {
             if (!slide || typeof slide !== 'object') return slide;
@@ -629,7 +654,8 @@ function createProjectMeta(projectId, name, payload, existingMeta = null) {
         name: safeName,
         createdAt: existingMeta?.createdAt || now,
         updatedAt: now,
-        slideCount: getSlideCount(payload)
+        slideCount: getSlideCount(payload),
+        savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || existingMeta?.savedVersion)
     };
 }
 
@@ -649,7 +675,8 @@ function saveProject(projectId, name, body) {
         name: meta.name,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
-        slideCount: meta.slideCount
+        slideCount: meta.slideCount,
+        savedVersion: normalizeSavedVersion(meta.savedVersion)
     };
 }
 
@@ -661,8 +688,32 @@ function loadProjectPayload(projectId) {
     return Object.assign({
         id: meta.id,
         name: meta.name,
+        savedVersion: normalizeSavedVersion(extractSavedVersion(payload) || meta.savedVersion),
         meta
     }, payload);
+}
+
+function listProjects() {
+    return getProjectsIndex().projects
+        .map((project) => {
+            const meta = readProjectMeta(project.id);
+            const payload = readJsonIfExists(getProjectDataPath(project.id));
+            const savedVersion = normalizeSavedVersion(
+                project.savedVersion
+                || meta?.savedVersion
+                || extractSavedVersion(payload)
+            );
+
+            return {
+                id: project.id,
+                name: meta?.name || project.name || project.id,
+                createdAt: meta?.createdAt || project.createdAt || getTimestamp(),
+                updatedAt: meta?.updatedAt || project.updatedAt || getTimestamp(),
+                slideCount: Number.isFinite(meta?.slideCount) ? meta.slideCount : getSlideCount(payload),
+                savedVersion
+            };
+        })
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 
 function createProject(projectName, body) {
@@ -799,7 +850,7 @@ app.put('/api/app-state', (req, res) => {
 });
 
 app.get('/api/projects', (req, res) => {
-    res.json(getProjectsIndex().projects);
+    res.json(listProjects());
 });
 
 app.post('/api/projects', (req, res) => {
@@ -815,8 +866,9 @@ app.post('/api/projects', (req, res) => {
 
     try {
         const body = req.body && req.body.template === 'empty'
-            ? createEmptyProjectPayload(requestedName)
+            ? createEmptyProjectPayload(requestedName, req.body && req.body.savedVersion)
             : {
+                savedVersion: req.body && req.body.savedVersion,
                 settings: req.body && req.body.settings,
                 slides: req.body && req.body.slides
             };

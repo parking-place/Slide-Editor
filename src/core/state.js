@@ -17,6 +17,7 @@
 
         let projectSettings = getDefaultProjectSettings();
         let currentProject = null;
+        let currentAppVersion = '';
         let availableProjects = [];
         let projectModalState = {
             mode: 'open',
@@ -123,11 +124,34 @@
             projectSettings = nextSettings;
         }
 
+        function normalizeSavedVersion(versionValue) {
+            return typeof versionValue === 'string' && versionValue.trim()
+                ? versionValue.trim()
+                : '';
+        }
+
+        function getCurrentSavedVersion() {
+            return normalizeSavedVersion(currentAppVersion) || 'unknown';
+        }
+
+        function getSavedVersionLabel(versionValue) {
+            return normalizeSavedVersion(versionValue) || 'old';
+        }
+
+        function buildProjectDataDocument(slides = slidesData, settings = projectSettings) {
+            return {
+                savedVersion: getCurrentSavedVersion(),
+                settings,
+                slides
+            };
+        }
+
         function setCurrentProject(project) {
             currentProject = project
                 ? {
                     id: project.id,
-                    name: project.name || project.meta?.name || project.settings?.branding?.projectName || project.id
+                    name: project.name || project.meta?.name || project.settings?.branding?.projectName || project.id,
+                    savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion)
                 }
                 : null;
             updateProjectIndicator();
@@ -170,6 +194,7 @@
                 const version = typeof payload?.version === 'string' ? payload.version.trim() : '';
                 if (!version) return;
 
+                currentAppVersion = version;
                 versionEl.textContent = version;
                 versionEl.hidden = false;
             } catch (err) {
@@ -399,7 +424,7 @@
                 const created = await requestJson('/api/projects', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, template: 'empty' })
+                    body: JSON.stringify({ name, template: 'empty', savedVersion: getCurrentSavedVersion() })
                 });
                 await loadProjectById(created.id);
                 showModal(`새 프로젝트를 만들었습니다: ${created.name}`);
@@ -417,11 +442,7 @@
                 const created = await requestJson('/api/projects', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        settings: projectSettings,
-                        slides: slidesData
-                    })
+                    body: JSON.stringify(Object.assign({ name }, buildProjectDataDocument()))
                 });
                 await loadProjectById(created.id);
                 showModal(`다른 이름으로 저장했습니다: ${created.name}`);
