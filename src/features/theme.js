@@ -85,11 +85,11 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             if (isDarkMode) {
                 return {
                     backgroundColor: '#FFFFFF',
-                    backgroundAlpha: 0.16,
-                    backgroundBlur: 18,
-                    backgroundSaturation: 142,
-                    refraction: 0.08,
-                    depth: 0.11
+                    backgroundAlpha: 0.20,
+                    backgroundBlur: 22,
+                    backgroundSaturation: 150,
+                    refraction: 0.06,
+                    depth: 0.05
                 };
             }
 
@@ -204,13 +204,13 @@ function hexToRgbString(value, fallback = '255, 255, 255') {
             root.setProperty('--glass-depth', glass.depth.toFixed(2));
 
             const borderAlpha = normalizedTheme.isDarkMode
-                ? 0.12 + (glass.refraction * 0.30)
+                ? 0.10 + (glass.refraction * 0.22)
                 : 0.24 + (glass.refraction * 0.72);
             const shadowAlpha = normalizedTheme.isDarkMode
-                ? 0.06 + (glass.depth * 0.10)
+                ? 0.04 + (glass.depth * 0.06)
                 : 0.05 + (glass.depth * 0.10);
             const highlightAlpha = normalizedTheme.isDarkMode
-                ? 0.10 + (glass.refraction * 0.18)
+                ? 0.07 + (glass.refraction * 0.12)
                 : 0.24 + (glass.refraction * 0.42);
 
             root.setProperty('--glass-border-alpha', borderAlpha.toFixed(2));

@@ -10,6 +10,11 @@
 
 ## Changed
 
+- 헤더의 프로젝트명 표시를 우측 버튼 묶음에서 분리하고, 중앙 glass 정보 패널로 재배치했습니다.
+- 라이트모드 `Save` 버튼은 다른 헤더 버튼과 같은 glass 계열로 맞추고, primary action은 강조색 tint로만 구분하도록 조정했습니다.
+- 다크모드 glass shadow와 highlight를 추가로 낮춰 전체 surface가 더 평평하게 보이도록 정리했습니다.
+- 테마 목록 선택/호버, 테마 적용 버튼, 프로젝트 매니저 현재 뱃지와 주요 액션, 네비게이터 활성 텍스트 등 일부 녹색 하드코딩을 `accent`/`secondaryAccent` 기반으로 치환했습니다.
+
 - 프로젝트 매니저 2차 UI 개편을 반영해 메인 액션을 `Current Project`와 `Selected Project` 상태에 맞게 다시 배치했습니다.
 - 현재 프로젝트를 선택했을 때는 `Save`, `Copy`, `Export`만 보이도록 정리했습니다.
 - 다른 프로젝트를 선택했을 때는 `Open`, `Copy`만 보이도록 정리했습니다.

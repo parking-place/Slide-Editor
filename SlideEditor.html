@@ -45,36 +45,41 @@
 
     <header class="app-shell-header">
         <nav class="header-nav" aria-label="주요 도구">
-        <div class="logo-lockup">
-            <a class="logo-link" href="https://github.com/parking-place/Slide-Editor" target="_blank" rel="noopener noreferrer" title="GitHub repository">
-                <div class="logo">Slide <span>Editor</span></div>
-            </a>
-            <span id="app-version" class="app-version" hidden></span>
+        <div class="header-left">
+            <div class="logo-lockup">
+                <a class="logo-link" href="https://github.com/parking-place/Slide-Editor" target="_blank" rel="noopener noreferrer" title="GitHub repository">
+                    <div class="logo">Slide <span>Editor</span></div>
+                </a>
+                <span id="app-version" class="app-version" hidden></span>
+            </div>
         </div>
-        <div class="header-actions">
+        <div class="header-center">
             <span id="project-indicator" class="project-indicator">Project loading...</span>
+        </div>
+        <div class="header-right">
+            <div class="header-actions">
+                <button type="button" class="btn-hdr btn-hdr--amber" title="Theme" onclick="window.openThemeModal()">
+                    <i class="fa-solid fa-palette"></i> Theme
+                </button>
+                <div class="hdr-divider"></div>
 
-            <button type="button" class="btn-hdr btn-hdr--amber" title="Theme" onclick="window.openThemeModal()">
-                <i class="fa-solid fa-palette"></i> Theme
-            </button>
-            <div class="hdr-divider"></div>
+                <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
+                    <i class="fa-solid fa-folder-tree"></i> Project
+                </button>
+                <div class="hdr-divider"></div>
 
-            <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
-                <i class="fa-solid fa-folder-tree"></i> Project
-            </button>
-            <div class="hdr-divider"></div>
+                <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="Save current project" onclick="window.exportData()">
+                    <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
+                <div class="hdr-divider"></div>
 
-            <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="Save current project" onclick="window.exportData()">
-                <i class="fa-solid fa-floppy-disk"></i> Save
-            </button>
-            <div class="hdr-divider"></div>
-
-            <button type="button" class="btn-hdr" id="dl-html-view-btn" title="Preview web guide" onclick="window.viewWebGuide()">
-                <i class="fa-solid fa-book-open"></i> Guide
-            </button>
-            <button type="button" class="btn-hdr" id="dl-html-btn" title="Download guide HTML" onclick="window.exportToHTML()">
-                <i class="fa-solid fa-file-code"></i> HTML
-            </button>
+                <button type="button" class="btn-hdr" id="dl-html-view-btn" title="Preview web guide" onclick="window.viewWebGuide()">
+                    <i class="fa-solid fa-book-open"></i> Guide
+                </button>
+                <button type="button" class="btn-hdr" id="dl-html-btn" title="Download guide HTML" onclick="window.exportToHTML()">
+                    <i class="fa-solid fa-file-code"></i> HTML
+                </button>
+            </div>
         </div>
         </nav>
     </header>

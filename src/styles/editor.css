@@ -7,8 +7,8 @@
             flex-direction: column;
             gap: 15px;
             box-shadow:
-                0 calc(10px + 20px * var(--glass-depth)) calc(24px + 32px * var(--glass-depth)) rgba(0, 0, 0, var(--glass-shadow-alpha)),
-                inset 0 1px 0 rgba(255, 255, 255, var(--glass-highlight-alpha));
+                0 calc(8px + 14px * var(--glass-depth)) calc(18px + 22px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.78)),
+                inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.8));
             backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
             animation: fadeIn 0.3s ease-in-out;
@@ -129,8 +129,8 @@
 
         .file-drop-zone.dragover {
             border-color: var(--hpe-green);
-            background: rgba(0, 230, 118, 0.08);
-            box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.18);
+            background: color-mix(in srgb, var(--secondary-accent) 14%, transparent);
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--secondary-accent) 28%, transparent);
         }
 
         .media-drop-panel {
@@ -273,7 +273,7 @@
 
         .btn-add {
             background:
-                linear-gradient(180deg, rgba(0, 230, 118, 0.16), rgba(0, 230, 118, 0.06)),
+                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 20%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)) 80%), color-mix(in srgb, var(--hpe-green) 10%, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.42)) 90%)),
                 linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.42)));
             color: var(--hpe-green);
             border: 1px solid color-mix(in srgb, var(--hpe-green) 68%, rgba(var(--glass-rgb), var(--glass-border-alpha)) 32%);
@@ -284,15 +284,16 @@
             transition: 0.2s;
             margin-top: 10px;
             box-shadow:
-                0 8px 18px rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.75)),
+                0 8px 14px rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.45)),
                 inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) + 0.06));
             backdrop-filter: blur(calc(var(--glass-blur) * 0.75)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.75)) saturate(var(--glass-saturation));
         }
 
         .btn-add:hover {
-            background: var(--hpe-green);
-            color: #000;
+            background:
+                linear-gradient(180deg, color-mix(in srgb, var(--hpe-green) 26%, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.10)) 74%), color-mix(in srgb, var(--hpe-green) 14%, rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.48)) 86%));
+            color: color-mix(in srgb, var(--hpe-green) 82%, var(--text-main) 18%);
         }
 
         @media (max-width: 960px) {
@@ -324,8 +325,8 @@
             position: relative;
             padding: 4% 5%;
             box-shadow:
-                0 calc(14px + 18px * var(--glass-depth)) calc(28px + 36px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.04)),
-                inset 0 1px 0 rgba(255, 255, 255, var(--glass-highlight-alpha));
+                0 calc(10px + 12px * var(--glass-depth)) calc(22px + 24px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.02)),
+                inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.82));
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -528,14 +529,14 @@
             border-color: rgba(255, 255, 255, 0.14);
         }
         .btn-copy-code:hover {
-            background: rgba(0, 230, 118, 0.1);
-            color: var(--hpe-green);
-            border-color: var(--hpe-green);
+            background: color-mix(in srgb, var(--secondary-accent) 14%, transparent);
+            color: var(--secondary-accent);
+            border-color: var(--secondary-accent);
         }
         .btn-copy-code.copied {
-            color: var(--hpe-green);
-            border-color: var(--hpe-green);
-            background: rgba(0, 230, 118, 0.15);
+            color: var(--secondary-accent);
+            border-color: var(--secondary-accent);
+            background: color-mix(in srgb, var(--secondary-accent) 18%, transparent);
         }
 
         /* highlight.js 諛곌꼍???먮뵒???ㅽ겕 ?뚮쭏??留욊쾶 ?ㅻ쾭?쇱씠??*/

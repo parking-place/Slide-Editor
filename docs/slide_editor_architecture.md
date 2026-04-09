@@ -65,6 +65,7 @@
   - 변수, 공통 리셋, 버튼/입력 기본 스타일, glass 공통 토큰
 - `layout.css`
   - 헤더, 본문 레이아웃, Navigator, 미리보기 배치, 전역 glass 배경/헤더 shell
+  - 헤더 중앙의 프로젝트명 정보 패널과 accent/secondaryAccent 기반 상호작용 tint를 포함합니다.
 - `editor.css`
   - 편집기 폼과 슬라이드 카드 스타일, glass shell + readable inner content 구조
 - `modal.css`
@@ -113,6 +114,7 @@
   - Save
   - Guide
   - HTML
+- 헤더는 좌측 로고/버전, 중앙 프로젝트명 정보 패널, 우측 액션 버튼으로 분리되어 있습니다.
 - 프로젝트/테마/확인 모달 제공
 - 좌측 Navigator와 본문 미리보기 컨테이너 제공
 
