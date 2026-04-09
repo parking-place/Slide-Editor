@@ -378,6 +378,12 @@
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
 }
 
+.project-state-card[hidden],
+#project-modal-current-panel[hidden],
+#project-modal-selected-panel[hidden] {
+    display: none !important;
+}
+
 .project-state-header {
     display: flex;
     align-items: flex-start;
