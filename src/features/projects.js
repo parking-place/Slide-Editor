@@ -5,7 +5,7 @@ function getProjectModalDefaultName(mode) {
                 return currentProject?.name ? `${currentProject.name} Copy` : 'My Guide Copy';
             }
             if (mode === 'new') {
-                return projectSettings?.branding?.projectName || 'My Guide';
+                return currentProject?.name || projectSettings?.branding?.projectName || 'My Guide';
             }
             return '';
         }
@@ -73,6 +73,8 @@ function getProjectModalDefaultName(mode) {
                     ? `${currentProject.id} / ${slidesData.length} slides currently loaded / ${getSavedVersionLabel(currentProject.savedVersion)}`
                     : 'Start from a new project or open an existing one.';
             }
+
+            syncBrandingUI();
 
             if (listEl) {
                 listEl.innerHTML = buildProjectListMarkup();
@@ -299,7 +301,7 @@ function getProjectModalDefaultName(mode) {
                     const created = await requestJson('/api/projects', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(Object.assign({ name }, buildProjectDataDocument()))
+                        body: JSON.stringify(Object.assign({ name }, buildProjectDataDocument(slidesData, projectSettings, name)))
                     });
                     await loadProjectById(created.id);
                     window.closeProjectModal();
@@ -320,7 +322,9 @@ function getProjectModalDefaultName(mode) {
                             name: renamed.project.name,
                             savedVersion: normalizeSavedVersion(renamed.project.savedVersion)
                         };
+                        syncProjectBrandingName(renamed.project.name);
                         updateProjectIndicator();
+                        window.renderPreview();
                     }
                     projectModalState.nameDraft = renamed.project.name;
                     renderProjectModal();

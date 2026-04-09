@@ -18,9 +18,8 @@
             ['#edit-text', { maxlength: '20000', spellcheck: 'false', enterkeyhint: 'done' }],
             ['#edit-image-caption', { maxlength: '160', autocomplete: 'off', enterkeyhint: 'done' }],
             ['#theme-name-input', { maxlength: '80', autocomplete: 'off', enterkeyhint: 'done' }],
-            ['#branding-project-name', { minlength: '1', maxlength: '120' }],
-            ['#branding-guide-subtitle', { maxlength: '160' }],
-            ['#branding-footer-copy', { maxlength: '80' }],
+            ['#project-branding-guide-subtitle', { maxlength: '160' }],
+            ['#project-branding-footer-copy', { maxlength: '80' }],
             ['#project-modal-name-input', { required: 'required', minlength: '1', maxlength: '120', enterkeyhint: 'done' }]
         ];
 

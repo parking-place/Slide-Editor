@@ -15,6 +15,32 @@
             };
         }
 
+        function normalizeProjectName(projectName, fallback = 'My Guide') {
+            const safeName = typeof projectName === 'string' ? projectName.trim() : '';
+            return safeName || fallback;
+        }
+
+        function buildProjectSettingsDocument(settings = projectSettings, projectName = currentProject?.name || settings?.branding?.projectName || 'My Guide') {
+            const resolvedProjectName = normalizeProjectName(projectName);
+            const defaultSettings = getDefaultProjectSettings(resolvedProjectName);
+            const safeSettings = settings && typeof settings === 'object' ? settings : {};
+            const safeBranding = safeSettings.branding && typeof safeSettings.branding === 'object'
+                ? safeSettings.branding
+                : {};
+
+            return {
+                activeTheme: safeSettings.activeTheme || defaultSettings.activeTheme,
+                branding: Object.assign({}, defaultSettings.branding, safeBranding, {
+                    projectName: resolvedProjectName
+                })
+            };
+        }
+
+        function syncProjectBrandingName(projectName = currentProject?.name || projectSettings?.branding?.projectName || 'My Guide') {
+            projectSettings = buildProjectSettingsDocument(projectSettings, projectName);
+            return projectSettings.branding.projectName;
+        }
+
         let projectSettings = getDefaultProjectSettings();
         let currentProject = null;
         let currentAppVersion = '';
@@ -113,10 +139,10 @@
 
             if (data && typeof data === 'object' && Array.isArray(data.slides)) {
                 slidesData = migrateData(data.slides);
-                projectSettings = {
+                projectSettings = buildProjectSettingsDocument({
                     activeTheme: data.settings?.activeTheme || nextSettings.activeTheme,
                     branding: Object.assign({}, nextSettings.branding, data.settings?.branding || {})
-                };
+                }, data.settings?.branding?.projectName || nextSettings.branding.projectName);
                 return;
             }
 
@@ -138,10 +164,10 @@
             return normalizeSavedVersion(versionValue) || 'old';
         }
 
-        function buildProjectDataDocument(slides = slidesData, settings = projectSettings) {
+        function buildProjectDataDocument(slides = slidesData, settings = projectSettings, projectName = currentProject?.name || settings?.branding?.projectName || 'My Guide') {
             return {
                 savedVersion: getCurrentSavedVersion(),
-                settings,
+                settings: buildProjectSettingsDocument(settings, projectName),
                 slides
             };
         }
@@ -154,6 +180,7 @@
                     savedVersion: normalizeSavedVersion(project.savedVersion || project.meta?.savedVersion)
                 }
                 : null;
+            syncProjectBrandingName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');
             updateProjectIndicator();
         }
 

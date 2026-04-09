@@ -660,12 +660,43 @@ window.exportToPPTX = async function() {
         };
 
         // 데이터(JSON) 파일 저장
+        function sanitizeDownloadName(name) {
+            return String(name || 'My Guide')
+                .trim()
+                .replace(/[\\/:*?"<>|]/g, '_')
+                .replace(/\s+/g, ' ')
+                || 'My Guide';
+        }
+
+        function buildBackupTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear().toString().slice(-2);
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        }
+
+        function buildBackupFileName(projectName) {
+            return `${sanitizeDownloadName(projectName)}_data_${buildBackupTimestamp()}.json`;
+        }
+
+        function getImportProjectName(importedData, fallbackName) {
+            if (importedData && typeof importedData === 'object' && !Array.isArray(importedData)) {
+                return normalizeProjectName(importedData.settings?.branding?.projectName, fallbackName);
+            }
+            return normalizeProjectName(fallbackName, 'Imported Project');
+        }
+
         window.exportData = async function() {
             if (!currentProject?.id) {
                 showModal('저장할 프로젝트가 없습니다.');
                 return;
             }
 
+            collectBrandingFromUI();
             const dataStr = JSON.stringify(buildProjectDataDocument(), null, 2);
 
             try {
@@ -708,7 +739,7 @@ window.exportToPPTX = async function() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `vme_data_${timestamp}.json`;
+            a.download = buildBackupFileName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -723,6 +754,7 @@ window.exportToPPTX = async function() {
                 return;
             }
 
+            collectBrandingFromUI();
             let portableSlides;
             try {
                 portableSlides = await buildPortableSlides(slidesData);
@@ -747,7 +779,7 @@ window.exportToPPTX = async function() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `vme_data_${timestamp}.json`;
+            a.download = buildBackupFileName(currentProject?.name || projectSettings?.branding?.projectName || 'My Guide');
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -783,35 +815,33 @@ window.exportToPPTX = async function() {
 
                     const importedData = JSON.parse(e.target.result);
 
-                    // 구버전(배열) 및 신버전(래퍼 객체) 자동 판별
-                    if (Array.isArray(importedData)) {
-                        // ── 구버전 호환: 슬라이드만 교체, settings는 현재 값 유지
-                        slidesData = migrateData(importedData);
-                        showModal('구버전 데이터를 불러왔습니다. 브랜딩/테마 설정은 현재 값을 유지합니다.');
-                    } else if (importedData && Array.isArray(importedData.slides)) {
-                        // ── 신버전 래퍼 구조
-                        parseLoadedData(importedData);
-                        // 저장된 테마 자동 적용
-                        await loadThemeByName(projectSettings.activeTheme);
-                        // 브랜딩 UI 갱신
-                        syncBrandingUI();
-                        showModal('데이터를 성공적으로 불러왔습니다!');
-                    } else {
+                    if (!Array.isArray(importedData) && !(importedData && Array.isArray(importedData.slides))) {
                         showModal('올바른 데이터 형식이 아닙니다.\n지원 형식: 슬라이드 배열([]) 또는 {settings, slides} 객체');
                         return;
                     }
 
-                    activeEditorIndex = null;
-                    editingSlideIndex = null;
-                    window.renderPreview();
-                    scheduleLegacyImageBackfill({
-                        persistAfterConversion: false
+                    const fallbackImportName = file.name.replace(/\.[^.]+$/, '') || 'Imported Project';
+                    const importProjectName = getImportProjectName(importedData, fallbackImportName);
+                    const importPayload = Array.isArray(importedData)
+                        ? buildProjectDataDocument(migrateData(importedData), getDefaultProjectSettings(importProjectName), importProjectName)
+                        : buildProjectDataDocument(migrateData(importedData.slides), importedData.settings, importProjectName);
+
+                    const created = await requestJson('/api/projects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(Object.assign({ name: importProjectName }, importPayload))
                     });
+
+                    await loadProjectById(created.id);
+                    if (typeof window.closeProjectModal === 'function') {
+                        window.closeProjectModal();
+                    }
+                    showModal(`데이터를 프로젝트로 가져왔습니다: ${created.name}`);
                 } catch (err) {
                     console.error('데이터 파일 불러오기 오류:', err);
                     showModal('데이터 파일을 읽는 중 오류가 발생했습니다.\n' + err.message);
                 }
-                event.target.value = ''; // input 초기화
+                event.target.value = '';
             };
             reader.readAsText(file);
         };

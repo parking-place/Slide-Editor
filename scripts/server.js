@@ -382,6 +382,12 @@ function updateProjectMeta(projectId, updates = {}) {
         savedVersion: normalizeSavedVersion(meta.savedVersion || extractSavedVersion(payload))
     };
 
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        payload.settings = mergeSettings(payload.settings, nextMeta.name);
+        payload.settings.branding.projectName = nextMeta.name;
+        writeJson(getProjectDataPath(projectId), payload);
+    }
+
     writeJson(getProjectMetaPath(projectId), nextMeta);
     syncProjectIndexEntry(nextMeta);
 
@@ -634,9 +640,12 @@ function normalizeProjectPayload(body, targetProjectId, fallbackProjectName = 'M
     const safePayload = payload && typeof payload === 'object' ? payload : {};
     const slides = Array.isArray(safePayload.slides) ? safePayload.slides : [];
 
+    const settings = mergeSettings(safePayload.settings, fallbackProjectName);
+    settings.branding.projectName = String(fallbackProjectName || settings.branding.projectName || 'My Guide').trim() || 'My Guide';
+
     return {
         savedVersion: extractSavedVersion(safePayload),
-        settings: mergeSettings(safePayload.settings, fallbackProjectName),
+        settings,
         slides: slides.map(slide => {
             if (!slide || typeof slide !== 'object') return slide;
             return Object.assign({}, slide, {

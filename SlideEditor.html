@@ -60,9 +60,6 @@
             <button type="button" class="btn-hdr btn-hdr--amber" title="Theme" onclick="window.openThemeModal()">
                 <i class="fa-solid fa-palette"></i> Theme
             </button>
-            <button type="button" class="btn-hdr btn-hdr--indigo" title="Branding" onclick="window.openBrandingModal()">
-                <i class="fa-solid fa-tag"></i> Branding
-            </button>
             <div class="hdr-divider"></div>
 
             <button type="button" class="btn-hdr btn-hdr--purple" title="Project manager" onclick="window.openProjectModal('open')">
@@ -70,13 +67,6 @@
             </button>
             <div class="hdr-divider"></div>
 
-            <input type="file" id="import-data-input" accept=".json" style="display: none;" onchange="window.importData(event)">
-            <button type="button" class="btn-hdr btn-hdr--purple" title="Import JSON" onclick="document.getElementById('import-data-input').click()">
-                <i class="fa-solid fa-file-import"></i> Import
-            </button>
-            <button type="button" class="btn-hdr btn-hdr--blue" title="Download JSON backup" onclick="window.downloadData()">
-                <i class="fa-solid fa-download"></i> Backup
-            </button>
             <button type="button" class="btn-hdr btn-hdr--blue-solid" id="dl-save-btn" title="Save current project" onclick="window.exportData()">
                 <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
@@ -260,6 +250,40 @@
                         <label id="project-modal-name-label" class="theme-section-label" for="project-modal-name-input">Project Name</label>
                         <input type="text" id="project-modal-name-input" class="theme-text-input" placeholder="My Guide" maxlength="120" autocomplete="off" required oninput="window.setProjectModalNameDraft(this.value)">
                         <p id="project-modal-help" class="project-help-text"></p>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <div class="theme-section-label">Branding</div>
+                        <div class="project-branding-card">
+                            <p class="project-branding-note">프로젝트명은 저장 이름과 항상 동일하게 유지됩니다.</p>
+                            <div class="branding-field">
+                                <label class="branding-field-label">프로젝트명 <span>(현재 저장 이름과 동기화됨)</span></label>
+                                <div id="project-branding-name-display" class="project-branding-name-display">-</div>
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-branding-guide-subtitle">부제 <span>(헤더 부제 / PPTX 표지)</span></label>
+                                <input type="text" id="project-branding-guide-subtitle" class="theme-text-input" maxlength="160" autocomplete="off"
+                                    placeholder="설치 및 구성 가이드" oninput="window.updateProjectBrandingDraft()">
+                            </div>
+                            <div class="branding-field">
+                                <label class="branding-field-label" for="project-branding-footer-copy">Footer 문구 <span>(페이지 하단 · PPTX 슬라이드 하단)</span></label>
+                                <input type="text" id="project-branding-footer-copy" class="theme-text-input" maxlength="80" autocomplete="off"
+                                    placeholder="My Guide" oninput="window.updateProjectBrandingDraft()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-editor-section">
+                        <div class="theme-section-label">Data Tools</div>
+                        <div class="project-tools-grid">
+                            <input type="file" id="project-import-data-input" accept=".json" style="display:none;" onchange="window.importData(event)">
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="document.getElementById('project-import-data-input').click()">
+                                <i class="fa-solid fa-file-import"></i> Import JSON
+                            </button>
+                            <button type="button" class="theme-action-btn project-tool-btn" onclick="window.downloadData()">
+                                <i class="fa-solid fa-download"></i> Backup JSON
+                            </button>
+                        </div>
                     </div>
 
                     <div class="project-editor-section">
