@@ -659,8 +659,15 @@
                     }
 
                     await loadProjectById(created.id);
-                    if (typeof window.closeProjectModal === 'function') {
-                        window.closeProjectModal();
+                    if (typeof window.handleProjectImportSuccess === 'function') {
+                        await window.handleProjectImportSuccess(created.id);
+                    } else {
+                        if (typeof window.closeNewProjectDialog === 'function') {
+                            window.closeNewProjectDialog();
+                        }
+                        if (typeof window.closeProjectModal === 'function') {
+                            window.closeProjectModal();
+                        }
                     }
                     showModal(`데이터를 프로젝트로 가져왔습니다: ${created.name}`);
                 } catch (err) {

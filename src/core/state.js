@@ -49,10 +49,16 @@
             mode: 'open',
             selectedProjectId: null,
             isSubmitting: false,
+            isNewProjectSubmitting: false,
             isLoadingSelection: false,
             selectedProjectDataId: null,
             selectedProjectData: null,
-            nameDraft: ''
+            nameDraft: '',
+            newProjectDraft: {
+                name: '',
+                subtitle: '',
+                footer: ''
+            }
         };
 
         let activeTheme = null;

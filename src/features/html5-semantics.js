@@ -132,6 +132,7 @@
     setupDialogDismiss('theme-modal', () => window.closeThemeModal());
     setupDialogDismiss('branding-modal', () => window.closeBrandingModal());
     setupDialogDismiss('project-modal', () => window.closeProjectModal());
+    setupDialogDismiss('new-project-modal', () => window.closeNewProjectDialog());
 
     showModal = function (message, isConfirm = false, onConfirm = null) {
         const modal = document.getElementById('custom-modal');
@@ -210,6 +211,24 @@
             baseCloseProjectModal.call(this);
         }
         closeDialog(document.getElementById('project-modal'));
+    };
+
+    const baseOpenNewProjectDialog = window.openNewProjectDialog;
+    window.openNewProjectDialog = function () {
+        const modal = document.getElementById('new-project-modal');
+        if (!modal) return;
+        if (typeof baseOpenNewProjectDialog === 'function') {
+            baseOpenNewProjectDialog.call(this);
+        }
+        openDialog(modal);
+    };
+
+    const baseCloseNewProjectDialog = window.closeNewProjectDialog;
+    window.closeNewProjectDialog = function () {
+        if (typeof baseCloseNewProjectDialog === 'function') {
+            baseCloseNewProjectDialog.call(this);
+        }
+        closeDialog(document.getElementById('new-project-modal'));
     };
 
     const originalRenderPreview = window.renderPreview;

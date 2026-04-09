@@ -355,6 +355,12 @@
     gap: 10px;
 }
 
+.project-list-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .project-list-refresh-btn {
     min-width: 42px;
     min-height: 42px;
@@ -362,8 +368,7 @@
     justify-content: center;
 }
 
-.project-state-card,
-.project-utility-card {
+.project-state-card {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -434,17 +439,7 @@
 .project-state-actions {
     display: flex;
     gap: 10px;
-}
-
-.project-tools-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.project-tool-btn {
-    justify-content: center;
-    min-height: 42px;
+    flex-wrap: wrap;
 }
 
 .project-list-item {
@@ -550,6 +545,18 @@
     background: rgba(255,255,255,0.03);
 }
 
+.new-project-modal-content {
+    width: 560px;
+}
+
+.new-project-modal-body {
+    padding: 20px 24px 24px;
+}
+
+.new-project-modal-body .project-state-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+}
+
 .theme-btn-apply[disabled],
 .theme-btn-save[disabled],
 .theme-action-btn[disabled],
@@ -575,12 +582,12 @@
         border-bottom: 1px solid var(--border-color);
     }
 
-    .project-tools-grid {
-        grid-template-columns: 1fr;
-    }
-
     .project-list-item {
         align-items: flex-start;
+    }
+
+    .new-project-modal-content {
+        width: min(96vw, 560px);
     }
 }
 
