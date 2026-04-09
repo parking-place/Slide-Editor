@@ -438,10 +438,10 @@
         const imageInput = document.getElementById('edit-image');
         const imageStatus = document.getElementById('edit-image-status');
         const imageCaption = document.getElementById('edit-image-caption').value.trim();
-        const deleteImageChecked = document.getElementById('edit-delete-image') && document.getElementById('edit-delete-image').checked;
         const textRatioInput = document.getElementById('edit-text-ratio');
         const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
         const previousSlide = slidesData[index];
+        const hasNewImage = !!(imageInput.files && imageInput.files[0]);
 
         try {
             if (previousSlide && previousSlide.imageAsset && previousSlide.imageAsset.assetId) {
@@ -454,12 +454,12 @@
                 title,
                 text,
                 imageCaption,
-                image: deleteImageChecked ? null : previousSlide.image,
-                imageAsset: deleteImageChecked ? null : (previousSlide.imageAsset || null),
+                image: previousSlide.image,
+                imageAsset: previousSlide.imageAsset || null,
                 textRatio
             };
 
-            if (imageInput.files && imageInput.files[0]) {
+            if (hasNewImage) {
                 const asset = await uploadImageFile(imageInput.files[0], imageStatus);
                 mergeSlideImageAsset(nextSlide, asset);
             }

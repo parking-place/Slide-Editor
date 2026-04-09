@@ -49,7 +49,6 @@
         const textArea = section.querySelector('textarea');
         const mediaWrapper = section.querySelector('.file-upload-wrapper.file-drop-zone');
         const ratioWrapper = section.querySelector('.file-upload-wrapper[id$="layout-ratio-container"]');
-        const deleteBlock = section.querySelector('#edit-delete-image')?.parentElement;
 
         const form = document.createElement('form');
         form.className = 'phase6-editor-form';
@@ -65,7 +64,7 @@
             form.appendChild(createFieldset('기본 정보', [inputGroup]));
         }
 
-        if (textArea || mediaWrapper || ratioWrapper || deleteBlock) {
+        if (textArea || mediaWrapper || ratioWrapper) {
             const composeGrid = document.createElement('div');
             composeGrid.className = 'editor-compose-grid phase6-compose-grid';
 
@@ -76,14 +75,10 @@
                 composeGrid.appendChild(bodyPane);
             }
 
-            if (mediaWrapper || deleteBlock) {
-                if (deleteBlock) {
-                    deleteBlock.classList.add('phase6-media-delete');
-                }
-
+            if (mediaWrapper) {
                 const mediaPane = document.createElement('div');
                 mediaPane.className = 'editor-compose-media';
-                [mediaWrapper, deleteBlock].filter(Boolean).forEach((node) => mediaPane.appendChild(node));
+                mediaPane.appendChild(mediaWrapper);
                 composeGrid.appendChild(mediaPane);
             }
 

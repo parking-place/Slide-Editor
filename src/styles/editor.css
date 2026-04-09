@@ -124,7 +124,8 @@
         }
 
         .file-drop-zone {
-            transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.2s;
+            will-change: transform;
         }
 
         .file-drop-zone.dragover {
@@ -166,6 +167,7 @@
             box-shadow:
                 0 10px 20px rgba(0, 0, 0, calc(var(--glass-shadow-alpha) * 0.46)),
                 inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) + 0.04));
+            transform: scale(1.015);
         }
 
         .media-drop-icon {
@@ -211,7 +213,7 @@
         }
 
         .file-upload-status[data-state="selected"] {
-            color: var(--hpe-green);
+            color: var(--secondary-accent);
             font-weight: 600;
         }
 

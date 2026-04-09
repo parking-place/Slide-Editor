@@ -106,10 +106,37 @@ function generateTocData(slides) {
                 layoutContainer: document.getElementById(wrapper.dataset.layoutId),
                 status: document.getElementById(wrapper.dataset.statusId),
                 captionContainer: document.getElementById(wrapper.dataset.captionId),
-                deleteCheckbox: wrapper.dataset.deleteId ? document.getElementById(wrapper.dataset.deleteId) : null,
                 defaultText: wrapper.dataset.defaultText || '',
                 existingText: wrapper.dataset.existingText || wrapper.dataset.defaultText || ''
             };
+        }
+
+        function getImageDisplayName(slide) {
+            const sourceFileName = slide?.imageAsset?.sourceFileName;
+            if (typeof sourceFileName === 'string' && sourceFileName.trim()) {
+                return sourceFileName.trim();
+            }
+
+            const imageValue = typeof slide?.image === 'string' ? slide.image.trim() : '';
+            if (!imageValue) {
+                return '';
+            }
+
+            if (imageValue.startsWith('data:image/')) {
+                return '업로드한 이미지';
+            }
+
+            const normalized = imageValue.replace(/\\/g, '/');
+            const fileName = normalized.split('/').pop() || '';
+            if (!fileName) {
+                return '업로드한 이미지';
+            }
+
+            try {
+                return decodeURIComponent(fileName);
+            } catch (error) {
+                return fileName;
+            }
         }
 
         function updateImageUploadUi(context) {
@@ -118,12 +145,9 @@ function generateTocData(slides) {
             }
 
             const selectedFile = context.input?.files?.[0] || null;
-            const hasExistingImage = context.wrapper.dataset.hasImage === 'true' && !context.deleteCheckbox?.checked;
+            const hasExistingImage = context.wrapper.dataset.hasImage === 'true';
             const hasImage = !!selectedFile || hasExistingImage;
 
-            if (selectedFile && context.deleteCheckbox) {
-                context.deleteCheckbox.checked = false;
-            }
             if (selectedFile) {
                 context.status.textContent = selectedFile.name;
                 context.status.dataset.state = 'selected';
@@ -135,6 +159,7 @@ function generateTocData(slides) {
                 context.status.dataset.state = 'idle';
             }
 
+            context.wrapper.dataset.hasImage = String(hasImage);
             context.wrapper.classList.toggle('has-image', hasImage);
 
             if (context.layoutContainer) {
@@ -214,10 +239,6 @@ function generateTocData(slides) {
             updateImageUploadUi(context);
         };
 
-        window.handleExistingImageToggle = function(input) {
-            updateImageUploadUi(getImageUploadContext(input));
-        };
-
         function syncAllImageUploadUi() {
             document.querySelectorAll('.file-drop-zone').forEach((zone) => {
                 updateImageUploadUi(getImageUploadContext(zone));
@@ -284,7 +305,6 @@ function generateTocData(slides) {
             const text = document.getElementById('edit-text').value.trim();
             const imageInput = document.getElementById('edit-image');
             const imageCaption = document.getElementById('edit-image-caption').value.trim();
-            const deleteImageChecked = document.getElementById('edit-delete-image')?.checked;
             const textRatioInput = document.getElementById('edit-text-ratio');
             const textRatio = textRatioInput ? parseInt(textRatioInput.value, 10) : 50;
 
@@ -298,8 +318,8 @@ function generateTocData(slides) {
                 };
                 reader.readAsDataURL(imageInput.files[0]);
             } else {
-                // 이미지 업로드 안 한 경우 (기존 이미지 유지 혹은 삭제)
-                const existingImage = deleteImageChecked ? null : slidesData[index].image;
+                // 이미지 업로드 안 한 경우 기존 이미지 유지
+                const existingImage = slidesData[index].image;
                 slidesData[index] = { chapter, middleTitle, title, text, imageCaption, image: existingImage, textRatio };
                 editingSlideIndex = null;
                 window.renderPreview();
@@ -360,7 +380,7 @@ function generateTocData(slides) {
                     const editorDiv = document.createElement('div');
                     editorDiv.className = 'editor-section';
                     const newImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
-                                        editorDiv.innerHTML = `
+                    editorDiv.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h3 style="margin: 0;"><i class="fa-solid fa-pen-to-square"></i> ${slidesData.length === 0 ? '첫 슬라이드 작성' : '새 슬라이드 추가'}</h3>
                             <button type="button" class="btn-cancel" onclick="window.cancelEditor()"><i class="fa-solid fa-xmark"></i></button>
@@ -381,7 +401,6 @@ function generateTocData(slides) {
                                     data-status-id="input-image-status"
                                     data-caption-id="input-image-caption-wrap"
                                     data-default-text="${escapeHtml(newImageUploadDefaultText)}"
-                                    data-existing-text="업로드된 이미지 사용 중"
                                     data-has-image="false"
                                     onclick="window.handleImageZoneClick(event)"
                                     ondragenter="window.handleImageDragEnter(event)"
@@ -448,18 +467,10 @@ function generateTocData(slides) {
                         // ==== 수정 모드 폼 ====
                         const editDiv = document.createElement('div');
                         editDiv.className = 'editor-section edit-mode';
-                        const editImageUploadDefaultText = slide.image
-                            ? '새 이미지 업로드 또는 드래그 앤 드롭 시 기존 이미지 교체'
-                            : '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
-                        
-                        const existingImageDeleteCheck = slide.image ? `
-                            <div style="margin-top: 5px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" id="edit-delete-image" style="width: auto; cursor: pointer;" onchange="window.handleExistingImageToggle(this)">
-                                <label for="edit-delete-image" style="cursor:pointer; color: #ff5c5c;"><i class="fa-solid fa-trash-can"></i> 기존 사진 삭제하기</label>
-                            </div>
-                        ` : '';
+                        const editImageUploadDefaultText = '스크린샷 이미지 업로드 또는 드래그 앤 드롭';
+                        const editImageExistingText = getImageDisplayName(slide) || editImageUploadDefaultText;
 
-                                                editDiv.innerHTML = `
+                        editDiv.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                 <h3 style="margin: 0;"><i class="fa-solid fa-pen"></i> 슬라이드 수정</h3>
                                 <button type="button" class="btn-cancel" onclick="window.cancelEditSlide()"><i class="fa-solid fa-xmark"></i></button>
@@ -479,9 +490,8 @@ function generateTocData(slides) {
                                         data-layout-id="edit-layout-ratio-container"
                                         data-status-id="edit-image-status"
                                         data-caption-id="edit-image-caption-wrap"
-                                        data-delete-id="edit-delete-image"
                                         data-default-text="${escapeHtml(editImageUploadDefaultText)}"
-                                        data-existing-text="업로드된 이미지 사용 중"
+                                        data-existing-text="${escapeHtml(editImageExistingText)}"
                                         data-has-image="${slide.image ? 'true' : 'false'}"
                                         onclick="window.handleImageZoneClick(event)"
                                         ondragenter="window.handleImageDragEnter(event)"
@@ -496,7 +506,6 @@ function generateTocData(slides) {
                                         <label for="edit-image-caption">이미지 설명</label>
                                         <input type="text" id="edit-image-caption" value="${escapeHtml(slide.imageCaption || '')}" placeholder="이미지 설명 (선택사항)">
                                     </div>
-                                    ${existingImageDeleteCheck}
                                 </div>
                             </div>
                             <div class="file-upload-wrapper media-ratio-panel" id="edit-layout-ratio-container" style="display: ${slide.image ? 'flex' : 'none'}; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 5px;">
