@@ -1,290 +1,124 @@
-# Slide Editor 구조 분석 및 운영 개요
+# Slide Editor 구조 문서
 
-이 문서는 현재 `Slide Editor` 코드 구조, 저장 방식, 이미지 파이프라인, HTML 가이드 출력 흐름, 배포 구조를 빠르게 파악하기 위한 최신 구조 문서입니다.
+이 문서는 현재 `Slide Editor`의 실행 구조, 저장 구조, 이미지 파이프라인, Viewer 출력 흐름, Docker 배포 구조를 빠르게 파악하기 위한 최신 문서입니다.
 
-문서 기준 버전은 `version.json` 기준 `v0.11.0`입니다.
+문서 기준 버전은 `version.json` 기준 `v0.12.0`입니다.
 
-## 1. 현재 프로젝트 개요
+## 1. 개요
 
-- 편집 UI: 브라우저 기반 단일 페이지 편집기
-- 서버: `scripts/server.js` 기반 Node.js/Express 서버
-- 기본 실행 경로: Docker Compose
-- 대체 실행 경로: `node scripts/server.js`
-- 주요 출력물: HTML 가이드, JSON 백업
-- 저장 모델: 프로젝트별 독립 저장 구조
-- 이미지 처리: 비동기 WebP 변환 + 구버전 데이터 백필 변환
+- 프런트엔드: 브라우저 기반 단일 페이지 편집기
+- 서버: `scripts/server.js` 기반 Node.js / Express 서버
+- 기본 실행: Docker Compose
+- 대체 실행: `node scripts/server.js`
+- 주요 산출물: Viewer 미리보기, HTML 다운로드, JSON 백업
+- 저장 방식: 프로젝트별 디렉터리 저장 구조
+- 이미지 처리: 비동기 WebP 변환 + 구버전 이미지 backfill
 
-현재 구조는 예전 단일 `slide_data.json` 중심 모델에서 벗어나, 프로젝트별 디렉터리와 이미지 자산 저장소를 갖는 방식으로 전환되어 있습니다.
+## 2. 루트 구조
 
-## 2. 디렉터리 구조
-
-### 2.1 루트
-
-- `SlideEditor.html`
-  - 메인 HTML 엔트리 파일입니다.
-  - 공통 라이브러리와 `src` 하위 JS/CSS를 로드합니다.
-- `Dockerfile`, `docker-compose.yml`
-  - 로컬과 원격 배포를 위한 컨테이너 설정입니다.
-- `version.json`
-  - 현재 릴리즈 버전의 단일 기준 파일입니다.
-- `README.md`
-  - 실행 방법과 운영 개요를 설명합니다.
-
-### 2.2 `src/`
-
-프런트엔드는 기능 단위 모듈 구조를 사용합니다.
-
-- `src/app.js`
-  - 부트스트랩과 초기 연결만 담당합니다.
-- `src/core/state.js`
-  - 전역 상태, 현재 프로젝트, 버전 정보, 공통 데이터 유틸을 담당합니다.
-- `src/features/projects.js`
-  - 프로젝트 목록 로딩, Current/Selected 상태 분기, 프로젝트 저장·복제·열기·삭제, 새 프로젝트 다이얼로그 흐름을 담당합니다.
-- `src/features/editor.js`
-  - 슬라이드 추가/수정/삭제와 미리보기 렌더링을 담당합니다.
-- `src/features/export.js`
-  - HTML 가이드 저장/다운로드, JSON 백업/임포트를 담당합니다.
-  - 현재는 구형 HTML 문자열 빌더를 직접 렌더링하지 않고, 가능하면 `src/features/export-enhancements.js`의 최신 가이드 생성기로 위임합니다.
-- `src/features/theme.js`
-  - 테마와 브랜딩 동기화, `glass` 토큰 정규화, CSS 변수 주입, 테마 모달의 glass 편집 UI를 담당합니다.
-- `src/features/media.js`
-  - 이미지 업로드, WebP 변환 상태 polling, 구버전 이미지 backfill을 담당합니다.
-  - import/backfill 시 소스가 이미 WebP(`data:image/webp`, `.webp`)인 이미지는 변환 후보에서 제외합니다.
-  - 실제 변환 대상이 0건이면 WebP 변환 완료 알림을 띄우지 않습니다.
-- `src/features/html5-semantics.js`
-  - `dialog`, `figure`, `section` 등 HTML5 시맨틱 보강을 담당합니다.
-- `src/features/html5-forms.js`
-  - `form`, `fieldset`, `details`, `progress`, `output` 기반 UI 보강을 담당합니다.
-- `src/features/outline.js`
-  - outline 메타데이터와 HTML 가이드 동기화 보강을 담당합니다.
-- `src/features/export-enhancements.js`
-  - 가이드용 Navigator, 이미지 fallback, portable HTML 변환, glass 토큰이 반영된 HTML 가이드 셸 보강을 담당합니다.
-  - `Viewer` 미리보기와 `HTML` 다운로드가 공통으로 사용하는 최신 HTML 가이드 생성 경로입니다.
-  - 코드 블록 본문, 코드 헤더, 언어 라벨, 복사 버튼 텍스트는 테마의 `codeColor`를 우선 사용하도록 맞춥니다.
-
-### 2.3 `src/styles/`
-
-스타일은 책임별로 분리되어 있고, `src/style.css`가 로더 역할을 합니다.
-
-- `base.css`
-  - 변수, 공통 리셋, 버튼/입력 기본 스타일, glass 공통 토큰
-- `layout.css`
-  - 헤더, 본문 레이아웃, Navigator, 미리보기 배치, 전역 glass 배경/헤더 shell
-  - 헤더 중앙의 프로젝트명 정보 패널과 accent/secondaryAccent 기반 상호작용 tint를 포함합니다.
-- `editor.css`
-  - 편집기 폼과 슬라이드 카드 스타일, glass shell + readable inner content 구조
-  - 에디터 슬라이드 이미지 곡률과 전역 스크롤바 시각 규칙도 함께 담당합니다.
-- `modal.css`
-  - 프로젝트/테마/확인 모달 스타일, glass 편집 필드와 live sample card
-- `enhancements.css`
-  - WebP 상태 UI, lazy 렌더링, HTML5 보강 스타일
-
-### 2.4 `scripts/`
-
-- `server.js`
-  - 정적 파일 서빙
-  - 프로젝트 API
-  - 앱 상태 API
-  - 테마 API
-  - HTML 저장 API
-  - 이미지 업로드/상태 조회 API
-  - WebP 변환 파이프라인
-
-### 2.5 `data/`
-
-- `data/projects/`
-  - 프로젝트별 저장 디렉터리
-- `data/themes/`
-  - 사용자 테마 저장 경로
-- `data/slide_data.json`, `data/image_data/`
-  - 구버전 호환용 legacy 경로
-  - 필요 시 `default` 프로젝트로 이관됩니다.
-
-### 2.6 `exports/`
-
-- 서버에서 생성한 HTML 가이드가 저장됩니다.
+```text
+Slide-Editor/
+├─ SlideEditor.html
+├─ version.json
+├─ Dockerfile
+├─ docker-compose.yml
+├─ docker-compose-up.bat
+├─ docker-compose-up.sh
+├─ docker-multiarch-release.bat
+├─ docker-multiarch-release.sh
+├─ src/
+├─ scripts/
+├─ data/
+├─ exports/
+├─ docs/
+└─ plans/
+```
 
 ## 3. 프런트엔드 구조
 
-### 3.1 HTML 엔트리
+### 3.1 진입점
 
-`SlideEditor.html`은 다음 역할을 수행합니다.
+- `SlideEditor.html`
+  - 공통 라이브러리와 `src` 하위 JS/CSS를 로드
+  - 헤더 액션, Navigator, 미리보기, 모달 컨테이너 제공
 
-- 공통 라이브러리 로드
-  - `marked`
-  - `highlight.js`
-  - 폰트 및 아이콘
-- 헤더 액션 표시
-  - Theme
-  - Project
-  - Save
-  - Viewer
-  - HTML
-- 헤더는 좌측 로고/버전, 중앙 프로젝트명 정보 패널, 우측 액션 버튼으로 분리되어 있습니다.
-- 프로젝트/테마/확인 모달 제공
-- 좌측 Navigator와 본문 미리보기 컨테이너 제공
+- `src/app.js`
+  - 부트스트랩 및 모듈 연결
 
-현재는 더 이상 PPTX 버튼이나 PPTX 라이브러리를 로드하지 않으며, HTML 가이드 중심 구조로 정리되어 있습니다.
+### 3.2 상태 및 공통 로직
 
-### 3.2 미리보기 렌더링
+- `src/core/state.js`
+  - 전역 상태
+  - 현재 프로젝트 정보
+  - 버전 정보
+  - 공통 유틸
+  - 초기 프로젝트 로드
 
-에디터 미리보기는 다음 순서로 구성됩니다.
+### 3.3 기능 모듈
 
-1. 표지 렌더링
-2. 본문 슬라이드 렌더링
-3. 중제목 전환 시 구분 표지 렌더링
-4. 좌측 Navigator 갱신
+- `src/features/projects.js`
+  - 프로젝트 목록
+  - 열기 / 복제 / 저장 / 이름 변경 / 삭제
+  - 프로젝트 매니저 UI
 
-예전처럼 미리보기 내부에 별도 목차 슬라이드를 넣지 않고, Navigator만 탐색 수단으로 유지합니다. 이로써 가이드와 편집기의 탐색 모델이 동일해졌습니다.
+- `src/features/editor.js`
+  - 슬라이드 추가 / 수정 / 삭제
+  - 미리보기 렌더링
+  - Navigator 데이터 생성
 
-### 3.3 프로젝트 매니저
+- `src/features/media.js`
+  - 이미지 업로드
+  - WebP 변환 상태 polling
+  - 구버전 이미지 backfill
 
-프로젝트 매니저는 `Current Project`와 `Selected Project`를 한 화면에 동시에 섞어 보여주지 않고,
-선택 상태에 따라 오른쪽 패널의 역할을 분리하는 구조로 정리되어 있습니다.
+- `src/features/export.js`
+  - JSON 백업 export / import
+  - 프로젝트 저장
 
-왼쪽 패널은 항상 동일합니다.
+- `src/features/export-enhancements.js`
+  - Viewer HTML 생성
+  - HTML 다운로드
+  - 이미지 fallback
+  - 코드블록 스타일
+  - Navigator / 이미지 확대
 
-- 저장된 프로젝트 목록
-- 새 프로젝트 생성/Import를 여는 `+` 버튼
-- 새로고침 버튼
-- 각 프로젝트 행의 삭제 버튼
+- `src/features/theme.js`
+  - 테마 로드 / 저장
+  - 브랜딩 UI 연동
+  - glass 관련 CSS 변수 적용
 
-오른쪽 패널은 선택 상태에 따라 바뀝니다.
+- `src/features/html5-semantics.js`
+  - HTML5 시맨틱 구조 보강
 
-- 현재 프로젝트를 선택한 경우
-  - 이름, 부제, footer 입력 필드
-  - `ID`, `page`, `Saved Version`, `Last Saved`
-  - `Save`, `Copy`, `Export`
-- 다른 프로젝트를 선택한 경우
-  - 이름, 부제, footer 읽기 전용 필드
-  - `ID`, `page`, `Saved Version`, `Last Saved`
-  - `Open`, `Copy`
+- `src/features/html5-forms.js`
+  - `form`, `fieldset`, `details`, `output`, `progress` 기반 UI 보강
 
-`Last Saved`는 저장 시각 데이터가 있으면 실제 일시를 표시하고,
-구버전 데이터처럼 값이 없을 때만 `NoData` fallback을 사용합니다.
-또한 이미지 전용 슬라이드는 별도 내부 스크롤을 만들지 않도록 `image-box`가 caption 포함 단일 레이아웃으로 렌더링됩니다.
+- `src/features/outline.js`
+  - Viewer / HTML에 공통 outline 메타데이터 반영
 
-저장 시각 데이터의 필드명은 `lastSavedAt`으로 통일합니다.
+### 3.4 스타일 구조
 
-- `meta.json`
-  - `updatedAt`
-  - `lastSavedAt`
-- `slide_data.json`
-  - `savedVersion`
-  - `lastSavedAt`
-  - `settings`
-  - `slides`
+- `src/style.css`
+  - 스타일 로더
 
-프런트는 `project.lastSavedAt -> project.meta.lastSavedAt -> updatedAt` 순서로 읽고,
-값이 없으면 `NoData`를 표시합니다.
+- `src/styles/base.css`
+  - 전역 변수, 리셋, 공통 토큰
 
-새 프로젝트 생성과 JSON Import는 메인 패널 하단에 섞어 두지 않고, 별도 `New Project` 다이얼로그에서 시작합니다.
-이 다이얼로그 안에서 새 프로젝트 생성용 입력 필드와 Import 버튼을 분리해 제공합니다.
+- `src/styles/layout.css`
+  - 헤더, 본문 레이아웃, Navigator
 
-프로젝트 목록의 상태 표시는 별(Current), 체크(Selected), 휴지통(Delete) 아이콘으로 정리되어 있고,
-카드와 다이얼로그 버튼은 에디터 전반에서 쓰는 아이콘 스타일과 맞춘 `icon + label` 조합으로 통일되어 있습니다.
+- `src/styles/editor.css`
+  - 편집기와 슬라이드 카드
 
-### 3.4 버전 표시
+- `src/styles/modal.css`
+  - 프로젝트/테마/확인 모달
 
-`version.json`은 앱 버전 표시와 릴리즈 기준의 단일 소스입니다.
+- `src/styles/enhancements.css`
+  - WebP 상태 UI, lazy 관련 보강, HTML5 보강 스타일
 
-저장 파일과 프로젝트 메타에는 `savedVersion`이 함께 기록됩니다.
+## 4. 저장 구조
 
-- 값이 있으면 해당 버전을 표시
-- 값이 없으면 구버전 데이터로 간주하고 `old` 표시
-
-### 3.5 테마 확장 구조
-
-- `glass.noiseOpacity`는 테마별 메인 배경 필름 그레인 강도를 저장하는 값입니다.
-- 현재 기본 다크 glass 값은 `backgroundColor: #000000`, `backgroundAlpha: 0`, `backgroundBlur: 40`, `backgroundSaturation: 151`, `refraction: 0.01` 기준으로 평평한 shell을 만들도록 맞춰져 있습니다.
-- 노이즈 강도 입력 범위는 `0 ~ 1`이며, 테마 모달 `Glass Surface`에서 바로 저장됩니다.
-- 새 슬라이드/수정 패널의 미디어 드롭존은 이미지가 없을 때 `+`와 안내 문구만, 이미지가 있을 때는 `x`와 파일명만 표시합니다.
-- 드롭존 클릭으로 이미지가 해제되는 동작은 폼 내부 상태만 바꾸며, 실제 이미지 삭제/교체는 슬라이드 생성 또는 저장 시점에만 반영됩니다.
-
-테마 파일은 색상, 웹 가이드, 폰트 외에 `glass` 섹션을 가질 수 있습니다.
-
-- `backgroundColor`
-- `backgroundAlpha`
-- `backgroundBlur`
-- `backgroundSaturation`
-- `refraction`
-- `depth`
-- `noiseOpacity`
-
-프런트에서는 `src/features/theme.js`가 이 구조를 정규화해
-구버전 테마에도 기본 `glass` 값을 주입합니다.
-
-정규화된 glass 값은 `src/styles/base.css`의 `--glass-*` CSS 변수로 연결됩니다.
-이 구조를 기준으로 이후 에디터 카드, 모달, HTML 가이드까지 같은 glass 토큰 체계를 공유합니다.
-헤더와 라이트모드 배경 쪽은 여기서 파생된 `--accent-glow` 토큰을 함께 사용해
-강조색 계열의 glow를 배경과 shell 하이라이트에 재활용합니다.
-또한 `colors.secondaryAccent`를 함께 정규화해, hover/soft highlight/보조 glass tint가
-테마마다 다른 보조강조색을 사용할 수 있도록 확장했습니다.
-또한 `glass.noiseOpacity`를 함께 정규화해, 메인 배경의 필름 그레인 강도를 테마별로 저장하고 조절할 수 있습니다.
-라이트 모드도 다크 모드와 동일하게 `theme.js`가 주입한 현재 테마 CSS 변수를 직접 사용하며,
-`body.light-mode`는 더 이상 `bgDark`/`slideBg`/`boxBg`/`border`나 `glass` 값을 고정 override하지 않습니다.
-
-현재 에디터 화면에서는 `src/styles/layout.css`가 배경 그라데이션과 헤더/Navigator 쪽 glass shell을,
-`src/styles/editor.css`가 슬라이드 카드, 편집 패널, 업로드 박스 같은 본문 shell을 담당합니다.
-입력 필드는 완전한 glass가 아니라, shell 안에 놓이는 읽기 중심의 solid surface로 유지합니다.
-슬라이드 추가 필드는 `src/features/editor.js`와 `src/features/html5-forms.js`가 함께 구성하며,
-본문 입력과 미디어 업로드를 가로 2열 레이아웃으로 배치합니다. 미디어 업로드는 강조색 glass가 적용된
-드래그 앤 드롭 영역으로 동작하고, 별도 browse 버튼 없이 기본 안내 문구 또는 업로드된 파일명만 표시합니다.
-이 드롭존은 hover/dragover 시 tint가 진해지면서 미세하게 확대되는 반응을 가집니다.
-이미지 설명과 비율 설정은 실제 이미지가 들어왔을 때만 노출되며, 이미지 설명은 드롭존 바로 아래에,
-비율 슬라이더는 본문/미디어 2열 아래의 전체 폭 패널로 렌더링됩니다.
-슬라이드 수정 시에는 별도 "기존 이미지 삭제" 체크박스를 두지 않고, 새 이미지를 선택한 뒤 저장하면
-기존 이미지를 자동 교체하는 방식으로 동작합니다.
-프로젝트 저장 시에는 새 payload를 기준으로 같은 프로젝트 안에서 더 이상 참조하지 않는 `imageAsset`을
-`image_data/index.json`과 실제 파일 시스템에서 함께 정리합니다.
-
-헤더 우측 프로젝트 표시, Save/Theme/Project 버튼, 슬라이드 추가/수정/삭제 계열 버튼,
-프로젝트 및 테마 dialog 내부 카드와 정보 행도 같은 glass 토큰을 공유합니다.
-코드블록 표면은 `src/styles/editor.css`, HTML 가이드 쪽 코드는 `src/features/export-enhancements.js`에서
-어두운 유리 표면을 유지하도록 별도 glass 규칙을 사용합니다.
-스크롤바는 `src/styles/base.css`의 공통 규칙을 기준으로 editor, Navigator, 모달, 코드 블록에 같은 모양을 쓰며,
-thumb는 현재 테마의 `accent`, track과 button은 transparent로 통일합니다.
-
-테마 모달에서는 `Glass Surface` 섹션을 통해 아래 값을 직접 조정할 수 있습니다.
-
-- `backgroundColor`
-- `backgroundAlpha`
-- `backgroundBlur`
-- `backgroundSaturation`
-- `refraction`
-- `depth`
-- `noiseOpacity`
-
-이 입력값은 live preview로 즉시 반영되고,
-저장 시 `.slidetheme`의 `glass` 섹션에 함께 기록됩니다.
-구버전 다크 테마가 예전 흰색 glass 기본값을 명시적으로 저장하고 있더라도,
-로드 시에는 검정 기반의 최신 dark glass 기본값으로 자동 보정해 현재 렌더링 규칙과 맞춥니다.
-
-테마 편집기 라벨은 현재 한글 기반으로 정리되어 있으며,
-섹션 제목 `Glass Surface`는 영어를 유지하고 세부 옵션만 한글화합니다.
-라이트모드의 dialog 입력 요소는 일반 텍스트와 구분되도록 별도의 밝은 field surface를 사용합니다.
-Theme, Branding, Project, New Project dialog의 닫기 버튼은 슬라이드 작성 창과 같은
-`.btn-cancel` 구조를 공유하며, 헤더용 아이콘 여백과 분리해 X 아이콘 중심이 정확히 맞도록 정리합니다.
-
-HTML 가이드 쪽은 `src/features/export-enhancements.js`가 현재 활성 theme의 `glass` 토큰을 읽어
-body 배경, 헤더, TOC aside, 본문 카드, 이미지 wrapper에 반영합니다.
-가이드는 에디터보다 읽기 중심이므로, 동일한 토큰을 쓰더라도 본문 text 영역은 더 짙은 readable surface로 분리합니다.
-가이드의 스크롤바도 editor와 같은 원칙을 따르며, aside/main/code block 모두 `accent` thumb와 transparent track을 사용합니다.
-모바일 폭과 `backdrop-filter` 미지원 환경에서는 Phase 5 조정 규칙에 따라
-blur 강도와 패딩을 낮추고, semi-transparent solid fallback으로 내려갑니다.
-메인 배경은 현재 glass blur를 읽히게 하기 위해 점선 격자와 약한 노이즈 레이어를 함께 사용합니다.
-또한 dialog는 백드롭 암전/블러를 제거하고 패널 그림자를 강화하는 쪽으로 조정해,
-유리 재질 자체의 투명도는 살리면서도 레이어 구분은 유지합니다.
-Navigator active 계산은 같은 제목이 이어지는 여러 슬라이드에서도 단일 항목 강조가 유지되도록
-visible area 기반 동기화 로직으로 보정되어 있습니다.
-
-## 4. 프로젝트 저장 구조
-
-유리 셸 위에서도 충분한 대비를 갖도록 별도의 밝기/강조색 조정 규칙을 함께 사용합니다.
-
-## 4. 프로젝트 저장 구조
-
-각 프로젝트는 아래 구조를 가집니다.
+프로젝트는 아래 구조로 저장됩니다.
 
 ```text
 data/projects/<projectId>/
@@ -296,192 +130,128 @@ data/projects/<projectId>/
     converted/
 ```
 
-### 4.1 `slide_data.json`
+### 4.1 `meta.json`
 
-핵심 편집 데이터입니다.
+포함 정보:
+
+- `id`
+- `name`
+- `createdAt`
+- `updatedAt`
+- `lastSavedAt`
+- `slideCount`
+- `savedVersion`
+
+### 4.2 `slide_data.json`
+
+포함 정보:
 
 - `savedVersion`
+- `lastSavedAt`
 - `settings`
 - `slides`
 
-`settings.branding.projectName`은 현재 프로젝트 저장 이름과 항상 같은 값으로 유지됩니다.
+### 4.3 구버전 호환
 
-### 4.2 `meta.json`
-
-목록 렌더링용 요약 메타데이터입니다.
-
-- 프로젝트 이름
-- 프로젝트 ID
-- 슬라이드 수
-- 생성/수정 시각
-- `savedVersion`
-
-### 4.3 `image_data/index.json`
-
-이미지 자산 메타데이터 저장소입니다.
-
-- 자산 ID
-- 상태
-  - `queued`
-  - `converting`
-  - `ready`
-  - `failed`
-- 원본 경로
-- WebP 경로
-- MIME 타입
-- 시각 정보
+- 예전 `data/slide_data.json`, `data/image_data/` 구조는 legacy 경로로 취급
+- 필요 시 `default` 프로젝트로 마이그레이션
+- 구버전 이미지 경로는 로드 후 WebP backfill 대상으로 처리
 
 ## 5. 이미지 파이프라인
 
-### 5.1 신규 업로드
+### 5.1 새 이미지 업로드
 
-1. 이미지 파일 업로드
-2. 원본을 `originals/`에 저장
-3. 상태를 `queued` 또는 `converting`으로 기록
-4. `sharp`로 WebP 변환
-5. 완료 후 `converted/`에 저장
-6. 프런트가 상태 API polling으로 자동 갱신
+1. 브라우저에서 이미지 선택
+2. `/api/projects/:projectId/images/upload`로 전송
+3. 서버가 원본 저장 후 WebP 변환 job 생성
+4. 프런트는 상태 polling
+5. 완료 시 `fileUrl` 기준 이미지 반영
 
-### 5.2 편집기 표시 방식
+### 5.2 구버전 이미지 backfill
 
-- 변환 중에는 이미지 영역에 상태 UI를 표시
-- 완료 후 WebP 이미지를 자동 반영
-- lazy 로딩 시 `loading="lazy"`와 `decoding="async"` 사용
+1. 구버전 프로젝트 또는 JSON import 로드
+2. 슬라이드는 먼저 표시
+3. 이미지 영역은 `변환 중` 상태로 표시
+4. 이미지를 하나씩 WebP로 변환
+5. 완료 후 자동 저장 또는 상태 갱신
 
-### 5.3 구버전 데이터 backfill
+## 6. Viewer / HTML 출력 구조
 
-구버전 JSON이나 예전 프로젝트를 열면 다음 흐름으로 처리합니다.
-
-1. 프로젝트와 슬라이드는 먼저 표시
-2. 이미지는 모두 `변환 중` 상태로 표시
-3. 이미지를 하나씩 순차적으로 WebP 변환
-4. 완료 후 알림 표시
-5. 서버 프로젝트는 변환 결과를 다시 저장해 다음부터 재변환하지 않음
-
-## 6. 출력 구조
-
-### 6.1 서버 저장
-
-- 현재 프로젝트 저장은 `/api/projects/:projectId` 계열 API로 수행합니다.
-- 저장 시 `savedVersion`을 함께 기록합니다.
-
-### 6.2 JSON 백업
-
-- portable JSON 형식으로 다운로드합니다.
-- 파일명은 `프로젝트명_data_YYMMDDhhmmss.json`
-- 필요 시 이미지를 인라인 데이터로 포함합니다.
-
-### 6.3 HTML 가이드
-
-- HTML 가이드는 `src/features/export-enhancements.js`에서 editor가 사용하는 glass 토큰과 동일한 값을 읽어 body 배경, 헤더, Navigator, 카드, 코드 블록 표면에 반영합니다.
-- guide의 배경도 editor처럼 그리드와 노이즈 레이어를 포함하며, active navigator 상태는 `accent`/`secondaryAccent` 기반 glass 강조를 사용합니다.
-
-HTML 가이드는 다음 두 UI 경로를 지원하지만, 실제 HTML 생성은 하나의 최신 Viewer 생성 경로로 통합되어 있습니다.
+현재 출력 구조는 Viewer 중심이다.
 
 - `Viewer`
-  - 서버에 저장한 HTML을 새 창에서 미리보기
-- `HTML`
-  - 현재 프로젝트명 기준 파일명으로 다운로드
+  - 서버에 HTML 저장
+  - 새 창으로 `/exports/SlideEditor_Web_Guide.html` 열기
 
-가이드 구조는 다음 특성을 가집니다.
+- `HTML`
+  - portable HTML 다운로드
+  - 프로젝트명 기준 파일명 사용
+
+주요 특징:
 
 - HTML5 시맨틱 구조
-- 가이드 전용 Navigator
-- 현재 위치 하이라이트
-- 이미지 클릭 확대
-- WebP 우선 + fallback 처리
-- portable 다운로드 시 이미지 인라인 가능
-
-현재 릴리즈 기준으로는 PPTX 출력 경로가 제거되어, HTML 가이드가 유일한 문서 출력 흐름입니다.
+- Navigator 포함
+- 현재 위치 active 표시
+- 이미지 확대 오버레이
+- 코드블록 디자인과 코드 색상 테마 연동
+- 다운로드 HTML self-contained 유지
 
 ## 7. 서버 구조
 
-`scripts/server.js`는 다음을 담당합니다.
+`scripts/server.js`는 아래 역할을 가진다.
 
 - 정적 파일 서빙
-- 앱 상태 저장/로드
-- 프로젝트 목록/생성/로드/이름 변경/삭제
-- 프로젝트별 이미지 업로드
-- 이미지 상태 조회
-- WebP 변환 실행
-- 테마 목록/저장/로드
-- HTML 가이드 저장
+- 프로젝트 목록 / 상세 / 저장 / 삭제 API
+- 현재 프로젝트 상태 API
+- 테마 파일 API
+- HTML 저장 API
+- 이미지 업로드 / 상태 / 파일 API
+- WebP 변환 queue 처리
 
-핵심 구성 요소는 아래와 같습니다.
+## 8. Docker 구조
 
-- `express`
-- `sharp`
-- 파일 시스템 기반 JSON 저장소
-
-데이터베이스 없이 프로젝트 디렉터리와 메타 JSON을 저장소로 사용하는 구조입니다.
-
-## 8. 배포 구조
-
-### 8.1 Docker
-
-기본 배포는 Docker 이미지 기준입니다.
+### 8.1 기본 배포
 
 - 이미지: `parkingplace/slide-editor:<version>` 또는 `latest`
-- 포트: `8000`
-- 볼륨:
-  - `data -> /app/data`
-  - `exports -> /app/exports`
+- Compose 기준 이미지 pull 후 실행
+- 데이터와 exports는 bind mount 사용
 
-### 8.2 원격 서버
+### 8.2 멀티아키텍처 릴리즈
 
-원격 서버에서는 Git 저장소를 기준으로 업데이트하고, Docker Compose로 최신 이미지를 실행합니다.
+현재 릴리즈 이미지는 다음 플랫폼을 목표로 한다.
 
-배포 후에는 다음 정리를 수행합니다.
+- `linux/amd64`
+- `linux/arm64`
 
-- 사용하지 않는 테스트 컨테이너 제거
-- dangling 이미지 제거
-- 필요 없는 구버전 이미지 정리
+이를 위해 아래 스크립트를 사용한다.
 
-## 9. 유지보수 포인트
+- `docker-multiarch-release.bat`
+- `docker-multiarch-release.sh`
 
-### 9.1 반드시 함께 갱신할 문서
+기본 명령:
 
-- `README.md`
-- `docs/CONTRIBUTING.md`
-- `docs/slide_editor_architecture.md`
+```text
+docker buildx build --platform linux/amd64,linux/arm64 ... --push .
+```
+
+의미:
+
+- x86 리눅스 서버와 Apple Silicon Mac에서 같은 Docker 태그 사용 가능
+
+## 9. 문서 및 버전 관리
+
+주요 문서:
+
+- `CHANGELOG.md`
 - `docs/changelog/unreleased.md`
-- 릴리즈 노트
+- `docs/changelog/releases/*.md`
+- `docs/CONTRIBUTING.md`
+- `README.md`
 
-### 9.2 버전 연동 대상
+버전 기준:
 
 - `version.json`
-- changelog
-- Git tag
-- Docker tag
-- `savedVersion`
+- Git 태그
+- Docker 태그
 
-### 9.3 영향 범위가 큰 변경 지점
-
-- 프로젝트 저장 구조
-- 이미지 자산 경로
-- WebP 파이프라인
-- HTML 가이드 생성 구조
-- Navigator/outline 로직
-- HTML5 `dialog`/폼 구조
-
-이 영역은 프런트엔드 UI, 저장 데이터, 서버 API, export 결과물이 동시에 영향을 받기 쉬우므로 통합 검증이 필요합니다.
-
-## 10. 현재 구조 요약
-
-현재 `Slide Editor`는 다음처럼 이해하면 가장 정확합니다.
-
-1. 기능별 모듈 구조를 갖는 브라우저 기반 슬라이드 편집기
-2. 파일 시스템 기반 프로젝트 저장소와 이미지 변환 서버를 갖는 경량 문서 플랫폼
-3. HTML 가이드 중심 출력, 프로젝트 단위 저장, 비동기 이미지 최적화, HTML5 강화 UI를 포함한 운영 구조
-
-## 11. Slide Viewer Guide Refresh
-
-- HTML 가이드는 이제 에디터 셸을 기반으로 한 읽기 전용 `Slide Viewer` 레이아웃으로 생성됩니다.
-- Viewer 미리보기와 HTML 다운로드는 같은 최신 가이드 생성기를 공유하고, 레이아웃 결과도 동일한 방향으로 유지합니다.
-- Viewer 미리보기는 서버 저장 기반 미리보기 경로를 유지합니다.
-- HTML 다운로드는 외부 CSS, JS, 데이터 파일에 의존하지 않는 단일 self-contained HTML 파일로 생성됩니다.
-- portable HTML 경로에서는 이미지가 모두 data URL로 인라인되며, 가이드 렌더링에 필요한 CSS와 JS도 문서 내부에 포함됩니다.
-- 가이드 헤더는 `Slide Viewer`, 제목, 부제, 생성 시각만 표시하는 읽기 전용 구조로 단순화되었습니다.
-- 뷰어 배경의 그라디언트, 격자, 노이즈는 editor와 같은 고정 레이어 방식으로 렌더링되어, 긴 문서에서도 배경이 스크롤 길이를 따라 늘어나지 않습니다.
-- 단일 HTML 다운로드는 마크다운/신텍스 파서 라이브러리를 포함하지 않고, export 시점에 이미 계산된 결과 HTML과 스타일만 저장합니다.
-- 단일 HTML 다운로드에서는 외부 폰트 링크를 유지하되, 연결이 없을 때는 시스템 폰트 스택으로 자연스럽게 fallback 됩니다.
+세 값은 항상 같은 버전을 사용한다.

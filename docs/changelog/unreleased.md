@@ -4,10 +4,12 @@
 
 ## Added
 
-- 없음
+- `docker-multiarch-release.bat`, `docker-multiarch-release.sh`를 추가해 `linux/amd64`와 `linux/arm64` 멀티아키텍처 이미지를 한 번에 빌드하고 Docker Hub로 push할 수 있게 했습니다.
 
 ## Changed
 
+- Docker 릴리즈 절차를 멀티아키텍처 기준으로 정리했습니다.
+- `README.md`, `docs/CONTRIBUTING.md`, `docs/slide_editor_architecture.md`를 현재 운영 방식과 멀티아키텍처 정책에 맞게 최신화했습니다.
 - `local-server-up.bat`를 Windows 로컬 테스트 전용 배치 파일로 전환하고 Git 추적 대상에서 제외했습니다.
 
 ## Fixed
