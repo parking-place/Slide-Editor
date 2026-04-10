@@ -2,7 +2,7 @@
 
 이 문서는 Slide Editor의 changelog 진입점입니다.
 
-현재 버전: `v0.12.0a`
+현재 버전: `v0.12.0b`
 
 ## Working Files
 

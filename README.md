@@ -1,13 +1,13 @@
 # Slide Editor
 
-[![Version](https://img.shields.io/badge/version-v0.12.0a-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.12.0b-blue?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 [![Powered by Codex](https://img.shields.io/badge/powered%20by-Codex-111827?style=for-the-badge)](#)
 
 브라우저에서 슬라이드를 편집하고, 프로젝트 단위로 저장하며, 같은 데이터로 Viewer 미리보기와 HTML 다운로드까지 처리하는 문서 제작 도구입니다.
 
-현재 버전은 `v0.12.0a`이며, 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, Viewer 기반 배포 흐름, 멀티아키텍처 Docker 릴리즈를 기준으로 동작합니다.
+현재 작업 버전은 `v0.12.0b`이며, 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, Viewer 기반 배포 흐름, 멀티아키텍처 Docker 릴리즈를 기준으로 동작합니다.
 
 ## 주요 기능
 
@@ -69,7 +69,7 @@ parkingplace/slide-editor:latest
 버전 고정:
 
 ```text
-parkingplace/slide-editor:v0.12.0a
+parkingplace/slide-editor:vX.Y.Z
 ```
 
 멀티아키텍처 지원:
@@ -135,11 +135,11 @@ HTML 출력 특성:
 - 멀티아키텍처 릴리즈는 아래 스크립트로 수행합니다.
 
 ```bash
-./docker-multiarch-release.sh v0.12.0a
+./docker-multiarch-release.sh vX.Y.Z
 ```
 
 ```bat
-docker-multiarch-release.bat v0.12.0a
+docker-multiarch-release.bat vX.Y.Z
 ```
 
 ## 문서
