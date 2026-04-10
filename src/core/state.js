@@ -293,7 +293,9 @@
             try {
                 const appState = await requestJson('/api/app-state');
                 await refreshProjectList();
-                const targetProjectId = appState.currentProjectId || availableProjects[0]?.id;
+                const preferredProjectId = appState.currentProjectId || '';
+                const targetProjectId = availableProjects.find((project) => project.id === preferredProjectId)?.id
+                    || availableProjects[0]?.id;
 
                 if (!targetProjectId) {
                     throw new Error('불러올 프로젝트가 없습니다.');
