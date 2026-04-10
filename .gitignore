@@ -15,6 +15,9 @@ data/image_data/*
 # 계획 문서는 작업용 메모이므로 커밋하지 않음
 plans/*
 
+# 호스팅용 개인 서버 정보
+docs/PRIVATE_CONTRIBUTING.md
+
 # 로컬 의존성 및 작업용 도구
 node_modules/
 .tools/
