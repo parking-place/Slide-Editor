@@ -2,7 +2,7 @@
 
 이 문서는 현재 `Slide Editor`의 실행 구조, 저장 구조, Viewer 출력 구조를 빠르게 파악하기 위한 최신 문서입니다.
 
-기준 버전은 `version.json` 기준 `v0.12.0`입니다.
+기준 버전은 `version.json` 기준 `v0.12.0a`입니다.
 
 ## 1. 개요
 
@@ -12,7 +12,7 @@
 - 보조 실행 방식: `node scripts/server.js`
 - 주요 결과물: Viewer 미리보기, HTML 다운로드, JSON 백업
 - 저장 방식: 프로젝트별 디렉터리 저장 구조
-- 이미지 처리: 비동기 WebP 변환 + 구버전 이미지 backfill
+- 이미지 처리: 비동기 WebP 변환 + 구버전 이미지 backfill + 업로드 큐 직렬 처리
 
 ## 2. 루트 구조
 
@@ -39,7 +39,7 @@ Slide-Editor/
 
 - `SlideEditor.html`
   - 라이브러리, CSS, 기능 모듈 JS를 순서대로 로드
-  - 헤더, Navigator, 미리보기, 프로젝트/테마/브랜딩 모달을 제공
+  - 헤더, Navigator, 미리보기, 프로젝트/테마/브랜딩 모달 제공
 
 - `src/app.js`
   - 부트스트랩용 엔트리 파일
@@ -63,10 +63,13 @@ Slide-Editor/
   - 에디터 미리보기 렌더링
   - 중제목 변경 시 커버 슬라이드 삽입
   - Navigator 데이터 생성
+  - 이미지 선택 직후 등록 상태 UI 반영
 
 - `src/features/media.js`
   - 이미지 업로드
   - WebP 변환 상태 polling
+  - 업로드 요청의 백그라운드 큐 직렬 처리
+  - 슬라이드 생성 직후 변환 플레이스홀더 표시
   - 구버전 이미지 backfill
 
 - `src/features/export.js`
@@ -113,7 +116,9 @@ Slide-Editor/
   - 프로젝트/테마/확인 모달
 
 - `src/styles/enhancements.css`
-  - WebP 상태 UI, lazy 렌더링, HTML5 보강 스타일
+  - WebP 상태 UI
+  - lazy 렌더링
+  - HTML5 보강 스타일
 
 ## 4. 데이터 구조
 
