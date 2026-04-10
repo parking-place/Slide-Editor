@@ -1,6 +1,7 @@
 /* === Integrated Phase Styles === */
 
 /* --- Integrated from src/webp_phase2.css --- */
+.file-upload-status[data-state="registered"],
 .file-upload-status[data-state="uploading"],
 .file-upload-status[data-state="processing"] {
     color: var(--hpe-green);

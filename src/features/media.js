@@ -7,6 +7,9 @@
 
     const IMAGE_ASSET_POLLERS = new Map();
     const IMAGE_ASSET_WAITERS = new Map();
+    const IMAGE_UPLOAD_QUEUE = [];
+    let IMAGE_UPLOAD_QUEUE_ACTIVE = false;
+    let imageUploadTaskSequence = 0;
     let legacyImageBackfillRunId = 0;
 
     function isImageAssetFilePath(imageValue) {
@@ -28,6 +31,62 @@
         if (!statusEl) return;
         statusEl.textContent = text;
         statusEl.dataset.state = state || 'idle';
+    }
+
+    function buildClientUploadAssetId() {
+        imageUploadTaskSequence += 1;
+        return `client-upload-${Date.now()}-${imageUploadTaskSequence}`;
+    }
+
+    function revokeLocalPreviewUrl(asset) {
+        const previewUrl = asset && asset.localPreviewUrl;
+        if (typeof previewUrl === 'string' && previewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl);
+        }
+    }
+
+    function createClientUploadPlaceholderAsset(file) {
+        const localPreviewUrl = URL.createObjectURL(file);
+        return {
+            assetId: buildClientUploadAssetId(),
+            status: 'queued',
+            error: null,
+            fileUrl: null,
+            originalUrl: localPreviewUrl,
+            localPreviewUrl,
+            sourceFileName: file.name,
+            mimeType: file.type || 'image/png',
+            isPlaceholder: true,
+            message: '대기열 1번'
+        };
+    }
+
+    function syncQueuedAsset(slide, assetId, patch) {
+        if (!slide || !slide.imageAsset || slide.imageAsset.assetId !== assetId) {
+            return false;
+        }
+
+        slide.imageAsset = Object.assign({}, slide.imageAsset, patch);
+        return true;
+    }
+
+    function refreshQueuedUploadStates() {
+        let changed = false;
+
+        IMAGE_UPLOAD_QUEUE.forEach((task, index) => {
+            const message = `대기열 ${index + 1}번`;
+            if (task.statusEl) {
+                setUploadStatus(task.statusEl, `등록됨 · ${message}`, 'registered');
+            }
+            changed = syncQueuedAsset(task.slide, task.placeholderAssetId, {
+                status: 'queued',
+                message
+            }) || changed;
+        });
+
+        if (changed) {
+            window.renderPreview();
+        }
     }
 
     function mergeSlideImageAsset(slide, asset) {
@@ -68,14 +127,14 @@
         legacyImageBackfillRunId += 1;
     };
 
-    async function uploadImageFile(file, statusEl) {
-        if (!currentProject || !currentProject.id) {
+    async function uploadImageFile(projectId, file, statusEl) {
+        if (!projectId) {
             throw new Error('현재 프로젝트가 없습니다.');
         }
 
         setUploadStatus(statusEl, '업로드 중...', 'uploading');
         const dataUrl = await blobToDataUrl(file);
-        const payload = await requestJson(`/api/projects/${encodeURIComponent(currentProject.id)}/images/upload`, {
+        const payload = await requestJson(`/api/projects/${encodeURIComponent(projectId)}/images/upload`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -87,6 +146,76 @@
 
         setUploadStatus(statusEl, 'WebP 변환 대기 중...', 'processing');
         return payload.asset;
+    }
+
+    function enqueueImageUpload(slide, file, statusEl) {
+        if (!currentProject || !currentProject.id) {
+            return Promise.reject(new Error('열려 있는 프로젝트가 없습니다.'));
+        }
+
+        const placeholderAsset = createClientUploadPlaceholderAsset(file);
+        slide.image = null;
+        slide.imageAsset = placeholderAsset;
+        setUploadStatus(statusEl, `등록됨 · ${file.name}`, 'registered');
+
+        return new Promise((resolve, reject) => {
+            IMAGE_UPLOAD_QUEUE.push({
+                projectId: currentProject.id,
+                slide,
+                file,
+                statusEl,
+                placeholderAssetId: placeholderAsset.assetId,
+                resolve,
+                reject
+            });
+
+            refreshQueuedUploadStates();
+            processImageUploadQueue();
+        });
+    }
+
+    async function processImageUploadQueue() {
+        if (IMAGE_UPLOAD_QUEUE_ACTIVE) {
+            return;
+        }
+
+        IMAGE_UPLOAD_QUEUE_ACTIVE = true;
+
+        try {
+            while (IMAGE_UPLOAD_QUEUE.length > 0) {
+                const task = IMAGE_UPLOAD_QUEUE.shift();
+
+                syncQueuedAsset(task.slide, task.placeholderAssetId, {
+                    status: 'converting',
+                    message: '백그라운드에서 변환 중...'
+                });
+                setUploadStatus(task.statusEl, '변환 중 · 백그라운드 처리 중...', 'processing');
+                window.renderPreview();
+
+                try {
+                    const asset = await uploadImageFile(task.projectId, task.file, task.statusEl);
+                    const previousAsset = task.slide.imageAsset;
+                    mergeSlideImageAsset(task.slide, asset);
+                    revokeLocalPreviewUrl(previousAsset);
+                    beginImageAssetPolling(task.slide, task.slide.imageAsset);
+                    task.resolve(asset);
+                    window.renderPreview();
+                } catch (error) {
+                    syncQueuedAsset(task.slide, task.placeholderAssetId, {
+                        status: 'failed',
+                        error: error.message,
+                        message: '업로드 실패'
+                    });
+                    setUploadStatus(task.statusEl, error.message || '이미지 업로드에 실패했습니다.', 'error');
+                    task.reject(error);
+                    window.renderPreview();
+                }
+
+                refreshQueuedUploadStates();
+            }
+        } finally {
+            IMAGE_UPLOAD_QUEUE_ACTIVE = false;
+        }
     }
 
     function createLegacyPlaceholderAsset(runId, slideIndex) {
@@ -155,7 +284,6 @@
         const parts = normalized.split('/');
         return (parts[1] || 'png').replace('+xml', '');
     }
-
     async function buildLegacyImageFile(candidate) {
         const sourceValue = candidate.sourceImage;
         const imageSrc = isInlineImageData(sourceValue) ? sourceValue : getSlideImageSrc(sourceValue);
@@ -246,7 +374,7 @@
                     return { started: true, convertedCount, failedCount, cancelled: true };
                 }
 
-                const asset = await uploadImageFile(file, null);
+                const asset = await enqueueImageUpload(candidate.slide, file, null);
                 mergeSlideImageAsset(candidate.slide, asset);
                 window.renderPreview();
 
@@ -270,7 +398,6 @@
                 window.renderPreview();
             }
         }
-
         if (!isLegacyBackfillRunActive(runId, projectId)) {
             return { started: true, convertedCount, failedCount, cancelled: true };
         }
@@ -297,11 +424,11 @@
     function getSlideVisualImageState(slide) {
         const asset = slide && slide.imageAsset;
 
-        if (asset && (asset.status === 'queued' || asset.status === 'converting')) {
+        if (asset && (asset.status === 'queued' || asset.status === 'uploading' || asset.status === 'converting')) {
             return {
                 state: 'converting',
                 src: null,
-                message: 'WebP로 변환 중...'
+                message: asset.message || 'WebP로 변환 중...'
             };
         }
 
@@ -428,20 +555,19 @@
         try {
             const nextSlide = { chapter, middleTitle, title, text, imageCaption, image: null, textRatio };
 
-            if (imageInput.files && imageInput.files[0]) {
-                const asset = await uploadImageFile(imageInput.files[0], imageStatus);
-                mergeSlideImageAsset(nextSlide, asset);
-            }
-
             slidesData.splice(insertIndex, 0, nextSlide);
-            if (nextSlide.imageAsset) {
-                beginImageAssetPolling(nextSlide, nextSlide.imageAsset);
+
+            if (imageInput.files && imageInput.files[0]) {
+                enqueueImageUpload(nextSlide, imageInput.files[0], imageStatus).catch((error) => {
+                    setUploadStatus(imageStatus, error.message || '이미지 업로드에 실패했습니다.', 'error');
+                    showModal('이미지 업로드 요청을 처리하지 못했습니다.\n' + error.message);
+                });
             }
 
             activeEditorIndex = null;
             window.renderPreview();
         } catch (error) {
-            setUploadStatus(imageStatus, error.message || '이미지 업로드 실패', 'error');
+            setUploadStatus(imageStatus, error.message || '이미지 업로드에 실패했습니다.', 'error');
             showModal('이미지 업로드 중 오류가 발생했습니다.\n' + error.message);
         }
     };
@@ -466,7 +592,7 @@
                 stopImageAssetPolling(previousSlide.imageAsset.assetId);
             }
 
-            const nextSlide = {
+            const nextSlide = Object.assign(previousSlide || {}, {
                 chapter,
                 middleTitle,
                 title,
@@ -475,11 +601,13 @@
                 image: previousSlide.image,
                 imageAsset: previousSlide.imageAsset || null,
                 textRatio
-            };
+            });
 
             if (hasNewImage) {
-                const asset = await uploadImageFile(imageInput.files[0], imageStatus);
-                mergeSlideImageAsset(nextSlide, asset);
+                enqueueImageUpload(nextSlide, imageInput.files[0], imageStatus).catch((error) => {
+                    setUploadStatus(imageStatus, error.message || '이미지 업로드에 실패했습니다.', 'error');
+                    showModal('이미지 업로드 요청을 처리하지 못했습니다.\n' + error.message);
+                });
             } else if (pendingRemoval) {
                 nextSlide.image = null;
                 nextSlide.imageAsset = null;
@@ -487,14 +615,14 @@
             }
 
             slidesData[index] = nextSlide;
-            if (nextSlide.imageAsset) {
+            if (nextSlide.imageAsset && !nextSlide.imageAsset.isPlaceholder) {
                 beginImageAssetPolling(nextSlide, nextSlide.imageAsset);
             }
 
             editingSlideIndex = null;
             window.renderPreview();
         } catch (error) {
-            setUploadStatus(imageStatus, error.message || '이미지 업로드 실패', 'error');
+            setUploadStatus(imageStatus, error.message || '이미지 업로드에 실패했습니다.', 'error');
             showModal('이미지 업로드 중 오류가 발생했습니다.\n' + error.message);
         }
     };
@@ -618,3 +746,4 @@
         applyPhase3Enhancements();
     };
 })();
+

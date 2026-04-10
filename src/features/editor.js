@@ -152,8 +152,8 @@ function generateTocData(slides) {
             const hasImage = !!selectedFile || (hasExistingImage && !pendingRemoval);
 
             if (selectedFile) {
-                context.status.textContent = selectedFile.name;
-                context.status.dataset.state = 'selected';
+                context.status.textContent = `등록됨 · ${selectedFile.name}`;
+                context.status.dataset.state = 'registered';
             } else if (hasExistingImage && !pendingRemoval) {
                 context.status.textContent = context.existingText;
                 context.status.dataset.state = 'selected';
