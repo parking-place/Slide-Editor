@@ -115,6 +115,7 @@
         let previousMiddleTitle = null;
         const titleKeyToTocId = {};
         const slideToTocId = {};
+        const middleToTargetId = {};
 
         sourceSlides.forEach((slide, index) => {
             const chapter = slide.chapter || 'Untitled Chapter';
@@ -128,7 +129,9 @@
             }
 
             if (middleTitle && middleTitle !== previousMiddleTitle) {
-                html += `<div class="toc-nav-middle" data-target="guide-slide-${index}" tabindex="0" role="button" title="${escapeHtml(middleTitle)}">${escapeHtml(middleTitle)}</div>`;
+                const middleTargetId = `guide-middle-cover-${index}`;
+                middleToTargetId[index] = middleTargetId;
+                html += `<div class="toc-nav-middle" data-target="${middleTargetId}" tabindex="0" role="button" title="${escapeHtml(middleTitle)}">${escapeHtml(middleTitle)}</div>`;
                 previousMiddleTitle = middleTitle;
             }
 
@@ -144,7 +147,7 @@
             html += `<div class="toc-nav-title" id="${tocId}" data-slide="${index}" data-target="guide-slide-${index}" tabindex="0" role="button" title="${escapeHtml(title)}">${escapeHtml(title)}</div>`;
         });
 
-        return { html, slideToTocId };
+        return { html, slideToTocId, middleToTargetId };
     }
 
     function formatGuideTimestamp(dateInput = new Date()) {
@@ -227,7 +230,28 @@
         const viewerSubtitle = branding.subtitle || '';
         const generatedLabel = `생성 ${formatGuideTimestamp(generatedAt)}`;
 
+        let previousChapter = null;
+        let previousMiddleTitle = null;
         const cardsHtml = sourceSlides.map((slide, index) => {
+            const chapter = slide.chapter || 'Untitled Chapter';
+            const middleTitle = slide.middleTitle || '';
+            let middleCoverHtml = '';
+
+            if (chapter !== previousChapter) {
+                previousChapter = chapter;
+                previousMiddleTitle = null;
+            }
+
+            if (middleTitle && middleTitle !== previousMiddleTitle) {
+                middleCoverHtml = `
+                <article class="guide-card guide-card--middle-cover" id="${navigatorModel.middleToTargetId[index] || `guide-middle-cover-${index}`}">
+                    <div class="guide-middle-cover-kicker">${escapeHtml(chapter)}</div>
+                    <div class="guide-middle-cover-title">${escapeHtml(middleTitle)}</div>
+                </article>
+            `;
+                previousMiddleTitle = middleTitle;
+            }
+
             const imageSrc = getSlideImageSrc(resolveSlideImageSource(slide) || slide.image);
             const parsedMarkdownText = marked.parse(slide.text || '');
             const hasText = Boolean(slide.text && slide.text.trim());
@@ -262,9 +286,10 @@
             ` : '';
 
             return `
+                ${middleCoverHtml}
                 <article class="guide-card" id="guide-slide-${index}" data-guide-toc-id="${navigatorModel.slideToTocId[index] || ''}">
                     <header class="guide-card-header">
-                        <p class="guide-chapter">${escapeHtml(slide.chapter || 'Untitled Chapter')}</p>
+                        <p class="guide-chapter">${escapeHtml(chapter)}</p>
                         ${middleTitleHtml}
                         <h2 class="guide-title">${escapeHtml(slide.title || `Slide ${index + 1}`)}</h2>
                     </header>
@@ -548,7 +573,8 @@
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.03)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.46)));
             border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--guide-border-color) 36%);
             border-radius: 18px;
-            overflow: hidden;
+            min-height: clamp(320px, 34vw, 420px);
+            overflow: visible;
             box-shadow:
                 0 calc(10px + 12px * var(--glass-depth)) calc(22px + 24px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.02)),
                 inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) * 0.82));
@@ -564,9 +590,36 @@
         .guide-chapter { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: ${editorAccentColor}; }
         .guide-middle-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: ${guideNavText}; }
         .guide-title { margin: 0; font-size: 28px; line-height: 1.25; color: inherit; }
-        .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; }
+        .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; align-items: stretch; }
+        .guide-card--middle-cover {
+            border-left: 6px solid ${editorAccentColor};
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 44px;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+                linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+                linear-gradient(135deg, rgba(5, 10, 18, 0.92), rgba(15, 23, 42, 0.78));
+        }
+        .guide-middle-cover-kicker {
+            font-size: 20px;
+            color: ${editorAccentColor};
+            font-weight: 700;
+        }
+        .guide-middle-cover-title {
+            font-size: 48px;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: inherit;
+        }
         .guide-text {
             min-width: 280px;
+            flex: 1 1 320px;
             padding: 20px;
             border-radius: 6px;
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), var(--guide-box-bg));
@@ -574,6 +627,7 @@
         }
         .guide-figure {
             min-width: 280px;
+            flex: 1 1 280px;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -657,6 +711,9 @@
             .guide-layout { padding: 18px 14px; }
             .guide-card-header { padding: 20px 20px 16px; }
             .guide-card-body { padding: 20px; gap: 16px; }
+            .guide-card--middle-cover { padding: 28px 24px; gap: 14px; }
+            .guide-middle-cover-kicker { font-size: 16px; }
+            .guide-middle-cover-title { font-size: 32px; }
             .guide-text,
             .guide-figure { padding: 16px; }
         }
