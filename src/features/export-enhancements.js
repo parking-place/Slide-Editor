@@ -548,7 +548,8 @@
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.03)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.46)));
             border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--guide-border-color) 36%);
             border-radius: 18px;
-            overflow: hidden;
+            min-height: clamp(320px, 34vw, 420px);
+            overflow: visible;
             box-shadow:
                 0 calc(10px + 12px * var(--glass-depth)) calc(22px + 24px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.02)),
                 inset 0 1px 0 rgba(255,255,255, calc(var(--glass-highlight-alpha) * 0.82));
@@ -564,9 +565,10 @@
         .guide-chapter { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: ${editorAccentColor}; }
         .guide-middle-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: ${guideNavText}; }
         .guide-title { margin: 0; font-size: 28px; line-height: 1.25; color: inherit; }
-        .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; }
+        .guide-card-body { display: flex; gap: 24px; padding: 28px; flex-wrap: wrap; align-items: stretch; }
         .guide-text {
             min-width: 280px;
+            flex: 1 1 320px;
             padding: 20px;
             border-radius: 6px;
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.04)), var(--guide-box-bg));
@@ -574,6 +576,7 @@
         }
         .guide-figure {
             min-width: 280px;
+            flex: 1 1 280px;
             margin: 0;
             display: flex;
             flex-direction: column;

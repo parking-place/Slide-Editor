@@ -306,7 +306,7 @@
 
         .slide-preview {
             width: 100%;
-            aspect-ratio: 16 / 9;
+            min-height: clamp(320px, 34vw, 420px);
             background: linear-gradient(180deg, rgba(var(--glass-rgb), calc(var(--glass-alpha) + 0.03)), rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.46)));
             border: 1px solid color-mix(in srgb, rgba(var(--glass-rgb), var(--glass-border-alpha)) 64%, var(--border-color) 36%);
             border-radius: 8px;
@@ -317,7 +317,7 @@
                 inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.82));
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
             backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-saturation));
             -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-saturation));
         }
@@ -381,7 +381,14 @@
         .preview-middle-title { color: var(--text-dim); font-size: 16px; font-weight: 600; margin-bottom: 4px; }
         .preview-title { color: var(--text-main); font-size: 24px; font-weight: 700; }
 
-        .preview-body { display: flex; gap: 20px; flex: 1; min-height: 0; overflow: hidden; }
+        .preview-body {
+            display: flex;
+            gap: 20px;
+            flex: 1 1 auto;
+            min-height: auto;
+            align-items: stretch;
+            overflow: visible;
+        }
         .preview-body.preview-body--image-only {
             align-items: stretch;
         }
@@ -396,7 +403,8 @@
             flex-direction: column;
             font-size: 14px;
             color: var(--text-main);
-            overflow: hidden;
+            min-height: 0;
+            overflow: visible;
             text-align: left;
             line-height: 1.6;
         }
@@ -404,6 +412,8 @@
         /* Markdown Preview Styles */
         .markdown-body {
             font-family: inherit;
+            flex: 1 1 auto;
+            min-height: 0;
         }
         .markdown-body p { margin-bottom: 0.8em; margin-top: 0; white-space: pre-wrap; word-break: break-word; }
         .markdown-body p:last-child { margin-bottom: 0; }
@@ -735,6 +745,7 @@
 
             .slide-preview {
                 padding: 5.5% 6%;
+                min-height: 280px;
                 box-shadow:
                     0 calc(10px + 12px * var(--glass-depth)) calc(20px + 24px * var(--glass-depth)) rgba(0, 0, 0, calc(var(--glass-shadow-alpha) + 0.02)),
                     inset 0 1px 0 rgba(255, 255, 255, calc(var(--glass-highlight-alpha) * 0.9));
