@@ -18,3 +18,6 @@ plans/*
 # 로컬 의존성 및 작업용 도구
 node_modules/
 .tools/
+
+# 윈도우 Node 로컬 실행 배치 파일은 테스트용 로컬 자산으로만 사용
+local-server-up.bat

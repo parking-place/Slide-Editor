@@ -779,10 +779,15 @@ function loadProjectPayload(projectId) {
 }
 
 function listProjects() {
-    return getProjectsIndex().projects
+    const index = getProjectsIndex();
+    const validProjects = index.projects
         .map((project) => {
             const meta = readProjectMeta(project.id);
             const payload = readJsonIfExists(getProjectDataPath(project.id));
+            if (!meta || !payload) {
+                return null;
+            }
+
             const savedVersion = normalizeSavedVersion(
                 project.savedVersion
                 || meta?.savedVersion
@@ -799,7 +804,14 @@ function listProjects() {
                 savedVersion
             };
         })
+        .filter(Boolean)
         .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+
+    if (validProjects.length !== index.projects.length) {
+        saveProjectsIndex({ projects: validProjects });
+    }
+
+    return validProjects;
 }
 
 function createProject(projectName, body) {

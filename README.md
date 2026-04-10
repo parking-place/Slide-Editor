@@ -1,26 +1,26 @@
 # Slide Editor
 
-[![Version](https://img.shields.io/badge/version-v0.11.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-v0.12.0-blue?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker-supported-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#)
 [![Powered by Codex](https://img.shields.io/badge/powered%20by-Codex-111827?style=for-the-badge)](#)
 
-브라우저에서 슬라이드를 편집하고, 프로젝트 단위로 저장하며, 같은 데이터로 HTML 가이드를 미리보기와 다운로드까지 처리하는 경량 문서 제작 도구입니다.
+브라우저에서 슬라이드를 편집하고 프로젝트 단위로 저장한 뒤, 같은 데이터로 Viewer 미리보기와 HTML 다운로드까지 처리하는 문서 제작 도구입니다.
 
-현재 버전은 `nvidia_light` 기본 테마, 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, Viewer 기반 HTML 출력, glass theme 편집 UI를 중심으로 동작합니다.
+현재 버전은 프로젝트별 저장 구조, 비동기 WebP 이미지 변환, Viewer 중심 HTML 출력, glass 기반 UI, 멀티아키텍처 Docker 릴리즈 흐름을 기준으로 동작합니다.
 
 ## 주요 기능
 
-- 프로젝트 생성, 열기, 다른 이름으로 저장, 이름 변경, 삭제
-- 프로젝트 매니저 안에서 브랜딩, JSON 임포트, JSON 백업 관리
+- 프로젝트 생성, 열기, 복제, 이름 변경, 삭제
+- 프로젝트 매니저에서 백업 JSON export / JSON import
 - 슬라이드 추가, 수정, 삭제
-- 이미지 업로드 후 비동기 WebP 변환
-- 구버전 데이터 로드 시 순차 WebP 백필 변환
-- 좌측 Navigator 기반 슬라이드 탐색
-- Viewer 새 창 보기 및 HTML 다운로드
-- 테마 파일(`.slidetheme`) 불러오기/저장
-- `Glass Surface`와 `noiseOpacity`를 포함한 glass 테마 편집
-- Docker 기반 배포 및 Node 로컬 서버 실행
+- 이미지 업로드 시 비동기 WebP 변환
+- 구버전 데이터 로드 시 순차 WebP backfill
+- Navigator 기반 슬라이드 탐색
+- Viewer 새 창 미리보기
+- 프로젝트명 기준 HTML 다운로드
+- `.slidetheme` 기반 테마 편집
+- Docker 기반 배포
 
 ## 빠른 시작
 
@@ -39,7 +39,7 @@ docker compose up -d
 http://localhost:8000/SlideEditor.html
 ```
 
-보조 실행 스크립트도 사용할 수 있습니다.
+보조 실행 스크립트:
 
 - Windows: `docker-compose-up.bat`
 - Linux/macOS: `chmod +x docker-compose-up.sh && ./docker-compose-up.sh`
@@ -51,26 +51,34 @@ npm install
 node scripts/server.js
 ```
 
-Windows에서는 `local-server-up.bat`로 바로 실행할 수 있습니다.
+주의:
 
-## 데이터와 볼륨
+- Windows용 `local-server-up.bat`는 Git에 포함하지 않는 로컬 테스트 전용 파일입니다.
 
-Docker 기본 마운트 경로는 아래와 같습니다.
+## Docker 이미지
 
-- `./data -> /app/data`
-- `./exports -> /app/exports`
+기본 이미지:
 
-주요 데이터는 아래처럼 저장됩니다.
+```text
+parkingplace/slide-editor:latest
+```
 
-- `data/projects/<projectId>/slide_data.json`
-- `data/projects/<projectId>/meta.json`
-- `data/projects/<projectId>/image_data/`
-- `data/themes/`
-- `exports/`
+버전 고정:
 
-## 프로젝트 저장 구조
+```text
+parkingplace/slide-editor:v0.12.0
+```
 
-각 프로젝트는 독립 디렉터리로 저장됩니다.
+멀티아키텍처 지원:
+
+- `linux/amd64`
+- `linux/arm64`
+
+즉, 일반 x86 리눅스 서버와 Apple Silicon Mac의 Docker Desktop에서 같은 태그를 그대로 사용할 수 있습니다.
+
+## 데이터 구조
+
+프로젝트는 아래 경로에 저장됩니다.
 
 ```text
 data/projects/<projectId>/
@@ -82,87 +90,56 @@ data/projects/<projectId>/
     converted/
 ```
 
-`slide_data.json`에는 편집 데이터와 `savedVersion`이 함께 저장되며, 프로젝트 매니저에서 해당 저장 버전을 표시합니다. 저장 버전 정보가 없는 구버전 데이터는 `old`로 표시됩니다.
+주요 경로:
+
+- `data/projects/`
+- `data/themes/`
+- `exports/`
+
+Docker 기본 마운트:
+
+- `./data -> /app/data`
+- `./exports -> /app/exports`
 
 ## 이미지 처리 방식
 
-- 새 이미지 업로드 시 서버로 전송한 뒤 WebP로 비동기 변환합니다.
-- 변환 중에는 슬라이드 이미지 영역에 상태 UI가 표시됩니다.
-- 변환이 끝나면 자동으로 WebP 이미지가 반영됩니다.
-- 구버전 JSON이나 예전 프로젝트를 불러오면 먼저 프로젝트를 표시한 뒤, 이미지를 하나씩 WebP로 백필 변환합니다.
-- 모든 백필 변환이 끝나면 완료 알림을 표시합니다.
+- 새 이미지 업로드 시 서버로 전송 후 WebP로 비동기 변환합니다.
+- 변환 중에는 슬라이드 이미지 영역에 상태 UI를 표시합니다.
+- 변환 완료 후 자동으로 WebP 이미지가 반영됩니다.
+- 구버전 JSON 또는 이전 프로젝트를 열면 이미지들을 순차적으로 WebP로 backfill 합니다.
 
-## 가이드 출력
+## Viewer / HTML 출력
 
-현재 출력 경로는 HTML 가이드 중심입니다.
+- `Viewer`: 서버에 HTML을 저장한 뒤 새 창으로 미리보기
+- `HTML`: 현재 프로젝트명 기준으로 가이드 HTML 다운로드
+- `Backup JSON`: portable JSON 백업 다운로드
 
-- `Viewer`: 서버에 저장한 Slide Viewer HTML을 새 창에서 미리보기
-- `HTML`: 현재 프로젝트명 기준 파일명으로 가이드 다운로드
-- `Backup JSON`: 현재 프로젝트 데이터를 portable JSON으로 다운로드
-
-가이드 HTML은 다음 특성을 가집니다.
+HTML 출력 특성:
 
 - HTML5 시맨틱 구조 사용
-- Viewer 전용 Navigator 제공
+- Navigator 포함
 - 현재 위치 하이라이트
-- 이미지 클릭 확대
-- WebP 우선 사용, 필요 시 fallback 적용
-- 단일 HTML 다운로드 시 이미지, CSS, JS를 한 파일 안에 포함
-- 단일 HTML 다운로드 시 외부 폰트 링크는 유지하고, 오프라인에서는 시스템 폰트로 fallback
-- 단일 HTML 다운로드 시 마크다운/신텍스 파서 라이브러리는 포함하지 않고 결과 HTML만 저장
+- 이미지 확대
+- WebP 우선 사용
+- 다운로드용 HTML은 self-contained 형태 유지
 
-## Docker 이미지
+## 릴리즈
 
-기본 배포 이미지는 아래 태그를 사용합니다.
+- `version.json`, Git 태그, Docker 태그는 같은 버전을 사용합니다.
+- 릴리즈 전에는 `docs/changelog/unreleased.md`를 정리하고 릴리즈 노트를 생성합니다.
+- 릴리즈 후에는 Docker Hub 이미지와 원격 서버 배포를 같은 버전 기준으로 맞춥니다.
+- 멀티아키텍처 릴리즈는 아래 스크립트로 수행할 수 있습니다.
 
-```text
-parkingplace/slide-editor:latest
+```bash
+./docker-multiarch-release.sh v0.12.0
 ```
 
-버전 고정이 필요하면 릴리즈 태그를 사용합니다.
-
-```text
-parkingplace/slide-editor:v0.11.0
+```bat
+docker-multiarch-release.bat v0.12.0
 ```
-
-## 프로젝트 구조
-
-```text
-Slide-Editor/
-├─ src/                     # 프런트엔드 코드
-├─ src/core/                # 전역 상태와 공통 유틸
-├─ src/features/            # 기능별 모듈
-├─ src/styles/              # 스타일 모듈
-├─ scripts/                 # Node 서버
-├─ data/                    # 프로젝트/테마 데이터
-├─ exports/                 # HTML 가이드 출력물
-├─ docs/                    # changelog, 규칙, 구조 문서
-├─ plans/                   # 작업 계획 문서
-├─ SlideEditor.html         # 메인 HTML 엔트리
-├─ Dockerfile
-├─ docker-compose.yml
-├─ docker-compose-up.bat
-├─ docker-compose-up.sh
-├─ local-server-up.bat
-└─ version.json
-```
-
-## 기술 스택
-
-- Frontend: HTML, CSS, Vanilla JavaScript
-- Server: Node.js, Express
-- Image pipeline: Sharp
-- Parsing/UI: Marked.js, Highlight.js
-- Runtime: Docker, Docker Compose
 
 ## 문서
 
 - changelog 진입점: [CHANGELOG.md](./CHANGELOG.md)
 - 개발/릴리즈 규칙: [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)
-- 구조 분석 문서: [docs/slide_editor_architecture.md](./docs/slide_editor_architecture.md)
-
-## 릴리즈 원칙
-
-- `version.json`, Git 태그, Docker 태그는 같은 버전을 사용합니다.
-- 릴리즈 전에는 `docs/changelog/unreleased.md`를 정리하고 릴리즈 노트를 생성합니다.
-- 릴리즈 후에는 Docker Hub 이미지와 원격 서버 배포를 같은 버전 기준으로 맞춥니다.
+- 구조 문서: [docs/slide_editor_architecture.md](./docs/slide_editor_architecture.md)
